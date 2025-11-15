@@ -203,7 +203,7 @@
 
     async function downloadPDF(){ const { jsPDF } = window.jspdf; const doc = new jsPDF(); const text = document.getElementById('output').innerText || '';
       const lines = doc.splitTextToSize(text, 170);
-      doc.setFontSize(12);
+      doc.setFontSize(10);
       doc.text(lines, 20, 20);
       doc.save('summary.pdf');
     }
@@ -246,8 +246,8 @@
     function setLang(){ CUR_LANG = document.getElementById('lang').value; applyLang(); }
     function applyLang(){ // update UI labels
       document.getElementById('summBtn').innerText = CUR_LANG==='ml' ? 'സംഗ്രഹിക്കുക' : 'Summarize';
-      document.getElementById('clearBtn').innerText = CUR_LANG==='ml' ? 'മാറ്റുക' : 'Clear';
-      document.getElementById('origBtn').innerText = CUR_LANG==='ml' ? 'മൗലികം' : 'Toggle Original';
+      document.getElementById('clearBtn').innerText = CUR_LANG==='ml' ? 'ക്ലിയർ ചെയ്യുക' : 'Clear';
+      document.getElementById('origBtn').innerText = CUR_LANG==='ml' ? 'ടോഗിൾ' : 'Toggle Original';
       document.getElementById('copyBtn').innerText = CUR_LANG==='ml' ? 'കോപ്പി' : 'Copy';
       document.getElementById('txtBtn').innerText = CUR_LANG==='ml' ? 'TXT ഡൗൺലോഡ്' : 'Download TXT';
       document.getElementById('pdfBtn').innerText = CUR_LANG==='ml' ? 'PDF ഡൗൺലോഡ്' : 'Download PDF';
