@@ -1,10 +1,264 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-    <title>YK</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Yaduk — Text Summarizer & Tools</title>
+  <link rel="icon" href="data:," />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#6ee7b7; --glass: rgba(255,255,255,0.04);
+    }
+    *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071022 0%, #071226 60%);color:#e6eef6}
+    .container{max-width:980px;margin:28px auto;padding:20px}
+    header{display:flex;gap:12px;align-items:center}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#0ea5a9,#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px}
+    h1{margin:0;font-size:20px}
+    p.lead{margin:6px 0 18px;color:var(--muted)}
+    .card{background:var(--card);border-radius:14px;padding:18px;box-shadow:0 6px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
+    textarea{width:100%;min-height:220px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);padding:12px;border-radius:10px;color:inherit;resize:vertical}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .btn{background:linear-gradient(90deg,#06b6d4,#7c3aed);border:none;padding:10px 14px;border-radius:10px;color:#021122;font-weight:600;cursor:pointer}
+    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:10px;color:var(--muted);cursor:pointer}
+    .select, .input{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px;border-radius:8px;color:inherit}
+    .sidebar{display:flex;flex-direction:column;gap:12px}
+    .output{white-space:pre-wrap;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:12px;border-radius:10px;min-height:120px}
+    .meta{display:flex;gap:12px;align-items:center;color:var(--muted);font-size:13px}
+    .chip{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:999px;font-size:13px}
+    .sentences{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+    .sentence{padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);cursor:pointer;border:1px solid transparent}
+    .sentence:hover{border-color:rgba(255,255,255,0.04)}
+    .sentence.highlight{background:linear-gradient(90deg,rgba(110,231,183,0.08),transparent);border-color:rgba(110,231,183,0.12)}
+    footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
+    .wordcloud{display:flex;flex-wrap:wrap;gap:8px}
+    .wc-item{padding:6px;border-radius:6px;background:rgba(255,255,255,0.02)}
+    @media(max-width:900px){.grid{grid-template-columns:1fr;}.sidebar{order:2}}
+    /* small animation */
+    .fade{animation:fadeIn .35s ease;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  </style>
 </head>
 <body>
-    <h1>Welcome!</h1>
-    <p>This is my first GitHub Pages website.</p>
+  <div class="container">
+    <header>
+      <div class="logo">YD</div>
+      <div>
+        <h1>Yaduk — Text Summarizer & Tools</h1>
+        <p class="lead">Summarize text, highlight important sentences, export summaries, and use Malayalam/English UI — all client-side for GitHub Pages.</p>
+      </div>
+    </header>
+
+    <main class="grid" style="margin-top:18px">
+      <section>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px">
+            <div style="display:flex;gap:8px;align-items:center">
+              <div class="meta"><span class="chip">Extractive Summarizer</span></div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <select id="lang" class="select" onchange="setLang()">
+                <option value="en">English</option>
+                <option value="ml">മലയാളം (Malayalam)</option>
+              </select>
+              <label style="color:var(--muted);font-size:13px">Sentences:</label>
+              <input id="numSent" class="input" type="number" value="2" min="1" max="6" style="width:64px" />
+            </div>
+          </div>
+
+          <textarea id="inputText"></textarea>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:12px">
+            <div class="controls">
+              <button class="btn" onclick="summarize()" id="summBtn">Summarize</button>
+              <button class="btn-ghost" onclick="resetInput()" id="clearBtn">Clear</button>
+              <button class="btn-ghost" onclick="toggleOriginal()" id="origBtn">Toggle Original</button>
+            </div>
+            <div class="meta">
+              <div class="chip" id="wordCount">Words: 0</div>
+              <div class="chip" id="readTime">Read: 0s</div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn-ghost" onclick="copySummary()" id="copyBtn">Copy</button>
+            <button class="btn-ghost" onclick="downloadTXT()" id="txtBtn">Download TXT</button>
+            <button class="btn-ghost" onclick="downloadPDF()" id="pdfBtn">Download PDF</button>
+            <button class="btn-ghost" onclick="downloadDoc()" id="docBtn">Download DOC</button>
+            <button class="btn-ghost" onclick="toggleWordCloud()" id="wcBtn">Word Cloud</button>
+            <button class="btn-ghost" onclick="adjustLength(-1)">−</button>
+            <button class="btn-ghost" onclick="adjustLength(1)">+</button>
+          </div>
+
+        </div>
+
+        <div class="card fade" style="margin-top:14px">
+          <h3 id="outTitle">Summary</h3>
+          <div id="output" class="output"></div>
+
+          <div class="sentences" id="sentenceList"></div>
+        </div>
+      </section>
+
+      <aside class="sidebar">
+        <div class="card fade">
+          <h4>Quick Tools</h4>
+          <div style="margin-top:8px" class="meta"><div class="chip">Highlight</div><div style="color:var(--muted);margin-left:8px">Click any sentence to toggle highlight</div></div>
+          <hr style="border:none;height:12px" />
+          <div style="margin-top:8px">
+            <h4>Word Cloud</h4>
+            <div id="wordCloud" class="wordcloud"></div>
+          </div>
+        </div>
+
+        <div class="card fade">
+          <h4>About</h4>
+          <p style="color:var(--muted);font-size:13px">This tool runs entirely in your browser and is suitable for GitHub Pages. No server, no Python required.</p>
+          <p style="font-size:13px;color:var(--muted)">Made for <strong>yaduk883.github.io</strong></p>
+        </div>
+      </aside>
+    </main>
+
+    <footer>
+      <div class="card" style="display:inline-block;padding:10px 14px">© Yaduk — Built for GitHub Pages • Works offline in browser</div>
+    </footer>
+  </div>
+
+  <!-- Libraries for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    // ----------------------
+    // Simple JS summarizer
+    // ----------------------
+    const stopwords = new Set(["i","me","my","myself","we","our","ours","ourselves","you","your","yours","yourself","yourselves","he","him","his","himself","she","her","hers","herself","it","its","itself","they","them","their","theirs","themselves","what","which","who","whom","this","that","these","those","am","is","are","was","were","be","been","being","have","has","had","having","do","does","did","doing","a","an","the","and","but","if","or","because","as","until","while","of","at","by","for","with","about","against","between","into","through","during","before","after","above","below","to","from","up","down","in","out","on","off","over","under","again","further","then","once","here","there","when","where","why","how","all","any","both","each","few","more","most","other","some","such","no","nor","not","only","own","same","so","than","too","very","can","will","just","don","should","now"]);
+
+    function splitSentences(text){
+      // Basic sentence splitter — preserves original punctuation
+      const re = /[^\.!?]+[\.!?]+|[^\.!?]+$/g;
+      const arr = text.match(re) || [];
+      return arr.map(s=>s.trim()).filter(Boolean);
+    }
+
+    function tokenizeWords(text){
+      return (text.toLowerCase().match(/\b[a-zA-Z]+\b/g) || []);
+    }
+
+    function summarize(){
+      const raw = document.getElementById('inputText').value.trim();
+      const n = Math.max(1, Math.min(6, parseInt(document.getElementById('numSent').value||2)));
+      if(!raw){alert(getTxt('inputEmpty'));return}
+
+      const sentences = splitSentences(raw);
+      const words = tokenizeWords(raw).filter(w=>!stopwords.has(w));
+
+      // frequency
+      const freq = {};
+      words.forEach(w=>freq[w]=(freq[w]||0)+1);
+
+      // sentence scores
+      const scores = {};
+      sentences.forEach(s=>{
+        const ws = tokenizeWords(s);
+        ws.forEach(w=>{ if(freq[w]) scores[s]=(scores[s]||0)+freq[w]; });
+      });
+
+      // top N sentences
+      const ordered = Object.entries(scores).sort((a,b)=>b[1]-a[1]).slice(0,n).map(x=>x[0]);
+      const summary = ordered.join(' ');
+
+      // output
+      document.getElementById('output').innerText = summary || getTxt('noSummary');
+      renderSentenceList(sentences, ordered);
+      updateMeta(raw);
+      renderWordCloud(freq);
+    }
+
+    function renderSentenceList(sentences, highlighted){
+      const container = document.getElementById('sentenceList'); container.innerHTML='';
+      sentences.forEach(s=>{
+        const el = document.createElement('div'); el.className='sentence'; el.innerText = s;
+        if(highlighted.includes(s)) el.classList.add('highlight');
+        el.onclick = ()=>{ el.classList.toggle('highlight'); }
+        container.appendChild(el);
+      });
+    }
+
+    function updateMeta(text){
+      const words = (text.match(/\b[a-zA-Z]+\b/g)||[]).length;
+      document.getElementById('wordCount').innerText = getTxt('words')+": " + words;
+      const seconds = Math.max(3, Math.round(words/200*60));
+      document.getElementById('readTime').innerText = getTxt('read')+": " + Math.round(seconds/60) + ' min';
+    }
+
+    function resetInput(){ document.getElementById('inputText').value=''; document.getElementById('output').innerText=''; document.getElementById('sentenceList').innerHTML=''; document.getElementById('wordCloud').innerHTML=''; }
+    function toggleOriginal(){ const el = document.getElementById('sentenceList'); el.style.display = el.style.display === 'none' ? 'block' : 'none'; }
+
+    function copySummary(){ const txt = document.getElementById('output').innerText; navigator.clipboard.writeText(txt); alert(getTxt('copied')); }
+
+    function downloadTXT(){ const txt = document.getElementById('output').innerText || ''; const blob = new Blob([txt], {type:'text/plain;charset=utf-8'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'summary.txt'; a.click(); }
+
+    function downloadDoc(){ const txt = document.getElementById('output').innerText || ''; const blob = new Blob([txt], {type:'application/msword'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'summary.doc'; a.click(); }
+
+    async function downloadPDF(){ const { jsPDF } = window.jspdf; const doc = new jsPDF(); const text = document.getElementById('output').innerText || '';
+      const lines = doc.splitTextToSize(text, 170);
+      doc.setFontSize(12);
+      doc.text(lines, 20, 20);
+      doc.save('summary.pdf');
+    }
+
+    function renderWordCloud(freq){
+      const wc = document.getElementById('wordCloud'); wc.innerHTML='';
+      const entries = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,30);
+      if(entries.length===0) { wc.innerHTML = '<div style="color:var(--muted)">No words to show</div>'; return }
+      const max = entries[0][1];
+      entries.forEach(([w,c])=>{
+        const size = Math.round(12 + (c/max)*28);
+        const el = document.createElement('span'); el.className='wc-item'; el.style.fontSize=size+'px'; el.innerText = w; wc.appendChild(el);
+      });
+    }
+
+    function toggleWordCloud(){ const el = document.getElementById('wordCloud'); el.style.display = el.style.display === 'none' ? 'flex' : 'none'; }
+    function adjustLength(delta){ const el = document.getElementById('numSent'); el.value = Math.max(1, Math.min(6, parseInt(el.value||2)+delta)); }
+
+    // ----------------------
+    // i18n (English + Malayalam)
+    // ----------------------
+    const STRINGS = {
+      en: {
+        'inputEmpty':'Please paste some text first.',
+        'noSummary':'Could not generate a summary.',
+        'copied':'Summary copied to clipboard!',
+        'words':'Words',
+        'read':'Read time'
+      },
+      ml: {
+        'inputEmpty':'ദയവായി ആദ്യം ഒരു ടെക്സ്റ്റ് പേസ്റ്റ് ചെയ്യുക.',
+        'noSummary':'സംഗ്രഹം ജനറേറ്റ് ചെയ്യാൻ കഴിയുന്നില്ല.',
+        'copied':'സംഗ്രഹം ക്ലിപ്പ്ബോർഡിലേക്ക് കോപ്പിചെയ്തു!',
+        'words':'വാക്കുകൾ',
+        'read':'വായിക്കാൻ'
+      }
+    };
+    let CUR_LANG = 'en';
+    function getTxt(k){ return STRINGS[CUR_LANG][k] || STRINGS['en'][k] || k; }
+    function setLang(){ CUR_LANG = document.getElementById('lang').value; applyLang(); }
+    function applyLang(){ // update UI labels
+      document.getElementById('summBtn').innerText = CUR_LANG==='ml' ? 'സംഗ്രഹിക്കുക' : 'Summarize';
+      document.getElementById('clearBtn').innerText = CUR_LANG==='ml' ? 'മാറ്റുക' : 'Clear';
+      document.getElementById('origBtn').innerText = CUR_LANG==='ml' ? 'മൗലികം' : 'Toggle Original';
+      document.getElementById('copyBtn').innerText = CUR_LANG==='ml' ? 'കോപ്പി' : 'Copy';
+      document.getElementById('txtBtn').innerText = CUR_LANG==='ml' ? 'TXT ഡൗൺലോഡ്' : 'Download TXT';
+      document.getElementById('pdfBtn').innerText = CUR_LANG==='ml' ? 'PDF ഡൗൺലോഡ്' : 'Download PDF';
+      document.getElementById('docBtn').innerText = CUR_LANG==='ml' ? 'DOC ഡൗൺലോഡ്' : 'Download DOC';
+      document.getElementById('wcBtn').innerText = CUR_LANG==='ml' ? 'വേർഡ് ക്ലൗഡ്' : 'Word Cloud';
+      document.getElementById('outTitle').innerText = CUR_LANG==='ml' ? 'സംഗ്രഹം' : 'Summary';
+      updateMeta(document.getElementById('inputText').value);
+    }
+
+    // Apply default
+    applyLang();
+  </script>
 </body>
 </html>
