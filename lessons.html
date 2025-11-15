@@ -3,99 +3,52 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lesson</title>
+  <title>LAIL – Lessons</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background: #f7f7f7;
-    }
-    .container {
-      max-width: 1200px;
-      margin: auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .controls {
-      display:flex;
-      gap:12px;
-      align-items:center;
-      justify-content:center;
-      margin-bottom:18px;
-    }
-    select, button {
-      padding:8px 10px;
-      font-size:16px;
-      border-radius:6px;
-      border:1px solid #ccc;
-    }
-    .english-box {
-      background: #eef2ff;
-      padding: 15px;
-      border-radius: 8px;
-      font-size: 18px;
-      margin-bottom: 15px;
-      text-align:center;
-    }
-    .columns {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    .col {
-      background: #f1f1f1;
-      padding: 15px;
-      border-radius: 8px;
-    }
-    .col-title {
-      font-weight: bold;
-      margin-bottom: 10px;
-      font-size: 18px;
-      text-align:center;
-    }
-    .sentence-box {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      min-height: 80px;
-      font-size: 17px;
-      line-height: 1.6;
-    }
-    @media(max-width:800px){ .columns{ grid-template-columns:1fr } }
+    body { background:#0a0f1a; color:white; font-family:Arial, sans-serif; margin:0; padding:20px; }
+    .container { max-width:900px; margin:auto; }
+    h1 { text-align:center; }
+    .card { background:#111827; padding:20px; border-radius:15px; margin-top:20px; }
+    select, button { padding:10px; border-radius:8px; background:#1a2538; border:none; color:white; margin-top:10px; cursor:pointer; }
+    select { width:48%; }
+    button { width:48%; }
+    .controls { display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:15px; }
+    .sentence-box { background:#1a2538; padding:15px; border-radius:12px; margin-top:10px; min-height:80px; font-size:17px; line-height:1.5; }
+    .columns { display:flex; gap:15px; margin-top:15px; }
+    .col { flex:1; }
+    .col-title { font-weight:bold; margin-bottom:8px; font-size:16px; text-align:center; }
+    .english-box { background:#25324a; padding:12px; border-radius:12px; text-align:center; font-size:18px; }
+    .transliteration { font-size:15px; margin-top:6px; color:#9aa4b2; text-align:center; }
+    @media(max-width:700px){ .columns{ flex-direction:column; } select, button{ width:100%; } }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Lesson</h2>
+    <h1>LAIL – Lessons</h1>
 
-    <div class="controls">
-      <label for="sourceLang">Your language:</label>
-      <select id="sourceLang"></select>
-
-      <label for="targetLang">Language to learn:</label>
-      <select id="targetLang"></select>
-
-      <button id="prevBtn">Prev</button>
-      <button id="nextBtn">Next</button>
+    <div class="card">
+      <h2>Choose Languages</h2>
+      <div class="controls">
+        <select id="sourceLang"></select>
+        <select id="targetLang"></select>
+        <button id="prevBtn">Previous</button>
+        <button id="nextBtn">Next</button>
+      </div>
     </div>
 
-    <div class="english-box" id="englishSentence">Loading...</div>
+    <div class="card">
+      <div class="english-box" id="englishSentence">Loading...</div>
 
-    <div class="columns">
-      <div class="col">
-        <div class="col-title" id="sourceTitle">Source</div>
-        <div class="sentence-box" id="sourceSentence">-</div>
-      </div>
-
-      <div class="col">
-        <div class="col-title" id="targetTitle">Target</div>
-        <div class="sentence-box" id="targetSentence">-</div>
+      <div class="columns">
+        <div class="col">
+          <div class="col-title" id="sourceTitle">Source</div>
+          <div class="sentence-box" id="sourceSentence">-</div>
+        </div>
+        <div class="col">
+          <div class="col-title" id="targetTitle">Target</div>
+          <div class="sentence-box" id="targetSentence">-</div>
+          <div class="transliteration" id="transliteration"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -107,38 +60,24 @@ const LESSONS = [
   {
     id:1,
     en: "How are you today? I'm fine, thanks for asking.",
-    Malayalam: "ഇന്ന് എങ്ങനെയുണ്ട്? ഞാൻ സുഖത്തിലാണ്, ചോദിച്ചതിന് നന്ദി.",
-    Tamil: "இன்று எப்படி இருக்கிறீர்கள்? நான் நன்றாக இருக்கிறேன், கேட்டதற்கு நன்றி.",
-    Kannada: "ಇಂದು ಹೇಗಿದ್ದೀರಾ? ನಾನು ಚೆನ್ನಾಗಿದ್ದೇನೆ, ಕೇಳಿದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು.",
-    Telugu: "ఇవాళ మీరు ఎలా ఉన్నారు? నేను బాగున్నాను, అడిగినందుకు ధన్యవాదాలు.",
-    Hindi: "आज आप कैसे हैं? मैं ठीक हूँ, पूछने के लिए धन्यवाद।",
-    Odia: "ଆଜି କେମିତି ଅଛନ୍ତି? ମୁଁ ଭଲ ଅଛି, ପଚାରିବାକୁ ଧନ୍ୟବାଦ।",
-    Punjabi: "ਅੱਜ ਤੁਸੀਂ ਕਿਵੇਂ ਹੋ? ਮੈਂ ਠੀਕ ਹਾਂ, ਪੁੱਛਣ ਲਈ ਧੰਨਵਾਦ।",
-    Sanskrit: "अद्य त्वं कथम् अस्ति? अहं कुशलः अस्मि, पृच्छितुं धन्यवादाः।",
-    Bodo: "माथां बान खोंगोर? आं गोयो, सोंनोब्ला थानाय।",
-    Assamese: "আজিৰ দিনটো কিদৰে? মই ভাল আছোঁ, সুধাৰ বাবে ধন্যবাদ।"
-  },
-  {
-    id:2,
-    en: "What's your favorite color? I like blue the most.",
-    Malayalam: "നിങ്ങൾക്ക് ഇഷ്ടമാണെന്ന നിറം ഏതാണ്? എനിക്ക് ഏറ്റവും ഇഷ്ടം നീലയാണ്.",
-    Tamil: "உங்களுக்கு பிடித்த நிறம் என்ன? எனக்கு மிகவும் பிடித்தது நீலம்.",
-    Kannada: "ನಿಮ್ಮ ಪ್ರಿಯ ಬಣ್ಣ ಯಾವುದು? ನನಗೆ ಇರ್ಭಗಿಂತ ಹೆಚ್ಚು ನೀಲಿ ಇಷ್ಟವಾಗಿದೆ.",
-    Telugu: "మీకు ఇష్టమైన రంగు ఏది? నాకు నీలం చాలా ఇష్టం.",
-    Hindi: "आपका पसंदीदा रंग क्या है? मुझे सबसे ज्यादा नीला पसंद है।",
-    Odia: "ଆପଣଙ୍କ ପସନ୍ଦ ରଙ୍ଗ କେଉଁଟି? ମୋତେ ସବୁଠାରୁ ଅଧିକ ନୀଳ ପସନ୍ଦ।",
-    Punjabi: "ਤੁਹਾਡਾ ਮਨਪਸੰਦ ਰੰਗ ਕਿਹੜਾ ਹੈ? ਮੈਨੂੰ ਨੀਲਾ ਸਭ ਤੋਂ ਵਧੀਆ ਲੱਗਦਾ ਹੈ।",
-    Sanskrit: "भवतः प्रियवर्णः कः? मम प्रियतम् नीलवर्णः अस्ति।",
-    Bodo: "गिदिं गथां रंगा मोजों? आं ब्लु रंगा होनाबाय।",
-    Assamese: "আপোনাৰ প্ৰিয় ৰং কোনটো? মোক নীলা আটাইতকৈ বেছি ভাল লাগে।"
+    Malayalam: { text:"ഇന്ന് എങ്ങനെയുണ്ട്? ഞാൻ സുഖത്തിലാണ്, ചോദിച്ചതിന് നന്ദി.", translit:"" },
+    Tamil: { text:"இன்று எப்படி இருக்கிறீர்கள்? நான் நன்றாக இருக்கிறேன், கேட்டதற்கு நன்றி.", translit:"" },
+    Kannada: { text:"ಇಂದು ಹೇಗಿದ್ದೀರಾ? ನಾನು ಚೆನ್ನಾಗಿದ್ದೇನೆ, ಕೇಳಿದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು.", translit:"" },
+    Telugu: { text:"ఇవాళ మీరు ఎలా ఉన్నారు? నేను బాగున్నాను, అడిగినందుకు ధన్యవాదాలు.", translit:"" },
+    Hindi: { text:"आज आप कैसे हैं? मैं ठीक हूँ, पूछने के लिए धन्यवाद।", translit:"" },
+    Odia: { text:"ଆଜି କେମିତି ଅଛନ୍ତି? ମୁଁ ଭଲ ଅଛି, ପଚାରିବାକୁ ଧନ୍ୟବାଦ।", translit:"" },
+    Punjabi: { text:"ਅੱਜ ਤੁਸੀਂ ਕਿਵੇਂ ਹੋ? ਮੈਂ ਠੀਕ ਹਾਂ, ਪੁੱਛਣ ਲਈ ਧੰਨਵਾਦ।", translit:"" },
+    Sanskrit: { text:"अद्य त्वं कथम् अस्ति? अहं कुशलः अस्मि, पृच्छितुं धन्यवादाः।", translit:"" },
+    Bodo: { text:"माथां बान खोंगोर? आं गोयो, सोंनोब्ला थानाय।", translit:"" },
+    Assamese: { text:"আজিৰ দিনটো কিদৰে? মই ভাল আছোঁ, সুধাৰ বাবে ধন্যবাদ।", translit:"" }
   }
-  // Add more lessons here as needed...
 ];
 
 let currentIndex = 0;
 
 const sourceSel = document.getElementById('sourceLang');
 const targetSel = document.getElementById('targetLang');
+
 LANGS.forEach(l => { const o=document.createElement('option'); o.value=l; o.textContent=l; sourceSel.appendChild(o); });
 LANGS.forEach(l => { const o=document.createElement('option'); o.value=l; o.textContent=l; targetSel.appendChild(o); });
 
@@ -147,28 +86,23 @@ targetSel.value = 'Tamil';
 
 function render(){
   const lesson = LESSONS[currentIndex];
+  const src = sourceSel.value;
+  const tgt = targetSel.value;
+
   document.getElementById('englishSentence').innerText = lesson.en;
-
-  const src = sourceSel.value || 'English';
-  const tgt = targetSel.value || 'English';
-
   document.getElementById('sourceTitle').innerText = src;
   document.getElementById('targetTitle').innerText = tgt;
 
-  document.getElementById('sourceSentence').innerText = lesson[src] || 'Translation not available.';
-  document.getElementById('targetSentence').innerText = lesson[tgt] || 'Translation not available.';
+  document.getElementById('sourceSentence').innerText = lesson[src].text || 'Translation not available.';
+  document.getElementById('targetSentence').innerText = lesson[tgt].text || 'Translation not available.';
+  document.getElementById('transliteration').innerText = lesson[tgt].translit || '';
 }
 
 sourceSel.addEventListener('change', render);
 targetSel.addEventListener('change', render);
 
-document.getElementById('prevBtn').addEventListener('click', () => {
-  if(currentIndex>0){ currentIndex--; render(); }
-});
-
-document.getElementById('nextBtn').addEventListener('click', () => {
-  if(currentIndex < LESSONS.length-1){ currentIndex++; render(); }
-});
+document.getElementById('prevBtn').addEventListener('click', () => { if(currentIndex>0){ currentIndex--; render(); } });
+document.getElementById('nextBtn').addEventListener('click', () => { if(currentIndex<LESSONS.length-1){ currentIndex++; render(); } });
 
 render();
 </script>
