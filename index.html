@@ -3,44 +3,108 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LAIL – Learn an Indian Language</title>
+  <title>LAIL – Lessons</title>
   <style>
     body { background:#0a0f1a; color:white; font-family:Arial, sans-serif; margin:0; padding:20px; }
     .container { max-width:900px; margin:auto; }
     h1 { text-align:center; }
-    .btn { background:#1a2538; padding:12px 18px; border-radius:8px; margin:10px 0; display:block; text-align:center; color:white; text-decoration:none; }
-    .btn:hover { background:#25324a; }
     .card { background:#111827; padding:20px; border-radius:15px; margin-top:20px; }
+    select, button { padding:10px; border-radius:8px; background:#1a2538; border:none; color:white; margin-top:10px; cursor:pointer; }
+    select { width:48%; }
+    button { width:48%; }
+    .controls { display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:15px; }
+    .sentence-box { background:#1a2538; padding:15px; border-radius:12px; margin-top:10px; min-height:80px; font-size:17px; line-height:1.5; }
+    .columns { display:flex; gap:15px; margin-top:15px; }
+    .col { flex:1; }
+    .col-title { font-weight:bold; margin-bottom:8px; font-size:16px; text-align:center; }
+    .english-box { background:#25324a; padding:12px; border-radius:12px; text-align:center; font-size:18px; }
+    .transliteration { font-size:15px; margin-top:6px; color:#9aa4b2; text-align:center; }
+    @media(max-width:700px){ .columns{ flex-direction:column; } select, button{ width:100%; } }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>LAIL – Learn an Indian Language</h1>
+    <h1>LAIL – Lessons</h1>
 
     <div class="card">
-      <h2>Start Learning</h2>
-      <p>Select what you want to explore:</p>
-
-      <!-- Navigation buttons to other pages -->
-      <a class="btn" href="lessons.html">Start Lessons</a>
-      <a class="btn" href="letters.html">View Alphabets</a>
-      <a class="btn" href="about.html">About This Project</a>
+      <h2>Choose Languages</h2>
+      <div class="controls">
+        <select id="sourceLang"></select>
+        <select id="targetLang"></select>
+        <button id="prevBtn">Previous</button>
+        <button id="nextBtn">Next</button>
+      </div>
     </div>
 
     <div class="card">
-      <h2>✨ What is LAIL?</h2>
-      <p>
-        LAIL (Learn an Indian Language) is a tool to help you learn multiple Indian
-        languages side‑by‑side. You can:
-      </p>
-      <ul>
-        <li>Compare languages</li>
-        <li>Learn alphabets</li>
-        <li>Practice sentences step‑by‑step</li>
-        <li>Save transliterations</li>
-        <li>Mark learned sentences</li>
-      </ul>
+      <div class="english-box" id="englishSentence">Loading...</div>
+
+      <div class="columns">
+        <div class="col">
+          <div class="col-title" id="sourceTitle">Source</div>
+          <div class="sentence-box" id="sourceSentence">-</div>
+        </div>
+        <div class="col">
+          <div class="col-title" id="targetTitle">Target</div>
+          <div class="sentence-box" id="targetSentence">-</div>
+          <div class="transliteration" id="transliteration"></div>
+        </div>
+      </div>
     </div>
   </div>
+
+<script>
+const LANGS = ["Malayalam","Tamil","Kannada","Telugu","Hindi","Odia","Punjabi","Sanskrit","Bodo","Assamese","English"];
+
+const LESSONS = [
+  {
+    id:1,
+    en: "How are you today? I'm fine, thanks for asking.",
+    Malayalam: { text:"ഇന്ന് എങ്ങനെയുണ്ട്? ഞാൻ സുഖത്തിലാണ്, ചോദിച്ചതിന് നന്ദി.", translit:"" },
+    Tamil: { text:"இன்று எப்படி இருக்கிறீர்கள்? நான் நன்றாக இருக்கிறேன், கேட்டதற்கு நன்றி.", translit:"" },
+    Kannada: { text:"ಇಂದು ಹೇಗಿದ್ದೀರಾ? ನಾನು ಚೆನ್ನಾಗಿದ್ದೇನೆ, ಕೇಳಿದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು.", translit:"" },
+    Telugu: { text:"ఇవాళ మీరు ఎలా ఉన్నారు? నేను బాగున్నాను, అడిగినందుకు ధన్యవాదాలు.", translit:"" },
+    Hindi: { text:"आज आप कैसे हैं? मैं ठीक हूँ, पूछने के लिए धन्यवाद।", translit:"" },
+    Odia: { text:"ଆଜି କେମିତି ଅଛନ୍ତି? ମୁଁ ଭଲ ଅଛି, ପଚାରିବାକୁ ଧନ୍ୟବାଦ।", translit:"" },
+    Punjabi: { text:"ਅੱਜ ਤੁਸੀਂ ਕਿਵੇਂ ਹੋ? ਮੈਂ ਠੀਕ ਹਾਂ, ਪੁੱਛਣ ਲਈ ਧੰਨਵਾਦ।", translit:"" },
+    Sanskrit: { text:"अद्य त्वं कथम् अस्ति? अहं कुशलः अस्मि, पृच्छितुं धन्यवादाः।", translit:"" },
+    Bodo: { text:"माथां बान खोंगोर? आं गोयो, सोंनोब्ला थानाय।", translit:"" },
+    Assamese: { text:"আজিৰ দিনটো কিদৰে? মই ভাল আছোঁ, সুধাৰ বাবে ধন্যবাদ।", translit:"" }
+  }
+];
+
+let currentIndex = 0;
+
+const sourceSel = document.getElementById('sourceLang');
+const targetSel = document.getElementById('targetLang');
+
+LANGS.forEach(l => { const o=document.createElement('option'); o.value=l; o.textContent=l; sourceSel.appendChild(o); });
+LANGS.forEach(l => { const o=document.createElement('option'); o.value=l; o.textContent=l; targetSel.appendChild(o); });
+
+sourceSel.value = 'Malayalam';
+targetSel.value = 'Tamil';
+
+function render(){
+  const lesson = LESSONS[currentIndex];
+  const src = sourceSel.value;
+  const tgt = targetSel.value;
+
+  document.getElementById('englishSentence').innerText = lesson.en;
+  document.getElementById('sourceTitle').innerText = src;
+  document.getElementById('targetTitle').innerText = tgt;
+
+  document.getElementById('sourceSentence').innerText = lesson[src].text || 'Translation not available.';
+  document.getElementById('targetSentence').innerText = lesson[tgt].text || 'Translation not available.';
+  document.getElementById('transliteration').innerText = lesson[tgt].translit || '';
+}
+
+sourceSel.addEventListener('change', render);
+targetSel.addEventListener('change', render);
+
+document.getElementById('prevBtn').addEventListener('click', () => { if(currentIndex>0){ currentIndex--; render(); } });
+document.getElementById('nextBtn').addEventListener('click', () => { if(currentIndex<LESSONS.length-1){ currentIndex++; render(); } });
+
+render();
+</script>
 </body>
 </html>
