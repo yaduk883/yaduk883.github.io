@@ -3,255 +3,412 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Yaduk — Code Tools & Summarizer</title>
+  <title>LAIL — Learn An Indian Language</title>
   <link rel="icon" href="data:," />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#6ee7b7;--glass:rgba(255,255,255,0.04)}
-    *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial}
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071022 0%, #071226 60%);color:#e6eef6}
-    .container{max-width:1100px;margin:28px auto;padding:20px}
+    /* Simple responsive styling, easy to edit later */
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#6ee7b7;--glass:rgba(255,255,255,0.03);--white:#e6eef6}
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Noto Sans',Helvetica,Arial}
+    body{margin:0;min-height:100vh;background:linear-gradient(180deg,#071022,#071226);color:var(--white);padding:18px}
+    .wrap{max-width:1100px;margin:0 auto}
     header{display:flex;gap:12px;align-items:center}
-    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#0ea5a9,#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px}
+    .logo{width:56px;height:56px;border-radius:8px;background:linear-gradient(135deg,#0ea5a9,#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:700}
     h1{margin:0;font-size:20px}
-    p.lead{margin:6px 0 18px;color:var(--muted)}
-    .card{background:var(--card);border-radius:14px;padding:16px;box-shadow:0 6px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
-    .toolbar{display:flex;gap:8px;flex-wrap:wrap}
-    .btn{background:linear-gradient(90deg,#06b6d4,#7c3aed);border:none;padding:8px 12px;border-radius:10px;color:#021122;font-weight:600;cursor:pointer}
-    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:10px;color:var(--muted);cursor:pointer}
-    select,input,textarea{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px;border-radius:8px;color:inherit}
-    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
-    textarea{width:100%;min-height:280px;resize:vertical;padding:12px;border-radius:10px}
-    .output{white-space:pre-wrap;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:12px;border-radius:10px;min-height:120px}
-    .tools-list{display:flex;gap:8px;flex-wrap:wrap}
-    .chip{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:999px;font-size:13px}
-    footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
-    @media(max-width:900px){.grid{grid-template-columns:1fr}}
+    p.lead{color:var(--muted);margin:6px 0 18px}
+    .card{background:var(--card);border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.03);margin-bottom:14px}
+    .row{display:flex;gap:14px}
+    .col{flex:1}
+    .sidebar{width:320px}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    select,multi-select,input,textarea,button{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:#050a16;color:var(--white)}
+    textarea{min-height:140px;resize:vertical}
+    .btn{background:linear-gradient(90deg,#06b6d4,#7c3aed);border:none;padding:8px 12px;border-radius:8px;color:#021122;font-weight:700;cursor:pointer}
+    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.05);color:var(--muted);padding:8px;border-radius:8px}
+    .lang-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:8px}
+    .lang-item{padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);text-align:center;cursor:pointer}
+    .lang-item.selected{outline:2px solid var(--accent)}
+    .letters{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+    .letter{padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.02)}
+    .sentence-box{margin-top:10px}
+    .sentence{padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);margin-bottom:8px}
+    .controls{display:flex;gap:8px;align-items:center}
+    .compare-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+    .compare-card{flex:1;min-width:220px;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px}
+    .muted{color:var(--muted);font-size:13px}
+    @media(max-width:900px){.row{flex-direction:column}.sidebar{width:auto}}
+    /* small helper styles */
+    .small{font-size:13px}
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="wrap">
     <header>
-      <div class="logo">YD</div>
+      <div class="logo">LAIL</div>
       <div>
-        <h1>Yaduk — Code Tools & Summarizer</h1>
-        <p class="lead">Client-side developer tools for GitHub Pages: indentation fixer (Python/Java/JS/HTML), formatter, minifier, JSON tools, and a simple summarizer — runs in the browser.</p>
+        <h1>LEARN AN INDIAN LANGUAGE (LAIL)</h1>
+        <p class="lead">Choose your native language, pick one or more target languages to learn, explore letters and step-by-step basic sentences with transliteration. (You can add more languages later.)</p>
       </div>
     </header>
 
-    <main style="margin-top:18px" class="grid">
-      <section>
+    <!-- Main UI: left = workspace, right = settings / compare -->
+    <div class="row">
+      <div class="col">
+        <!-- LANGUAGE SELECTION CARD -->
+        <div class="card" id="langCard">
+          <label for="nativeSelect">Select your native language (you speak):</label>
+          <select id="nativeSelect"></select>
+
+          <label for="targetSelect" style="margin-top:10px">Select language(s) you want to learn (multi-select allowed):</label>
+          <!-- We'll use a visual grid for multi-select so it's easier on mobile -->
+          <div class="lang-grid" id="targetGrid"></div>
+
+          <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+            <button class="btn" id="loadLangBtn">Load Selected Languages</button>
+            <button class="btn-ghost" id="clearTargets">Clear</button>
+          </div>
+
+          <p class="muted small" style="margin-top:8px">Languages included (you can add more later): Malayalam, Tamil, Kannada, Telugu, Hindi, Odia, Punjabi, Sanskrit, Bodo, Assamese, English.</p>
+        </div>
+
+        <!-- LETTERS CARD: shows letters for currently active target language -->
         <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px">
-            <div class="tools-list">
-              <button class="btn" onclick="selectTool('indent')">Indent Fixer</button>
-              <button class="btn" onclick="selectTool('format')">Formatter</button>
-              <button class="btn" onclick="selectTool('minify')">Minifier</button>
-              <button class="btn" onclick="selectTool('json')">JSON Tools</button>
-              <button class="btn" onclick="selectTool('summ')">Summarizer</button>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <label style="color:var(--muted)">Language:</label>
-              <select id="langTool"><option value="python">Python</option><option value="javascript">JavaScript</option><option value="java">Java</option><option value="html">HTML</option><option value="css">CSS</option></select>
-            </div>
-          </div>
+          <h3>Letters / Alphabet</h3>
+          <p class="muted small">Click a language from the selected list (below) to view its letters. These are starter letters — you can edit the lists in the code comments.</p>
 
-          <textarea id="inputCode" placeholder="Paste code or text here"></textarea>
+          <!-- Selected targets as clickable badges -->
+          <div id="selectedTargets" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"></div>
 
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
-            <div class="toolbar">
-              <button class="btn" onclick="runTool()">Run</button>
-              <button class="btn-ghost" onclick="clearAll()">Clear</button>
-              <button class="btn-ghost" onclick="copyOut()">Copy Output</button>
-            </div>
-            <div style="color:var(--muted);font-size:13px" id="notes">Tool: Indent Fixer</div>
-          </div>
+          <!-- area to render letters -->
+          <div class="letters" id="lettersArea"></div>
         </div>
 
-        <div class="card" style="margin-top:12px">
-          <h3 id="outTitle">Output</h3>
-          <div id="output" class="output"></div>
-        </div>
-      </section>
-
-      <aside>
+        <!-- SENTENCES CARD: step-by-step sentences with Next/Prev progression -->
         <div class="card">
-          <h4>Quick Settings</h4>
-          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
-            <label>Indentation: <select id="indentSize"><option value="2">2 spaces</option><option value="4" selected>4 spaces</option><option value="8">8 spaces</option></select></label>
-            <label><input type="checkbox" id="tabsToSpaces" checked /> Convert tabs → spaces</label>
-            <label><input type="checkbox" id="trimLines" checked /> Trim trailing spaces</label>
-            <label><input type="checkbox" id="preserveBlankLines" checked /> Preserve blank lines</label>
+          <h3>Basic Sentences (Step by Step)</h3>
+          <p class="muted small">Each step shows a set of sentences. Click <strong>Next</strong> to go to harder sentences. You can add transliteration for each sentence in the input field below the sentence.</p>
+
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+            <label style="margin:0">Active target:</label>
+            <select id="activeTargetSelect" style="width:160px"></select>
+            <div style="margin-left:auto" class="muted">Step: <span id="stepNumber">1</span></div>
           </div>
+
+          <div id="sentencesArea"></div>
+
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn-ghost" id="prevStep">Prev</button>
+            <button class="btn" id="nextStep">Next</button>
+            <button class="btn-ghost" id="addSentence">Add Sentence</button>
+          </div>
+
+          <p class="muted small" style="margin-top:10px">Notes: Each sentence card contains: target-language sentence, English translation, input for transliteration, and a checkbox to mark "mastered".</p>
         </div>
 
-        <div class="card" style="margin-top:12px">
-          <h4>Examples</h4>
-          <div style="color:var(--muted);font-size:13px">Click a sample to load it into the editor.</div>
-          <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
-            <button class="btn-ghost" onclick="loadSample('python')">Python sample</button>
-            <button class="btn-ghost" onclick="loadSample('js')">JavaScript sample</button>
-            <button class="btn-ghost" onclick="loadSample('html')">HTML sample</button>
-            <button class="btn-ghost" onclick="loadSample('java')">Java sample</button>
+      </div>
+
+      <!-- RIGHT SIDEBAR: compare and settings -->
+      <aside class="sidebar">
+        <div class="card">
+          <h3>Compare Languages</h3>
+          <p class="muted small">Select multiple languages to compare the same sentence across them (side-by-side).</p>
+
+          <div style="margin-top:8px">
+            <label>Choose sentence to compare (by index):</label>
+            <input id="compareIndex" type="number" value="1" min="1" />
           </div>
+
+          <div class="compare-row" id="compareArea"></div>
         </div>
 
-        <div class="card" style="margin-top:12px">
-          <h4>About</h4>
-          <p style="color:var(--muted);font-size:13px">All tools run entirely in the browser. They use heuristics and are designed to fix typical indentation/formatting issues. For full AST-level formatting use server-side tools (Prettier, Black, google-java-format) or your IDE.</p>
+        <div class="card">
+          <h3>Settings & Help</h3>
+          <p class="muted small">You can edit the initial letters and sentence lists inside the <code>LANG_DATA</code> object in the script. Comments in the code explain where to add new languages and sentences.</p>
+          <p class="muted small">All data is stored in browser memory (localStorage) so your edits persist on this device. To reset, clear browser storage for this site.</p>
         </div>
       </aside>
-    </main>
+    </div>
 
-    <footer>
-      <div class="card" style="display:inline-block;padding:10px 14px">© Yaduk — Client-side developer tools for GitHub Pages</div>
-    </footer>
+    <footer style="margin-top:18px;text-align:center;color:var(--muted)">© LAIL — Learn An Indian Language. Built for GitHub Pages. — You can edit language data in the code comments.</footer>
   </div>
 
-<script>
-// ---------- Utilities ----------
-function getIndent(){ return ' '.repeat(parseInt(document.getElementById('indentSize').value||4)); }
-function trimLine(s){ return document.getElementById('trimLines').checked ? s.replace(/[\s]+$/,'') : s; }
-function convertTabs(s){ return document.getElementById('tabsToSpaces').checked ? s.replace(/\t/g, getIndent()) : s; }
+  <script>
+  /*
+    LAIL — Single-file client-side app.
+    -- Structure and data:
+       LANG_DATA: contains per-language 'letters' (array of strings) and 'sentences' (array of steps, each step is array of sentence objects)
+       Sentence object format: { target: 'text in target script', english: 'English translation', translit: 'user-provided transliteration (initially empty)', mastered: false }
+    -- Features implemented below:
+       1) Select native language (no functional difference yet; reserved for future features)
+       2) Multi-select target languages (visual grid)
+       3) Display letters of chosen target
+       4) Step-based sentences per language with Next/Prev
+       5) Input for transliteration for each sentence (saved to localStorage)
+       6) Compare same sentence across multiple selected languages
+    -- How to add new languages:
+       Edit LANG_DATA object: add a new key (language code) with displayName, letters array, sentences array.
+  */
 
-function selectTool(id){ window.activeTool = id; document.getElementById('notes').innerText = 'Tool: ' + (id==='summ'?'Summarizer': id==='json'?'JSON Tools' : id==='minify'?'Minifier':'Indent Fixer'); document.getElementById('outTitle').innerText = 'Output'; }
-// default tool
-window.activeTool = 'indent';
+  // --------------------
+  // Initial language data (editable)
+  // --------------------
+  const LANG_DATA = {
+    // Key: code used internally. displayName: shown to user.
+    'mal': {
+      displayName: 'Malayalam',
+      letters: ['അ','ആ','ഇ','ഈ','ഉ','ഊ','ഋ','എ','ഏ','ഐ','ഒ','ഓ','ഔ'],
+      // sentences grouped by step. Each step is an array of sentence objects.
+      sentences: [
+        // Step 1: very basic
+        [
+          {target:'സുഖമാണോ?', english:'How are you?', translit:'', mastered:false},
+          {target:'ഞാന്‌ സുഖമാണ്.', english:'I am fine.', translit:'', mastered:false}
+        ],
+        // Step 2: basic personal
+        [
+          {target:'നിന്റെ പേര് എന്താണ്?', english:'What is your name?', translit:'', mastered:false},
+          {target:'എന്റെ പേര് ... ആണ്.', english:'My name is ...', translit:'', mastered:false}
+        ],
+        // Step 3: slightly harder
+        [
+          {target:'നിനക്ക് എവിടെ ഉണ്ടായിരിക്കുന്നു?', english:'Where are you from?', translit:'', mastered:false},
+          {target:'ഞാന്‌ ഇന്ത്യയിലെ ആണ്.', english:'I am from India.', translit:'', mastered:false}
+        ]
+      ]
+    },
+    'tam': {
+      displayName: 'Tamil',
+      letters: ['அ','ஆ','இ','ஈ','உ','ஊ','எ','ஏ','ஐ','ஒ','ஓ','ஔ'],
+      sentences: [
+        [{target:'எப்படி இருக்கிறீர்கள்?', english:'How are you?', translit:'', mastered:false},{target:'நான் நன்றாக இருக்கிறேன்.', english:'I am fine.', translit:'', mastered:false}],
+        [{target:'உங்கள் பெயர் என்ன?', english:'What is your name?', translit:'', mastered:false},{target:'என் பெயர் ...', english:'My name is ...', translit:'', mastered:false}],
+        [{target:'நீ எங்கேவிருந்து வருகிறாய்?', english:'Where are you from?', translit:'', mastered:false},{target:'நான் இந்தியாவிலிருந்து வருகிறேன்.', english:'I am from India.', translit:'', mastered:false}]
+      ]
+    },
+    'kan': {
+      displayName: 'Kannada',
+      letters: ['ಅ','ಆ','ಇ','ಈ','ಉ','ಊ','ಋ','ಎ','ಏ','ಐ','ಒ','ಓ','ಔ'],
+      sentences: [
+        [{target:'ನೀವು ಹೇಗಿದ್ದೀರಾ?', english:'How are you?', translit:'', mastered:false},{target:'ನಾನು ಚೆನ್ನಾಗಿದ್ದೇನೆ.', english:'I am fine.', translit:'', mastered:false}],
+        [{target:'ನಿಮ್ಮ ಹೆಸರು ಏನು?', english:'What is your name?', translit:'', mastered:false},{target:'ನನ್ನ ಹೆಸರು ...', english:'My name is ...', translit:'', mastered:false}]
+      ]
+    },
+    'tel': {
+      displayName: 'Telugu',
+      letters: ['అ','ఆ','ఇ','ఈ','ఉ','ఊ','ఋ','ఎ','ఏ','ఐ','ఒ','ఓ','ఔ'],
+      sentences: [
+        [{target:'మీరు ఎలా ఉన్నారు?', english:'How are you?', translit:'', mastered:false},{target:'నేను బాగున్నాను.', english:'I am fine.', translit:'', mastered:false}],
+        [{target:'మీ పేరు ఏమిటి?', english:'What is your name?', translit:'', mastered:false},{target:'నా పేరు ...', english:'My name is ...', translit:'', mastered:false}]
+      ]
+    },
+    'hin': {displayName:'Hindi', letters:['अ','आ','इ','ई','उ','ऊ','ऋ','ए','ऐ','ओ','औ'], sentences:[[{target:'आप कैसे हैं?', english:'How are you?', translit:'', mastered:false},{target:'मैं ठीक हूँ।', english:'I am fine.', translit:'', mastered:false},{target:'आपका नाम क्या है?', english:'What is your name?', translit:'', mastered:false}]]},
+    'ori': {displayName:'Odia', letters:['ଅ','ଆ','ଇ','ଈ','ଉ','ଊ','ଋ','ଏ','ଐ','ଓ','ଔ'], sentences:[[{target:'କେମିତି ଅଛନ୍ତି?', english:'How are you?', translit:'', mastered:false},{target:'ମୁଁ ଭଲ ଅଛି।', english:'I am fine.', translit:'', mastered:false}]]},
+    'pan': {displayName:'Punjabi', letters:['ਅ','ਆ','ਇ','ਈ','ਉ','ਊ','ਏ','ਐ','ਓ','ਔ'], sentences:[[{target:'ਤੁਸੀਂ ਕਿਵੇਂ ਹੋ?', english:'How are you?', translit:'', mastered:false},{target:'ਮੈਂ ਠੀਕ ਹਾਂ।', english:'I am fine.', translit:'', mastered:false}]]},
+    'san': {displayName:'Sanskrit', letters:['अ','आ','इ','ई','उ','ऊ','ऋ','ए','ऐ','ओ','औ'], sentences:[[{target:'भवान् कथम् अस्ति?', english:'How are you?', translit:'', mastered:false},{target:'अहं कुशली अस्मि।', english:'I am fine.', translit:'', mastered:false}]]},
+    'bod': {displayName:'Bodo', letters:['अ','आ','इ','ई'], sentences:[[{target:'थां सिथां?', english:'How are you?', translit:'', mastered:false},{target:'आँन बोथा', english:'I am fine.', translit:'', mastered:false}]]},
+    'asm': {displayName:'Assamese', letters:['অ','আ','ই','ঈ','উ','ঊ','এ','ঐ','ও','ঔ'], sentences:[[{target:'আপুনি কেনেকৈ আছে?', english:'How are you?', translit:'', mastered:false},{target:'মই ভাল আছোঁ।', english:'I am fine.', translit:'', mastered:false}]]},
+    'eng': {displayName:'English', letters:['A','B','C','D','E','F','G'], sentences:[[{target:'How are you?', english:'How are you?', translit:'', mastered:false},{target:'I am fine.', english:'I am fine.', translit:'', mastered:false},{target:'What is your name?', english:'What is your name?', translit:'', mastered:false}]]}
+  };
 
-function runTool(){ const txt = document.getElementById('inputCode').value; if(!txt.trim()){ alert('Paste some code first'); return; }
-  const lang = document.getElementById('langTool').value;
-  if(window.activeTool === 'summ') return runSummarizer();
-  if(window.activeTool === 'json') return runJSONTool();
-  if(window.activeTool === 'minify') return runMinify(lang);
-  if(window.activeTool === 'format') return runFormatter(lang);
-  // default: indentation fixer
-  const out = fixIndentation(txt, lang);
-  document.getElementById('output').innerText = out;
-}
+  // --------------------
+  // Helper: keys and display order for initial population
+  const DEFAULT_ORDER = ['mal','tam','kan','tel','hin','ori','pan','san','bod','asm','eng'];
 
-function clearAll(){ document.getElementById('inputCode').value=''; document.getElementById('output').innerText=''; }
-function copyOut(){ navigator.clipboard.writeText(document.getElementById('output').innerText); alert('Copied'); }
+  // LocalStorage keys
+  const STORAGE_KEY = 'lail_data_v1';
 
-// ---------- Samples ----------
-function loadSample(which){ const samples = {
-  python: `def greet(name):\n    if name:\n        print('Hello', name)\n    else:\n       print('Hello world')\n\nfor i in range(3):\n    greet('User' + str(i))`,
-  js: `function test(){\nconsole.log('start');\nif(true){\nconsole.log('inside');\n}\n}`,
-  html: `<div>\n<p>Paragraph</p>\n<ul>\n<li>One</li>\n<li>Two</li>\n</ul>\n</div>`,
-  java: `public class Main{\npublic static void main(String[] args){\nSystem.out.println(\"Hello\");\nif(true){\nSystem.out.println(\"Inside\");\n}\n}\n}`
-}; document.getElementById('inputCode').value = samples[which]; }
+  // Application state
+  const state = {
+    native: 'eng', // default native
+    targets: [], // array of language codes selected by user
+    activeTarget: null, // the language to show letters/sentences for
+    stepByLang: {}, // current step index per language
+    // data holds live copy of LANG_DATA plus any user edits (transliteration, mastered flags)
+    data: JSON.parse(JSON.stringify(LANG_DATA))
+  };
 
-// ---------- Indentation Fixer ----------
-function fixIndentation(src, lang){ let lines = src.replace(/\r\n?/g,'\n').split('\n');
-  // convert tabs
-  lines = lines.map(l=>convertTabs(l));
-  if(!document.getElementById('preserveBlankLines').checked) lines = collapseMultipleBlank(lines);
-  if(lang==='python') return fixPython(lines);
-  if(lang==='javascript' || lang==='java' || lang==='c' || lang==='cpp') return fixByBraces(lines);
-  if(lang==='html' || lang==='xml') return fixHtml(lines);
-  if(lang==='css') return fixByBraces(lines);
-  return lines.join('\n');
-}
-
-function collapseMultipleBlank(lines){ const out=[]; let prevBlank=false; for(const l of lines){ if(l.trim()===''){ if(prevBlank) continue; prevBlank=true; out.push(''); } else { prevBlank=false; out.push(l); } } return out; }
-
-// Heuristic Python fixer: based on colon-based blocks and common dedent keywords
-function fixPython(lines){ const IND = getIndent(); const dedentKeywords = new Set(['return','pass','break','continue','raise']);
-  let out=[]; let indentLevel=0; let prevWasColon=false;
-  for(let i=0;i<lines.length;i++){
-    let raw = lines[i]; let trimmed = raw.trim();
-    if(trimmed===''){ out.push(''); prevWasColon=false; continue; }
-    // if line begins with dedent keywords or matches elif/else/except/finally, reduce one level
-    const firstTok = trimmed.split(/\s+/)[0];
-    if(/^elif\b|^else\b|^except\b|^finally\b/.test(trimmed)){
-      indentLevel = Math.max(0, indentLevel-1);
-    } else if(dedentKeywords.has(firstTok)){
-      // keep same indent (do nothing) — many returns stay inside block
+  // --------------------
+  // Persist / load
+  function saveState(){
+    // Only persist sentence transliterations and mastered flags and selected targets
+    const toSave = { targets: state.targets, native: state.native, stepByLang: state.stepByLang, data: {} };
+    for(const k in state.data){
+      toSave.data[k] = { sentences: state.data[k].sentences };
     }
-    // if previous line ended with ':', increase indent for this line
-    if(prevWasColon){ indentLevel = indentLevel + 1; }
-    // produce new line with current indent
-    const newLine = IND.repeat(indentLevel) + trimmed;
-    out.push(trimLine(newLine));
-    // set prevWasColon
-    prevWasColon = /:\s*(#.*)?$/.test(trimmed);
-    // lookahead for original indentation drop
-    const currIndentOrig = (raw.match(/^\s*/)[0]||'').length; const nextIndentOrig = ((lines[i+1]||'').match(/^\s*/)[0]||'').length;
-    if(nextIndentOrig < currIndentOrig){ indentLevel = Math.max(0, indentLevel - 1); prevWasColon = false; }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   }
-  return out.join('\n');
-}
-
-// Braces-based fixer for JS/Java/C/CSS
-function fixByBraces(lines){ const IND = getIndent(); let out=[]; let level=0;
-  for(let i=0;i<lines.length;i++){
-    let line = lines[i]; let trimmed = line.trim(); if(trimmed===''){ out.push(''); continue; }
-    // decrease indent if line begins with closing brace
-    if(trimmed.startsWith('}')){ level = Math.max(0, level-1); }
-    out.push(IND.repeat(level) + trimmed);
-    // increase if line ends with opening brace (or contains '{' without matching '}')
-    const opens = (trimmed.match(/{/g)||[]).length; const closes = (trimmed.match(/}/g)||[]).length;
-    level += Math.max(0, opens - closes);
+  function loadState(){
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    try{
+      const parsed = JSON.parse(raw);
+      if(parsed.targets) state.targets = parsed.targets;
+      if(parsed.native) state.native = parsed.native;
+      if(parsed.stepByLang) state.stepByLang = parsed.stepByLang;
+      if(parsed.data){
+        for(const k in parsed.data){ if(state.data[k]) state.data[k].sentences = parsed.data[k].sentences; }
+      }
+    }catch(e){ console.warn('Failed to load saved data', e); }
   }
-  return out.join('\n');
-}
 
-// Simple HTML indenter
-function fixHtml(lines){ const IND = getIndent(); const out=[]; let level=0;
-  const selfClosing = /<\s*(br|hr|img|input|meta|link|area|base|col|embed|source|track)\b/i;
-  for(const raw of lines){ let s = raw.trim(); if(s===''){ out.push(''); continue; }
-    // closing tag
-    if(/^<\/.+>/.test(s)){ level = Math.max(0, level-1); out.push(IND.repeat(level)+s); continue; }
-    // single-line opening+closing
-    if(/^<[^>]+>.*<\/.+>\s*$/.test(s)){ out.push(IND.repeat(level)+s); continue; }
-    // self-closing or inline tags
-    if(/^<[^>]+\/>$/.test(s) || selfClosing.test(s)){ out.push(IND.repeat(level)+s); continue; }
-    // opening tag
-    if(/^<[^>]+>/.test(s) && !/^<\/.+>/.test(s)){ out.push(IND.repeat(level)+s); level++; continue; }
-    out.push(IND.repeat(level)+s);
+  // --------------------
+  // UI population
+  function populateLanguageSelectors(){
+    const nativeSel = document.getElementById('nativeSelect'); nativeSel.innerHTML='';
+    DEFAULT_ORDER.forEach(code => {
+      const opt = document.createElement('option'); opt.value = code; opt.textContent = state.data[code].displayName; if(code===state.native) opt.selected=true; nativeSel.appendChild(opt);
+    });
+
+    // target grid
+    const grid = document.getElementById('targetGrid'); grid.innerHTML='';
+    DEFAULT_ORDER.forEach(code => {
+      const div = document.createElement('div'); div.className='lang-item'; div.textContent = state.data[code].displayName; div.dataset.code = code;
+      if(state.targets.includes(code)) div.classList.add('selected');
+      div.onclick = ()=>{
+        // toggle selection
+        const idx = state.targets.indexOf(code);
+        if(idx===-1) state.targets.push(code); else state.targets.splice(idx,1);
+        renderSelectedTargets(); populateTargetSelectors(); saveState(); // update visuals and persist
+        // toggle visual
+        div.classList.toggle('selected');
+      };
+      grid.appendChild(div);
+    });
   }
-  return out.join('\n');
-}
 
-// ---------- Formatter (lightweight) ----------
-function runFormatter(lang){ const txt=document.getElementById('inputCode').value; if(lang==='javascript'){ try{ const formatted = fixByBraces(txt.split(/\r?\n/)).replace(/\s*\{\s*/g,' { ').replace(/\s*\}\s*/g,' } '); document.getElementById('output').innerText = formatted; } catch(e){ document.getElementById('output').innerText = txt; } }
-  else if(lang==='python'){ document.getElementById('output').innerText = fixPython(txt.split(/\r?\n/)); }
-  else if(lang==='html'){ document.getElementById('output').innerText = fixHtml(txt.split(/\r?\n/)); }
-  else { document.getElementById('output').innerText = txt; }
-}
-
-// ---------- Minifier ----------
-function runMinify(lang){ const txt=document.getElementById('inputCode').value; if(lang==='html'){ const m=txt.replace(/>\s+</g,'><').replace(/\n+/g,''); document.getElementById('output').innerText = m; }
-  else if(lang==='javascript' || lang==='java'){ const m=txt.replace(/\/\/.*$/gm,'').replace(/\n+/g,' ').replace(/\s{2,}/g,' '); document.getElementById('output').innerText = m; }
-  else document.getElementById('output').innerText = txt.replace(/\s{2,}/g,' ');
-}
-
-// ---------- JSON Tools ----------
-function runJSONTool(){ const txt=document.getElementById('inputCode').value;
-  try{
-    const obj = JSON.parse(txt);
-    document.getElementById('output').innerText = JSON.stringify(obj,null,parseInt(document.getElementById('indentSize').value||2));
-  } catch(e){
-    // attempt to show friendly errors or minified attempt
-    try{ const parsed = JSON.parse(txt.replace(/\n/g,'').trim()); document.getElementById('output').innerText = JSON.stringify(parsed,null,parseInt(document.getElementById('indentSize').value||2)); }
-    catch(err){ document.getElementById('output').innerText = 'JSON parse error: '+err.message; }
+  function renderSelectedTargets(){
+    const sel = document.getElementById('selectedTargets'); sel.innerHTML='';
+    state.targets.forEach(code=>{
+      const d = document.createElement('div'); d.className='lang-item selected'; d.textContent = state.data[code].displayName; d.style.cursor='pointer'; d.onclick = ()=>{ setActiveTarget(code); };
+      sel.appendChild(d);
+    });
   }
-}
 
-// ---------- Summarizer (simple extractive) ----------
-function runSummarizer(){ const txt=document.getElementById('inputCode').value; if(!txt.trim()){ alert('Paste some text first'); return; }
-  const stopwords = new Set(['i','me','my','myself','we','our','ours','you','your','yours','he','she','it','they','them','this','that','a','an','the','and','but','if','or','because','as','until','while','of','at','by','for','with','about','against','between','into','through','during','before','after','above','below','to','from','up','down','in','out','on','off','over','under','again','further','then','once','here','there','when','where','why','how','all','any','both','each','few','more','most','other','some','such','no','nor','not','only','own','same','so','than','too','very','can','will','just','don','should','now']);
-  const sentences = txt.match(/[^\.\!\?]+[\.\!\?]+|[^\.\!\?]+$/g) || [];
-  const words = (txt.toLowerCase().match(/\b[a-zA-Z]+\b/g) || []).filter(w=>!stopwords.has(w));
-  const freq = {}; words.forEach(w=>freq[w]=(freq[w]||0)+1);
-  const scores = {}; sentences.forEach(s=>{ (s.toLowerCase().match(/\b[a-zA-Z]+\b/g)||[]).forEach(w=>{ if(freq[w]) scores[s]=(scores[s]||0)+freq[w]; }); });
-  const n = Math.min(3, Math.max(1, Math.round((txt.split(/\s+/)||[]).length/50)));
-  const ordered = Object.entries(scores).sort((a,b)=>b[1]-a[1]).slice(0,n).map(x=>x[0]);
-  document.getElementById('output').innerText = ordered.join(' ') || 'No summary generated.';
-}
+  function populateTargetSelectors(){
+    const activeSel = document.getElementById('activeTargetSelect'); activeSel.innerHTML='';
+    state.targets.forEach(code=>{
+      const opt = document.createElement('option'); opt.value = code; opt.textContent = state.data[code].displayName; activeSel.appendChild(opt);
+    });
+    // keep active target
+    if(state.targets.length>0){
+      if(!state.activeTarget || !state.targets.includes(state.activeTarget)) state.activeTarget = state.targets[0];
+    } else state.activeTarget = null;
+    if(state.activeTarget) activeSel.value = state.activeTarget;
+    renderLetters(); renderSentences(); renderCompare();
 
-// initialize
-selectTool('indent');
+    activeSel.onchange = (e)=>{ setActiveTarget(e.target.value); };
+  }
 
-</script>
+  function setActiveTarget(code){ state.activeTarget = code; if(!state.stepByLang[code]) state.stepByLang[code]=1; document.getElementById('activeTargetSelect').value = code; renderLetters(); renderSentences(); }
+
+  // --------------------
+  // Render letters for active target
+  function renderLetters(){
+    const area = document.getElementById('lettersArea'); area.innerHTML='';
+    if(!state.activeTarget) return area.innerHTML='<div class="muted">Select a target language from the list above.</div>';
+    const letters = state.data[state.activeTarget].letters || [];
+    letters.forEach(ch=>{
+      const span = document.createElement('div'); span.className='letter'; span.textContent = ch; area.appendChild(span);
+    });
+  }
+
+  // --------------------
+  // Sentences: render current step for active language
+  function renderSentences(){
+    const out = document.getElementById('sentencesArea'); out.innerHTML='';
+    if(!state.activeTarget) return out.innerHTML='<div class="muted">Choose a target to see sentences.</div>';
+    const langObj = state.data[state.activeTarget];
+    if(!langObj || !langObj.sentences || langObj.sentences.length===0) return out.innerHTML='<div class="muted">No sentences added yet for this language.</div>';
+    const step = state.stepByLang[state.activeTarget] || 1; // 1-based step index
+    const stepIndex = Math.max(1, Math.min(step, langObj.sentences.length));
+    document.getElementById('stepNumber').textContent = stepIndex;
+    const sentences = langObj.sentences[stepIndex-1] || [];
+
+    // render each sentence card
+    sentences.forEach((sObj, idx)=>{
+      const card = document.createElement('div'); card.className='sentence';
+
+      // Target text (native script)
+      const t = document.createElement('div'); t.style.fontSize='18px'; t.style.fontWeight='600'; t.textContent = sObj.target; card.appendChild(t);
+
+      // English translation
+      const e = document.createElement('div'); e.className='muted small'; e.textContent = 'English: ' + sObj.english; card.appendChild(e);
+
+      // Transliteration input (editable)
+      const translitLabel = document.createElement('label'); translitLabel.textContent = 'Transliteration (in Latin script):'; translitLabel.style.marginTop='8px'; translitLabel.className='small';
+      const translitInput = document.createElement('input'); translitInput.type='text'; translitInput.value = sObj.translit || '';
+      translitInput.onchange = (ev)=>{ sObj.translit = ev.target.value; saveState(); };
+      card.appendChild(translitLabel); card.appendChild(translitInput);
+
+      // Mastered checkbox
+      const mlabel = document.createElement('label'); mlabel.style.marginTop='8px'; mlabel.className='small';
+      const mcb = document.createElement('input'); mcb.type='checkbox'; mcb.checked = !!sObj.mastered; mcb.onchange = (ev)=>{ sObj.mastered = ev.target.checked; saveState(); renderSentences(); };
+      mlabel.appendChild(mcb); mlabel.appendChild(document.createTextNode(' Mark as mastered'));
+      card.appendChild(mlabel);
+
+      out.appendChild(card);
+    });
+
+    // If there are more steps, show navigation
+  }
+
+  // Step controls
+  document.getElementById('nextStep').onclick = ()=>{
+    if(!state.activeTarget) return;
+    const total = state.data[state.activeTarget].sentences.length || 1; state.stepByLang[state.activeTarget] = (state.stepByLang[state.activeTarget]||1) + 1; if(state.stepByLang[state.activeTarget] > total) state.stepByLang[state.activeTarget]=total; saveState(); renderSentences();
+  };
+  document.getElementById('prevStep').onclick = ()=>{
+    if(!state.activeTarget) return; state.stepByLang[state.activeTarget] = (state.stepByLang[state.activeTarget]||1) - 1; if(state.stepByLang[state.activeTarget] < 1) state.stepByLang[state.activeTarget]=1; saveState(); renderSentences();
+  };
+
+  // Add sentence button: opens a prompt to add new sentence to current step
+  document.getElementById('addSentence').onclick = ()=>{
+    if(!state.activeTarget) return alert('Choose an active target language first');
+    const text = prompt('Enter sentence in target language (script):'); if(!text) return;
+    const eng = prompt('Enter English translation:')||'';
+    const step = state.stepByLang[state.activeTarget] || 1;
+    const arr = state.data[state.activeTarget].sentences;
+    // ensure step array exists
+    if(!arr[step-1]) arr[step-1] = [];
+    arr[step-1].push({target:text, english:eng, translit:'', mastered:false}); saveState(); renderSentences();
+  };
+
+  // Load selected languages button
+  document.getElementById('loadLangBtn').onclick = ()=>{
+    // if no targets, auto-add default (English)
+    if(state.targets.length===0){ alert('Please select one or more target languages from the grid.'); return; }
+    populateTargetSelectors(); renderSelectedTargets(); saveState();
+  };
+  document.getElementById('clearTargets').onclick = ()=>{ state.targets = []; populateLanguageSelectors(); populateTargetSelectors(); renderSelectedTargets(); saveState(); };
+
+  // --------------------
+  // Compare rendering: show the same sentence index across selected targets
+  function renderCompare(){
+    const area = document.getElementById('compareArea'); area.innerHTML='';
+    const idx = Math.max(1, parseInt(document.getElementById('compareIndex').value||1));
+    if(state.targets.length===0) return area.innerHTML='<div class="muted">Select target languages to compare.</div>';
+    state.targets.forEach(code=>{
+      const card = document.createElement('div'); card.className='compare-card';
+      const title = document.createElement('div'); title.style.fontWeight='700'; title.textContent = state.data[code].displayName; card.appendChild(title);
+      const sentences = state.data[code].sentences || [];
+      const stepArr = sentences[idx-1] || [];
+      if(stepArr.length===0){ const m = document.createElement('div'); m.className='muted'; m.textContent = 'No sentence at this index.'; card.appendChild(m); }
+      stepArr.forEach(s=>{
+        const t = document.createElement('div'); t.style.marginTop='8px'; t.style.fontSize='16px'; t.textContent = s.target; card.appendChild(t);
+        const e = document.createElement('div'); e.className='muted small'; e.textContent = s.english; card.appendChild(e);
+        const tr = document.createElement('div'); tr.className='small'; tr.textContent = 'Transliteration: ' + (s.translit || '-'); card.appendChild(tr);
+      });
+      area.appendChild(card);
+    });
+  }
+  document.getElementById('compareIndex').onchange = renderCompare;
+
+  // --------------------
+  // Initialization: load from storage, populate UI
+  loadState(); populateLanguageSelectors(); renderSelectedTargets(); populateTargetSelectors(); renderCompare();
+
+  // Update compare / letters when selection changes
+  // Save state when user navigates away
+  window.addEventListener('beforeunload', saveState);
+  </script>
 </body>
 </html>
