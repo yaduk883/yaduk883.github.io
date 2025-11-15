@@ -1,110 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LAIL – Lessons</title>
-  <style>
-    body { background:#0a0f1a; color:white; font-family:Arial, sans-serif; margin:0; padding:20px; }
-    .container { max-width:900px; margin:auto; }
-    h1 { text-align:center; }
-    .card { background:#111827; padding:20px; border-radius:15px; margin-top:20px; }
-    select, button { padding:10px; border-radius:8px; background:#1a2538; border:none; color:white; margin-top:10px; cursor:pointer; }
-    select { width:48%; }
-    button { width:48%; }
-    .controls { display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:15px; }
-    .sentence-box { background:#1a2538; padding:15px; border-radius:12px; margin-top:10px; min-height:80px; font-size:17px; line-height:1.5; }
-    .columns { display:flex; gap:15px; margin-top:15px; }
-    .col { flex:1; }
-    .col-title { font-weight:bold; margin-bottom:8px; font-size:16px; text-align:center; }
-    .english-box { background:#25324a; padding:12px; border-radius:12px; text-align:center; font-size:18px; }
-    .transliteration { font-size:15px; margin-top:6px; color:#9aa4b2; text-align:center; }
-    @media(max-width:700px){ .columns{ flex-direction:column; } select, button{ width:100%; } }
-  </style>
+<meta charset="UTF-8">
+<title>LAIL – Lessons</title>
+
+<style>
+    body {
+        background:#f5f5f5;
+        font-family: Arial;
+        padding:20px;
+    }
+
+    /* Top menu */
+    .menu {
+        background:#222;
+        padding:10px;
+        text-align:right;
+    }
+    .menu a {
+        color:white;
+        margin-left:15px;
+        text-decoration:none;
+    }
+
+    .card {
+        background:white;
+        padding:20px;
+        margin-top:20px;
+        border-radius:10px;
+        box-shadow:0 0 10px rgba(0,0,0,0.1);
+    }
+
+    select {
+        background:#333;
+        color:white;
+        padding:8px;
+        border-radius:5px;
+    }
+
+    button {
+        padding:8px 15px;
+        background:#333;
+        color:white;
+        border:none;
+        border-radius:5px;
+        cursor:pointer;
+    }
+
+    button:hover {
+        background:#555;
+    }
+
+    .sentence-box {
+        margin-top:20px;
+        padding:20px;
+        background:#eee;
+        border-radius:10px;
+    }
+</style>
 </head>
+
 <body>
-  <div class="container">
-    <h1>LAIL – Lessons</h1>
 
-    <div class="card">
-      <h2>Choose Languages</h2>
-      <div class="controls">
-        <select id="sourceLang"></select>
-        <select id="targetLang"></select>
-        <button id="prevBtn">Previous</button>
-        <button id="nextBtn">Next</button>
-      </div>
+<!-- Navigation Menu -->
+<nav class="menu">
+    <a href="index.html">Home</a>
+    <a href="letters.html">Letters</a>
+    <a href="lessons.html">Lessons</a>
+    <a href="about.html">About</a>
+</nav>
+
+<h2>LAIL – Sentence Lessons</h2>
+
+<div class="card">
+    <h3>Choose Language to Learn</h3>
+
+    <!-- Language selection -->
+    <select id="learningLanguage">
+        <option value="">-- Select --</option>
+        <option>Malayalam</option>
+        <option>Tamil</option>
+        <option>Kannada</option>
+        <option>Telugu</option>
+        <option>Hindi</option>
+        <option>Odiya</option>
+        <option>Punjabi</option>
+        <option>Sanskrit</option>
+        <option>Bodo</option>
+        <option>Assamese</option>
+        <option>English</option>
+    </select>
+</div>
+
+
+<div class="card">
+    <h3>Level <span id="levelNum">1</span></h3>
+
+    <div class="sentence-box" id="sentenceBox">
+        <!-- Sentences will appear here -->
     </div>
 
-    <div class="card">
-      <div class="english-box" id="englishSentence">Loading...</div>
+    <h4>Transliteration (in English)</h4>
+    <input type="text" id="translit" placeholder="Type transliteration here" style="width:100%; padding:10px;">
 
-      <div class="columns">
-        <div class="col">
-          <div class="col-title" id="sourceTitle">Source</div>
-          <div class="sentence-box" id="sourceSentence">-</div>
-        </div>
-        <div class="col">
-          <div class="col-title" id="targetTitle">Target</div>
-          <div class="sentence-box" id="targetSentence">-</div>
-          <div class="transliteration" id="transliteration"></div>
-        </div>
-      </div>
-    </div>
-  </div>
+    <br><br>
+
+    <button onclick="prevLevel()">◀ Previous</button>
+    <button onclick="nextLevel()">Next ▶</button>
+</div>
 
 <script>
-const LANGS = ["Malayalam","Tamil","Kannada","Telugu","Hindi","Odia","Punjabi","Sanskrit","Bodo","Assamese","English"];
 
-const LESSONS = [
-  {
-    id:1,
-    en: "How are you today? I'm fine, thanks for asking.",
-    Malayalam: { text:"ഇന്ന് എങ്ങനെയുണ്ട്? ഞാൻ സുഖത്തിലാണ്, ചോദിച്ചതിന് നന്ദി.", translit:"" },
-    Tamil: { text:"இன்று எப்படி இருக்கிறீர்கள்? நான் நன்றாக இருக்கிறேன், கேட்டதற்கு நன்றி.", translit:"" },
-    Kannada: { text:"ಇಂದು ಹೇಗಿದ್ದೀರಾ? ನಾನು ಚೆನ್ನಾಗಿದ್ದೇನೆ, ಕೇಳಿದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು.", translit:"" },
-    Telugu: { text:"ఇవాళ మీరు ఎలా ఉన్నారు? నేను బాగున్నాను, అడిగినందుకు ధన్యవాదాలు.", translit:"" },
-    Hindi: { text:"आज आप कैसे हैं? मैं ठीक हूँ, पूछने के लिए धन्यवाद।", translit:"" },
-    Odia: { text:"ଆଜି କେମିତି ଅଛନ୍ତି? ମୁଁ ଭଲ ଅଛି, ପଚାରିବାକୁ ଧନ୍ୟବାଦ।", translit:"" },
-    Punjabi: { text:"ਅੱਜ ਤੁਸੀਂ ਕਿਵੇਂ ਹੋ? ਮੈਂ ਠੀਕ ਹਾਂ, ਪੁੱਛਣ ਲਈ ਧੰਨਵਾਦ।", translit:"" },
-    Sanskrit: { text:"अद्य त्वं कथम् अस्ति? अहं कुशलः अस्मि, पृच्छितुं धन्यवादाः।", translit:"" },
-    Bodo: { text:"माथां बान खोंगोर? आं गोयो, सोंनोब्ला थानाय।", translit:"" },
-    Assamese: { text:"আজিৰ দিনটো কিদৰে? মই ভাল আছোঁ, সুধাৰ বাবে ধন্যবাদ।", translit:"" }
-  }
+// ---------------------------
+// SENTENCE LEVELS
+// ---------------------------
+const lessons = [
+    {
+        level: 1,
+        sentences: [
+            { en: "How are you?", ml: "സുഖമാണോ?" },
+            { en: "I am fine.", ml: "എനിക്ക് സുഖമാണ്." }
+        ]
+    },
+
+    {
+        level: 2,
+        sentences: [
+            { en: "What is your name?", ml: "നിങ്ങളുടെ പേര് എന്താണ്?" },
+            { en: "My name is...", ml: "എന്റെ പേര് ..." }
+        ]
+    },
+
+    {
+        level: 3,
+        sentences: [
+            { en: "Where are you going?", ml: "നിങ്ങൾ എവിടേക്ക് പോകുന്നു?" },
+            { en: "I am going home.", ml: "ഞാൻ വീട്ടിലേക്ക് പോകുന്നു." }
+        ]
+    }
 ];
 
-let currentIndex = 0;
+let currentLevel = 1;
 
-const sourceSel = document.getElementById('sourceLang');
-const targetSel = document.getElementById('targetLang');
+// ---------------------------
+// DISPLAY SENTENCES
+// ---------------------------
+function showLevel() {
+    document.getElementById("levelNum").innerText = currentLevel;
 
-LANGS.forEach(l => { const o=document.createElement('option'); o.value=l; o.textContent=l; sourceSel.appendChild(o); });
-LANGS.forEach(l => { const o=document.createElement('option'); o.value=l; o.textContent=l; targetSel.appendChild(o); });
+    const box = document.getElementById("sentenceBox");
+    const lesson = lessons[currentLevel - 1];
 
-sourceSel.value = 'Malayalam';
-targetSel.value = 'Tamil';
+    box.innerHTML = "";
 
-function render(){
-  const lesson = LESSONS[currentIndex];
-  const src = sourceSel.value;
-  const tgt = targetSel.value;
-
-  document.getElementById('englishSentence').innerText = lesson.en;
-  document.getElementById('sourceTitle').innerText = src;
-  document.getElementById('targetTitle').innerText = tgt;
-
-  document.getElementById('sourceSentence').innerText = lesson[src].text || 'Translation not available.';
-  document.getElementById('targetSentence').innerText = lesson[tgt].text || 'Translation not available.';
-  document.getElementById('transliteration').innerText = lesson[tgt].translit || '';
+    lesson.sentences.forEach(s => {
+        box.innerHTML += `<p><b>${s.en}</b><br>${s.ml}</p>`;
+    });
 }
 
-sourceSel.addEventListener('change', render);
-targetSel.addEventListener('change', render);
+showLevel();
 
-document.getElementById('prevBtn').addEventListener('click', () => { if(currentIndex>0){ currentIndex--; render(); } });
-document.getElementById('nextBtn').addEventListener('click', () => { if(currentIndex<LESSONS.length-1){ currentIndex++; render(); } });
+// ---------------------------
+// NEXT / PREVIOUS LEVEL
+// ---------------------------
+function nextLevel() {
+    if (currentLevel < lessons.length) {
+        currentLevel++;
+        showLevel();
+    }
+}
 
-render();
+function prevLevel() {
+    if (currentLevel > 1) {
+        currentLevel--;
+        showLevel();
+    }
+}
+
 </script>
+
 </body>
 </html>
