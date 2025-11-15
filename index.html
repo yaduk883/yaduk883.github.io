@@ -1,208 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>LAIL – Sentence Lessons</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-    /* For standalone: copy this to style.css for reuse */
-    body {
-        background:#f5f5f5;
-        font-family: Arial;
-        padding:20px;
-    }
-    .menu {
-        background:#222;
-        padding:10px;
-        text-align:right;
-    }
-    .menu a {
-        color:white;
-        margin-left:15px;
-        text-decoration:none;
-    }
-    .card {
-        background:white;
-        padding:20px;
-        margin-top:20px;
-        border-radius:10px;
-        box-shadow:0 0 10px rgba(0,0,0,0.1);
-    }
-    select, button {
-        background:#333;
-        color:white;
-        padding:8px;
-        border-radius:5px;
-    }
-    button {
-        padding:8px 15px;
-        border:none;
-        cursor:pointer;
-    }
-    button:hover {
-        background:#555;
-    }
-    .sentence-box {
-        margin-top:20px;
-        padding:20px;
-        background:#eee;
-        border-radius:10px;
-    }
-    </style>
+<meta charset="UTF-8" />
+<title>LAIL – Learn An Indian Language</title>
+<style>
+  body {
+    background:#f0f4f8;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+  .container {
+    background: #fff;
+    padding: 40px 60px;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    text-align: center;
+    max-width: 320px;
+    width: 100%;
+  }
+  h1 {
+    font-weight: 700;
+    margin-bottom: 35px;
+    color: #2c3e50;
+  }
+  button {
+    display: block;
+    width: 100%;
+    margin: 15px 0;
+    padding: 15px;
+    font-size: 18px;
+    background-color: #2980b9;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  button:hover {
+    background-color: #1c5980;
+  }
+</style>
 </head>
 <body>
 
-<!-- Navigation (shared on all pages) -->
-<nav class="menu">
-    <a href="index.html">Home</a>
-    <a href="letters.html">Letters</a>
-    <a href="lessons.html">Lessons</a>
-    <a href="about.html">About</a>
-</nav>
-
-<h2>LAIL – Sentence Lessons</h2>
-
-<!-- Card: User selects their native language and the target language to learn -->
-<div class="card">
-    <h3>Select Source & Learning Language</h3>
-    <!-- Source language (your known language) -->
-    <label for="sourceLanguage">You speak:</label>
-    <select id="sourceLanguage">
-        <option value="">-- Select --</option>
-        <option>Malayalam</option>
-        <option>Tamil</option>
-        <option>Kannada</option>
-        <option>Telugu</option>
-        <option>Hindi</option>
-        <option>Odiya</option>
-        <option>Punjabi</option>
-        <option>Sanskrit</option>
-        <option>Bodo</option>
-        <option>Assamese</option>
-        <option>English</option>
-    </select>
-
-    <!-- Target language(s) to learn; can select multiple for compare mode -->
-    <label for="learningLanguage">Learn:</label>
-    <select id="learningLanguage" multiple size="4">
-        <option>Malayalam</option>
-        <option>Tamil</option>
-        <option>Kannada</option>
-        <option>Telugu</option>
-        <option>Hindi</option>
-        <option>Odiya</option>
-        <option>Punjabi</option>
-        <option>Sanskrit</option>
-        <option>Bodo</option>
-        <option>Assamese</option>
-        <option>English</option>
-        <!-- Add more languages here -->
-    </select>
-    <br>
-    <small>(Tip: Hold CTRL/CMD to select multiple languages for comparison)</small>
-    <br><br>
-    <button onclick="showLevel()">Start Lesson</button>
+<div class="container">
+  <h1>LAIL</h1>
+  <button onclick="location.href='lessons.html'">Lessons</button>
+  <button onclick="location.href='letters.html'">Alphabets</button>
+  <button onclick="location.href='about.html'">About</button>
 </div>
-
-
-<!-- Card: lessons, sentence, transliteration input -->
-<div class="card">
-    <h3>Level <span id="levelNum">1</span></h3>
-
-    <!-- Where the current lesson sentences appear -->
-    <div class="sentence-box" id="sentenceBox">
-        <!-- Sentences per language will be injected here -->
-    </div>
-
-    <!-- User inputs/transliterates each sentence for practice -->
-    <h4>Transliteration (in English)</h4>
-    <input type="text" id="translit" placeholder="Type transliteration here" style="width:100%; padding:10px;">
-
-    <br><br>
-    <!-- Lesson navigation -->
-    <button onclick="prevLevel()">◀ Previous</button>
-    <button onclick="nextLevel()">Next ▶</button>
-</div>
-
-<script>
-// ---------------------------------------------------
-// LESSONS DATA: Extend by adding more languages
-// For each language, add its sentences per level
-// ---------------------------------------------------
-const lessons = {
-    Malayalam: [
-        { en: "How are you?", native: "സുഖമാണോ?", translit: "sukhamaano?" },
-        { en: "I am fine.", native: "എനിക്ക് സുഖമാണ്.", translit: "enikku sukhamaanu." }
-        // Add more sentences/levels below
-    ],
-    Tamil: [
-        { en: "How are you?", native: "நீங்கள் எப்படி இருக்கிறார்?", translit: "neengal eppadi irukkirargal?" },
-        { en: "I am fine.", native: "நான் நலமாக இருக்கிறேன்.", translit: "naan nalamaga irukkiren." }
-    ],
-    // Add Kannada, Telugu, etc., same format
-    // Extend further as needed
-};
-
-// Default level, can extend to actual multi-level system later
-let currentLevel = 1;
-
-// ---------------------------------------------------
-// GET SELECTED LANGUAGES & SHOW SENTENCES
-// ---------------------------------------------------
-function showLevel() {
-    document.getElementById("levelNum").innerText = currentLevel;
-    const box = document.getElementById("sentenceBox");
-    box.innerHTML = "";
-
-    // Fetch user selections
-    let learningLangs = Array.from(document.getElementById("learningLanguage").selectedOptions).map(o => o.value);
-
-    // If nothing chosen, remind user
-    if (!learningLangs.length) {
-        box.innerHTML = "<p>Please select at least one language to learn.</p>";
-        return;
-    }
-
-    // Show level 1 sentences for each selected language (can extend for multi-level)
-    learningLangs.forEach(lang => {
-        let data = lessons[lang];
-        if (data) {
-            box.innerHTML += `<h4>${lang}</h4>`;
-            data.slice((currentLevel-1)*2, currentLevel*2).forEach(s => {
-                // Shows English, native script, and transliteration (can also add source lang view later)
-                box.innerHTML += `<p>
-                    <b>${s.en}</b><br>
-                    ${s.native}<br>
-                    <i>${s.translit}</i></p>`;
-            });
-        } else {
-            box.innerHTML += `<p>No sentences for ${lang} yet.</p>`;
-        }
-    });
-}
-
-// Navigation between levels
-function nextLevel() {
-    // For demo, just allow 2 levels; extend per your full lessons
-    if (currentLevel < 2) {
-        currentLevel++;
-        showLevel();
-    }
-}
-function prevLevel() {
-    if (currentLevel > 1) {
-        currentLevel--;
-        showLevel();
-    }
-}
-
-// ---------------------------------------------------
-// COMMENTS FOR FUTURE EXTENSION:
-// 1. To add more languages: extend lessons{} structure
-// 2. To add more sentence levels: increase slice() limit, update nextLevel/maxLevel logic
-// 3. To support more features (comparison, audio, etc.): update "sentence-box" display logic
-// ---------------------------------------------------
-</script>
 
 </body>
 </html>
