@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LAIL – Lessons</title>
+  <style>
+    body { background:#0a0f1a; color:white; font-family:Arial, sans-serif; margin:0; padding:20px; }
+    .container { max-width:1000px; margin:auto; }
+    h1 { text-align:center; }
+    .back { color:white; text-decoration:none; display:inline-block; margin-bottom:20px; }
+    .card { background:#111827; padding:20px; border-radius:12px; margin-top:20px; }
+    select, button, input { width:100%; padding:10px; border-radius:8px; border:1px solid #333; background:#050a16; color:white; margin-top:10px; }
+    .sentence-block { margin-top:16px; padding:12px; border:1px solid #233; border-radius:10px; background:#0f172a; }
+    .label { font-weight:700; margin-bottom:6px; }
+    .muted { color:#9aa4b2; font-size:13px; }
+    .nav-btns { display:flex; gap:12px; justify-content:space-between; margin-top:18px; }
+    .nav-btns button { width:48%; }
+    @media(max-width:700px){ .nav-btns{flex-direction:column} .nav-btns button{width:100%} }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <a href="index.html" class="back">← Back to Home</a>
+
+    <h1>Lessons</h1>
+
+    <!-- Native + Target Language Selection -->
+    <div class="card">
+      <h2>Choose Languages</h2>
+      <label class="muted">Select your native language (what you speak)</label>
+      <select id="nativeSelect"></select>
+
+      <label class="muted" style="margin-top:10px">Select the language you want to learn</label>
+      <select id="targetSelect"></select>
+
+      <p class="muted" style="margin-top:8px">Note: Sentences are grouped by index across languages. If a direct translation in the target language is available it will be shown; otherwise you will see a placeholder and can add transliteration for practice.</p>
+    </div>
+
+    <!-- Lesson Viewer -->
+    <div class="card" id="lessonCard" style="display:none;">
+      <h2 id="titleBox"></h2>
+
+      <!-- Native Language Sentence -->
+      <div class="sentence-block">
+        <div class="label">Sentence (Your language)</div>
+        <div id="nativeSentence" style="font-size:18px; margin-top:6px;"></div>
+      </div>
+
+      <!-- English Meaning -->
+      <div class="sentence-block">
+        <div class="label">English meaning</div>
+        <div id="englishMeaning" style="margin-top:6px;"></div>
+      </div>
+
+      <!-- Target Language Sentence -->
+      <div class="sentence-block">
+        <div class="label">Sentence (Target language)</div>
+        <div id="targetSentence" style="font-size:18px; margin-top:6px;"></div>
+      </div>
+
+      <!-- Target language transliteration (input) -->
+      <div class="sentence-block">
+        <div class="label">Transliteration (Target language in Latin letters)</div>
+        <input type="text" id="translitInput" placeholder="Write transliteration here" />
+        <div class="muted" style="margin-top:8px">This transliteration is saved locally in your browser for this language pair and sentence index.</div>
+      </div>
+
+      <div class="nav-btns">
+        <button onclick="prevSentence()">Previous</button>
+        <button onclick="nextSentence()">Next</button>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+// ----------------------------------------------------
+// DATA: sentences for each language.
+// Use double-quoted string literals to avoid issues
+// with apostrophes or other punctuation inside values.
+// ----------------------------------------------------
+
+const DATA = {
+  "Malayalam": [
+    { "text": "സുഖമാണോ?", "english": "How are you?" },
+    { "text": "ഞാന്‍ സുഖമായിരിക്കുന്നു.", "english": "I am fine." },
+    { "text": "നിന്റെ പേര് എന്താണ്?", "english": "What is your name?" }
+  ],
+  "Tamil": [
+    { "text": "எப்படி இருக்கிறாய்?", "english": "How are you?" },
+    { "text": "நான் நன்றாக இருக்கிறேன்.", "english": "I am fine." },
+    { "text": "உங்கள் பெயர் என்ன?", "english": "What is your name?" }
+  ],
+  "Kannada": [
+    { "text": "ನೀವು ಹೇಗಿದ್ದೀರಾ?", "english": "How are you?" },
+    { "text": "ನಾನು ಚೆನ್ನಾಗಿದ್ದೇನೆ.", "english": "I am fine." },
+    { "text": "ನಿಮ್ಮ ಹೆಸರು ಏನು?", "english": "What is your name?" }
+  ],
+  "Telugu": [
+    { "text": "మీరు ఎలా ఉన్నారు?", "english": "How are you?" },
+    { "text": "నేను బాగా ఉన్నాను.", "english": "I am fine." },
+    { "text": "మీ పేరు ఏమిటి?", "english": "What is your name?" }
+  ],
+  "Hindi": [
+    { "text": "आप कैसे हैं?", "english": "How are you?" },
+    { "text": "मैं ठीक हूँ।", "english": "I am fine." },
+    { "text": "आपका नाम क्या है?", "english": "What is your name?" }
+  ],
+  "Odia": [
+    { "text": "କେମିତି ଅଛନ୍ତି?", "english": "How are you?" },
+    { "text": "ମୁଁ ଭଲ ଅଛି।", "english": "I am fine." },
+    { "text": "ଆପଣଙ୍କ ନାମ କ'ଣ?", "english": "What is your name?" }
+  ],
+  "Punjabi": [
+    { "text": "ਤੁਸੀਂ ਕਿਵੇਂ ਹੋ?", "english": "How are you?" },
+    { "text": "ਮੈਂ ਠੀਕ ਹਾਂ।", "english": "I am fine." },
+    { "text": "ਤੁਹਾਡਾ ਨਾਮ ਕੀ ਹੈ?", "english": "What is your name?" }
+  ],
+  "Sanskrit": [
+    { "text": "भवान् कथम् अस्ति?", "english": "How are you?" },
+    { "text": "अहं कुशलः अस्मि।", "english": "I am fine." },
+    { "text": "भवतः नाम किम्?", "english": "What is your name?" }
+  ],
+  "Bodo": [
+    { "text": "खोंगोर?", "english": "How are you?" },
+    { "text": "आनि दोथाइ", "english": "I am fine." },
+    { "text": "मारी नाँन?", "english": "What is your name?" }
+  ],
+  "Assamese": [
+    { "text": "آپুনি কেনেকৈ আছে?", "english": "How are you?" },
+    { "text": "মই ভাল আছোঁ।", "english": "I am fine." },
+    { "text": "আপোনাৰ নাম কি?", "english": "What is your name?" }
+  ],
+  "English": [
+    { "text": "How are you?", "english": "How are you?" },
+    { "text": "I am fine.", "english": "I am fine." },
+    { "text": "What is your name?", "english": "What is your name?" }
+  ]
+};
+
+// ----------------------------------------------------
+// Utility: list of language names (keys from DATA)
+const LANGS = Object.keys(DATA);
+
+// ----------------------------------------------------
+// UI elements
+const nativeSelect = document.getElementById('nativeSelect');
+const targetSelect = document.getElementById('targetSelect');
+const lessonCard = document.getElementById('lessonCard');
+
+// Populate native select
+LANGS.forEach(lang => {
+  const opt = document.createElement('option'); opt.value = lang; opt.textContent = lang; nativeSelect.appendChild(opt);
+});
+
+// When native changes, populate targets (all other languages)
+nativeSelect.addEventListener('change', () => {
+  const native = nativeSelect.value;
+  targetSelect.innerHTML = '';
+  LANGS.forEach(lang => {
+    if(lang === native) return; // skip same language
+    const opt = document.createElement('option'); opt.value = lang; opt.textContent = lang; targetSelect.appendChild(opt);
+  });
+  // set default target selection (first available)
+  if(targetSelect.options.length > 0){ targetSelect.selectedIndex = 0; targetSelect.dispatchEvent(new Event('change')); }
+});
+
+let nativeLang = null;
+let targetLang = null;
+let index = 0; // sentence index (0-based)
+
+// When target selected, show lesson
+targetSelect.addEventListener('change', () => {
+  nativeLang = nativeSelect.value;
+  targetLang = targetSelect.value;
+  index = 0;
+  lessonCard.style.display = 'block';
+  loadSentence();
+});
+
+// ----------------------------------------------------
+// Load sentence: show native sentence, english meaning, target sentence (if available)
+function loadSentence(){
+  const nativeArr = DATA[nativeLang] || [];
+  const targetArr = DATA[targetLang] || [];
+  const nativeObj = nativeArr[index];
+  const englishMeaning = nativeObj ? nativeObj.english : '';
+  const nativeText = nativeObj ? nativeObj.text : '';
+
+  // target sentence: if target has same index, use it; otherwise show placeholder
+  let targetText = 'Translation not available yet.';
+  if(targetArr[index] && targetArr[index].text) targetText = targetArr[index].text;
+
+  document.getElementById('titleBox').textContent = `${nativeLang} → ${targetLang} (Sentence ${index+1})`;
+  document.getElementById('nativeSentence').textContent = nativeText;
+  document.getElementById('englishMeaning').textContent = englishMeaning;
+  document.getElementById('targetSentence').textContent = targetText;
+
+  // load saved transliteration (keyed by native+target+index)
+  const key = `translit__${nativeLang}__${targetLang}__${index}`;
+  document.getElementById('translitInput').value = localStorage.getItem(key) || '';
+}
+
+function saveTranslit(){ const key = `translit__${nativeLang}__${targetLang}__${index}`; localStorage.setItem(key, document.getElementById('translitInput').value); }
+
+function nextSentence(){ saveTranslit(); const max = (DATA[nativeLang]||[]).length; if(index < max-1){ index++; loadSentence(); } }
+function prevSentence(){ saveTranslit(); if(index > 0){ index--; loadSentence(); } }
+
+// initialize selects with a default selection
+nativeSelect.selectedIndex = 0; nativeSelect.dispatchEvent(new Event('change'));
+
+</script>
+</body>
+</html>
