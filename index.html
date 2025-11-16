@@ -1,53 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Background Remover</title>
+  <meta charset="UTF-8" />
+  <title>Background Remover (WASM)</title>
   <style>
-    body { background:#0a0f1a; color:white; font-family:Arial; text-align:center; }
-    img { max-width:300px; margin:20px; border:1px solid #444; }
-    button { padding:10px 20px; margin:10px; }
+    body { background:#0a0f1a; color:white; text-align:center; }
+    img { max-width:300px; margin:20px; border:1px solid #333; }
+    button { padding:10px 20px; }
   </style>
 </head>
 <body>
 
-<h1>Background Remover</h1>
+<h2>Remove Background - Pure JavaScript (WASM)</h2>
 
 <input type="file" id="fileInput" accept="image/*" />
-<br><br>
-
-<img id="preview" />
-
 <br>
-<button onclick="removeBG()">Remove Background</button>
-
+<img id="preview" />
+<br>
+<button onclick="processImage()">Remove Background</button>
 <h3>Output:</h3>
-<img id="outputImg" />
+<img id="output" />
 
-<script>
+<script type="module">
+import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@latest";
+
 let selectedFile = null;
 
-document.getElementById("fileInput").addEventListener("change", function(e) {
+document.getElementById("fileInput").addEventListener("change", e => {
     selectedFile = e.target.files[0];
-
-    // Preview input
-    const url = URL.createObjectURL(selectedFile);
-    document.getElementById("preview").src = url;
+    document.getElementById("preview").src = URL.createObjectURL(selectedFile);
 });
 
-async function removeBG() {
+async function processImage() {
     if (!selectedFile) return alert("Choose an image first!");
 
-    let formData = new FormData();
-    formData.append("image", selectedFile);
+    const remover = await pipeline(
+        "image-segmentation",
+        "Xenova/u2net"
+    );
 
-    const res = await fetch("http://localhost:5000/remove-bg", {
-        method: "POST",
-        body: formData
-    });
+    const result = await remover(URL.createObjectURL(selectedFile));
 
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    document.getElementById("outputImg").src = url;
+    // Create transparent PNG
+    const canvas = document.createElement("canvas");
+    canvas.width = result.width;
+    canvas.height = result.height;
+
+    const ctx = canvas.getContext("2d");
+    const imgData = ctx.createImageData(result.width, result.height);
+
+    for (let i = 0; i < result.data.length; i += 2) {
+        const alpha = result.data[i + 1] * 255;
+        imgData.data[i * 2] = 0;   // R
+        imgData.data[i * 2 + 1] = 0; // G
+        imgData.data[i * 2 + 2] = 0; // B
+        imgData.data[i * 2 + 3] = alpha; // A from mask
+    }
+
+    ctx.putImageData(imgData, 0, 0);
+
+    document.getElementById("output").src = canvas.toDataURL("image/png");
 }
 </script>
 
