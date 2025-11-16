@@ -1,47 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Background Remover (WASM)</title>
-  <style>
-    body { background:#0a0f1a; color:white; text-align:center; }
-    img { max-width:300px; margin:20px; border:1px solid #333; }
-    button { padding:10px 20px; }
-  </style>
-</head>
-<body>
+import React, { useState } from "react";
+import { pipeline } from "@xenova/transformers";
 
-<h2>Remove Background - Pure JavaScript (WASM)</h2>
+const BackgroundRemover = () => {
+  const [inputImage, setInputImage] = useState(null);
+  const [outputImage, setOutputImage] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-<input type="file" id="fileInput" accept="image/*" />
-<br>
-<img id="preview" />
-<br>
-<button onclick="processImage()">Remove Background</button>
-<h3>Output:</h3>
-<img id="output" />
+  async function handleFileChange(e) {
+    setInputImage(URL.createObjectURL(e.target.files[0]));
+  }
 
-<script type="module">
-import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@latest";
+  async function removeBackground() {
+    if (!inputImage) return alert("Please select an image first.");
 
-let selectedFile = null;
+    setLoading(true);
 
-document.getElementById("fileInput").addEventListener("change", e => {
-    selectedFile = e.target.files[0];
-    document.getElementById("preview").src = URL.createObjectURL(selectedFile);
-});
+    // Load U2Net model
+    const remover = await pipeline("image-segmentation", "Xenova/u2net");
+    const result = await remover(inputImage);
 
-async function processImage() {
-    if (!selectedFile) return alert("Choose an image first!");
-
-    const remover = await pipeline(
-        "image-segmentation",
-        "Xenova/u2net"
-    );
-
-    const result = await remover(URL.createObjectURL(selectedFile));
-
-    // Create transparent PNG
+    // Build transparent PNG from segmentation mask
     const canvas = document.createElement("canvas");
     canvas.width = result.width;
     canvas.height = result.height;
@@ -50,18 +28,93 @@ async function processImage() {
     const imgData = ctx.createImageData(result.width, result.height);
 
     for (let i = 0; i < result.data.length; i += 2) {
-        const alpha = result.data[i + 1] * 255;
-        imgData.data[i * 2] = 0;   // R
-        imgData.data[i * 2 + 1] = 0; // G
-        imgData.data[i * 2 + 2] = 0; // B
-        imgData.data[i * 2 + 3] = alpha; // A from mask
+      const alpha = result.data[i + 1] * 255;
+      imgData.data[i * 2] = 0;
+      imgData.data[i * 2 + 1] = 0;
+      imgData.data[i * 2 + 2] = 0;
+      imgData.data[i * 2 + 3] = alpha;
     }
 
     ctx.putImageData(imgData, 0, 0);
+    setOutputImage(canvas.toDataURL("image/png"));
+    setLoading(false);
+  }
 
-    document.getElementById("output").src = canvas.toDataURL("image/png");
-}
-</script>
+  return (
+    <div style={styles.container}>
+      <h2 style={styles.title}>React Background Remover (WASM)</h2>
 
-</body>
-</html>
+      <input 
+        type="file" 
+        accept="image/*"
+        onChange={handleFileChange}
+        style={styles.fileInput}
+      />
+
+      <div style={styles.imgRow}>
+        {inputImage && (
+          <div>
+            <h4 style={styles.label}>Input</h4>
+            <img src={inputImage} alt="input" style={styles.image} />
+          </div>
+        )}
+
+        {outputImage && (
+          <div>
+            <h4 style={styles.label}>Output</h4>
+            <img src={outputImage} alt="output" style={styles.image} />
+          </div>
+        )}
+      </div>
+
+      <button onClick={removeBackground} style={styles.button}>
+        {loading ? "Processing..." : "Remove Background"}
+      </button>
+    </div>
+  );
+};
+
+// Simple inline styles
+const styles = {
+  container: {
+    textAlign: "center",
+    padding: "20px",
+    background: "#0a0f1a",
+    minHeight: "100vh",
+    color: "white",
+  },
+  title: { marginBottom: "20px" },
+  fileInput: {
+    margin: "10px",
+    padding: "10px",
+    background: "#222",
+    color: "white",
+    borderRadius: "8px",
+  },
+  button: {
+    padding: "10px 20px",
+    marginTop: "20px",
+    background: "#4f46e5",
+    border: "none",
+    borderRadius: "8px",
+    color: "white",
+    cursor: "pointer",
+  },
+  imgRow: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "40px",
+    marginTop: "20px",
+  },
+  image: {
+    maxWidth: "300px",
+    borderRadius: "10px",
+    border: "1px solid #333",
+  },
+  label: {
+    marginBottom: "10px",
+    fontWeight: "bold",
+  },
+};
+
+export default BackgroundRemover;
