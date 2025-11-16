@@ -1,58 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8" />
-<title>LAIL – Learn An Indian Language</title>
-<style>
-  body {
-    background:#f0f4f8;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-  }
-  .container {
-    background: #fff;
-    padding: 40px 60px;
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-    text-align: center;
-    max-width: 320px;
-    width: 100%;
-  }
-  h1 {
-    font-weight: 700;
-    margin-bottom: 35px;
-    color: #2c3e50;
-  }
-  button {
-    display: block;
-    width: 100%;
-    margin: 15px 0;
-    padding: 15px;
-    font-size: 18px;
-    background-color: #2980b9;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  button:hover {
-    background-color: #1c5980;
-  }
-</style>
+  <title>Background Remover</title>
+  <style>
+    body { background:#0a0f1a; color:white; font-family:Arial; text-align:center; }
+    img { max-width:300px; margin:20px; border:1px solid #444; }
+    button { padding:10px 20px; margin:10px; }
+  </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>LAIL</h1>
-  <button onclick="location.href='lessons.html'">Lessons</button>
-  <button onclick="location.href='letters.html'">Alphabets</button>
-  <button onclick="location.href='about.html'">About</button>
-</div>
+<h1>Background Remover</h1>
+
+<input type="file" id="fileInput" accept="image/*" />
+<br><br>
+
+<img id="preview" />
+
+<br>
+<button onclick="removeBG()">Remove Background</button>
+
+<h3>Output:</h3>
+<img id="outputImg" />
+
+<script>
+let selectedFile = null;
+
+document.getElementById("fileInput").addEventListener("change", function(e) {
+    selectedFile = e.target.files[0];
+
+    // Preview input
+    const url = URL.createObjectURL(selectedFile);
+    document.getElementById("preview").src = url;
+});
+
+async function removeBG() {
+    if (!selectedFile) return alert("Choose an image first!");
+
+    let formData = new FormData();
+    formData.append("image", selectedFile);
+
+    const res = await fetch("http://localhost:5000/remove-bg", {
+        method: "POST",
+        body: formData
+    });
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    document.getElementById("outputImg").src = url;
+}
+</script>
 
 </body>
 </html>
