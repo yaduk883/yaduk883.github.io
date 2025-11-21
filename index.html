@@ -1,120 +1,39 @@
-import React, { useState } from "react";
-import { pipeline } from "@xenova/transformers";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 Yadu's Static Book Library</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Yadu's Static Book Library</h1>
+        
+        <div class="controls">
+            <input type="text" id="searchInput" placeholder="🔍 Search by Book Name or Author...">
+        </div>
 
-const BackgroundRemover = () => {
-  const [inputImage, setInputImage] = useState(null);
-  const [outputImage, setOutputImage] = useState(null);
-  const [loading, setLoading] = useState(false);
+        <p id="statusMessage" class="info">Loading book data...</p>
 
-  async function handleFileChange(e) {
-    setInputImage(URL.createObjectURL(e.target.files[0]));
-  }
-
-  async function removeBackground() {
-    if (!inputImage) return alert("Please select an image first.");
-
-    setLoading(true);
-
-    // Load U2Net model
-    const remover = await pipeline("image-segmentation", "Xenova/u2net");
-    const result = await remover(inputImage);
-
-    // Build transparent PNG from segmentation mask
-    const canvas = document.createElement("canvas");
-    canvas.width = result.width;
-    canvas.height = result.height;
-
-    const ctx = canvas.getContext("2d");
-    const imgData = ctx.createImageData(result.width, result.height);
-
-    for (let i = 0; i < result.data.length; i += 2) {
-      const alpha = result.data[i + 1] * 255;
-      imgData.data[i * 2] = 0;
-      imgData.data[i * 2 + 1] = 0;
-      imgData.data[i * 2 + 2] = 0;
-      imgData.data[i * 2 + 3] = alpha;
-    }
-
-    ctx.putImageData(imgData, 0, 0);
-    setOutputImage(canvas.toDataURL("image/png"));
-    setLoading(false);
-  }
-
-  return (
-    <div style={styles.container}>
-      <h2 style={styles.title}>React Background Remover (WASM)</h2>
-
-      <input 
-        type="file" 
-        accept="image/*"
-        onChange={handleFileChange}
-        style={styles.fileInput}
-      />
-
-      <div style={styles.imgRow}>
-        {inputImage && (
-          <div>
-            <h4 style={styles.label}>Input</h4>
-            <img src={inputImage} alt="input" style={styles.image} />
-          </div>
-        )}
-
-        {outputImage && (
-          <div>
-            <h4 style={styles.label}>Output</h4>
-            <img src={outputImage} alt="output" style={styles.image} />
-          </div>
-        )}
-      </div>
-
-      <button onClick={removeBackground} style={styles.button}>
-        {loading ? "Processing..." : "Remove Background"}
-      </button>
+        <div id="bookTableContainer">
+            <table id="bookTable">
+                <thead>
+                    <tr>
+                        <th>Name of Book</th>
+                        <th>Author</th>
+                        <th>Language</th>
+                        <th>N.o of Copies</th>
+                        <th>Available/Not</th>
+                        <th>Checked Out By</th>
+                    </tr>
+                </thead>
+                <tbody id="bookTableBody">
+                    </tbody>
+            </table>
+        </div>
     </div>
-  );
-};
-
-// Simple inline styles
-const styles = {
-  container: {
-    textAlign: "center",
-    padding: "20px",
-    background: "#0a0f1a",
-    minHeight: "100vh",
-    color: "white",
-  },
-  title: { marginBottom: "20px" },
-  fileInput: {
-    margin: "10px",
-    padding: "10px",
-    background: "#222",
-    color: "white",
-    borderRadius: "8px",
-  },
-  button: {
-    padding: "10px 20px",
-    marginTop: "20px",
-    background: "#4f46e5",
-    border: "none",
-    borderRadius: "8px",
-    color: "white",
-    cursor: "pointer",
-  },
-  imgRow: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "40px",
-    marginTop: "20px",
-  },
-  image: {
-    maxWidth: "300px",
-    borderRadius: "10px",
-    border: "1px solid #333",
-  },
-  label: {
-    marginBottom: "10px",
-    fontWeight: "bold",
-  },
-};
-
-export default BackgroundRemover;
+    
+    <script src="script.js"></script>
+</body>
+</html>
