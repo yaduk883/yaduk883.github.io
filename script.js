@@ -1,171 +1,178 @@
-/* --- 1. CSS Variables (The Core of Theming) --- */
-:root {
-    /* Light Theme Defaults */
-    --primary-color: #1e88e5; /* Streamlit Blue */
-    --background-color: #f4f7f6;
-    --card-background: #ffffff;
-    --text-color: #333;
-    --border-color: #eee;
-    --input-border-color: #ccc;
-    --table-header-bg: #f0f0f0;
-    --hover-bg: #eef7ff;
-    --description-bg: #f9f9f9;
+// ------------------------------------------
+// Configuration
+// ------------------------------------------
+const GOOGLE_SHEET_CSV = "https://docs.google.com/spreadsheets/d/10foSwd8HyCbltVFYT5HpuiiQMk9FFIkn-aVhH93_A78/gviz/tq?tqx=out:csv";
+const TABLE_BODY_ID = 'bookTableBody';
+const SEARCH_INPUT_ID = 'searchInput';
+const STATUS_MESSAGE_ID = 'statusMessage';
+const DESCRIPTION_AREA_ID = 'descriptionArea';
+const DESCRIPTION_TITLE_ID = 'descriptionTitle';
+const DESCRIPTION_TEXT_ID = 'descriptionText';
+const THEME_TOGGLE_ID = 'themeToggle'; // New ID
+const THEME_STORAGE_KEY = 'bookLibraryTheme'; // New Key
+
+let bookData = []; // Global array to hold the parsed data
+
+// ------------------------------------------
+// Theme Functions (NEW)
+// ------------------------------------------
+
+/**
+ * Toggles the 'dark-theme' class on the body and updates the button text/icon.
+ */
+function toggleTheme() {
+    const body = document.body;
+    const button = document.getElementById(THEME_TOGGLE_ID);
+    
+    // Toggle the class
+    const isDark = body.classList.toggle('dark-theme');
+
+    // Update the button text
+    if (isDark) {
+        button.innerHTML = '🌙 Switch to Light';
+        localStorage.setItem(THEME_STORAGE_KEY, 'dark');
+    } else {
+        button.innerHTML = '☀️ Switch to Dark';
+        localStorage.setItem(THEME_STORAGE_KEY, 'light');
+    }
 }
 
-/* --- 2. Dark Theme Overrides --- */
-body.dark-theme {
-    --background-color: #1e1e1e;
-    --card-background: #2d2d2d;
-    --text-color: #f0f0f0;
-    --border-color: #444;
-    --input-border-color: #555;
-    --table-header-bg: #3c3c3c;
-    --hover-bg: #4a4a4a;
-    --description-bg: #3a3a3a;
-}
+/**
+ * Loads the user's saved theme preference on page load.
+ */
+function loadTheme() {
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    const button = document.getElementById(THEME_TOGGLE_ID);
+    const body = document.body;
 
-/* --- 3. Basic Reset and Typography --- */
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    /* Apply variables */
-    background-color: var(--background-color);
-    color: var(--text-color);
-    transition: background-color 0.3s, color 0.3s;
-}
-
-.container {
-    max-width: 1200px;
-    margin: 40px auto;
-    padding: 20px;
-    /* Apply variables */
-    background-color: var(--card-background);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-h1 {
-    text-align: center;
-    color: var(--primary-color);
-    margin-bottom: 25px;
-}
-
-/* --- 4. Search Input and Controls --- */
-.controls {
-    margin-bottom: 20px;
-    display: flex; /* Arrange button and input side-by-side */
-    gap: 15px;
-}
-
-#searchInput {
-    flex-grow: 1; /* Allow input to take remaining space */
-    padding: 12px 15px;
-    border: 1px solid var(--input-border-color);
-    border-radius: 6px;
-    font-size: 16px;
-    box-sizing: border-box;
-    background-color: var(--card-background);
-    color: var(--text-color);
-    transition: border-color 0.3s;
-}
-
-#searchInput:focus {
-    border-color: var(--primary-color);
-    outline: none;
-}
-
-/* Theme Button Styling */
-.theme-button {
-    padding: 12px 15px;
-    border: none;
-    border-radius: 6px;
-    background-color: var(--primary-color);
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s, opacity 0.3s;
-    white-space: nowrap; /* Prevents text wrap */
-}
-.theme-button:hover {
-    opacity: 0.9;
+    if (savedTheme === 'dark') {
+        body.classList.add('dark-theme');
+        button.innerHTML = '🌙 Switch to Light';
+    } else {
+        // Default to light theme if no preference or preference is 'light'
+        body.classList.remove('dark-theme');
+        button.innerHTML = '☀️ Switch to Dark';
+    }
 }
 
 
-/* --- 5. Status Message --- */
-#statusMessage {
-    padding: 10px;
-    margin: 15px 0;
-    border-radius: 4px;
-    font-weight: bold;
-    text-align: center;
-}
-.info { background-color: #e3f2fd; color: #1e88e5; }
-.error { background-color: #ffebee; color: #d32f2f; }
-/* Dark Theme Status Message adjustments */
-body.dark-theme .info { background-color: #0b375b; color: #79b0e8; }
-body.dark-theme .error { background-color: #5d1717; color: #ff8a80; }
+// ------------------------------------------
+// Core Functions (Modified DisplayDescription and RenderTable for Class)
+// ------------------------------------------
 
+// ... fetchCSVData and parseCSV remain unchanged ...
 
-/* --- 6. Table Styling --- */
-#bookTableContainer {
-    overflow-x: auto;
-    margin-top: 20px;
-}
+/**
+ * Displays the description for a selected book.
+ * @param {Object} book - The book object to display.
+ */
+function displayDescription(book) {
+    const titleElement = document.getElementById(DESCRIPTION_TITLE_ID);
+    const textElement = document.getElementById(DESCRIPTION_TEXT_ID);
+    const area = document.getElementById(DESCRIPTION_AREA_ID);
 
-#bookTable {
-    width: 100%;
-    border-collapse: collapse;
-    background-color: var(--card-background);
+    titleElement.textContent = `📝 ${book['Name of Book']}`;
+    
+    let description = book['Description'] || "No description available.";
+    textElement.textContent = description;
+
+    area.style.display = 'block'; // Show the description box
 }
 
-#bookTable th, #bookTable td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
+
+/**
+ * Renders the table rows based on the filtered data and adds click handlers.
+ * (Modified to use a class 'selected-row' instead of inline style for consistency)
+ * @param {Array<Object>} dataToDisplay - The filtered book data.
+ */
+function renderTable(dataToDisplay) {
+    const tbody = document.getElementById(TABLE_BODY_ID);
+    const status = document.getElementById(STATUS_MESSAGE_ID);
+    
+    tbody.innerHTML = ''; // Clear existing rows
+    document.getElementById(DESCRIPTION_AREA_ID).style.display = 'none'; // Hide description
+
+    if (dataToDisplay.length === 0) {
+        status.textContent = "❌ No matches found. Try a different search term.";
+        status.className = 'error';
+        return;
+    }
+
+    const displayKeys = [
+        'Name of Book', 'Author', 'Language', 'N.o of Copies', 
+        'Available/Not', 'Checked Out By'
+    ];
+
+    dataToDisplay.forEach(book => {
+        const row = tbody.insertRow();
+        
+        row.style.cursor = 'pointer'; 
+        row.addEventListener('click', () => {
+            // Remove 'selected-row' class from all rows
+            Array.from(tbody.children).forEach(r => r.classList.remove('selected-row'));
+            // Add 'selected-row' class to the clicked row
+            row.classList.add('selected-row'); 
+            displayDescription(book);
+        });
+
+        displayKeys.forEach(key => {
+            const cell = row.insertCell();
+            let value = book[key] || '';
+
+            if (key === 'Available/Not') {
+                cell.textContent = value;
+                if (value.toLowerCase() === 'available') {
+                    cell.classList.add('available');
+                } else if (value.toLowerCase() === 'not available') {
+                    cell.classList.add('not-available');
+                }
+            } else {
+                cell.textContent = value;
+            }
+        });
+    });
+
+    status.textContent = `🔎 ${dataToDisplay.length} match(es) found. Click a row to view the description.`;
+    status.className = 'info';
 }
 
-#bookTable th {
-    background-color: var(--table-header-bg);
-    font-weight: 600;
-    color: var(--text-color);
-    position: sticky;
-    top: 0;
+// ... filterData remains unchanged ...
+
+// ------------------------------------------
+// Initialization (Main Execution)
+// ------------------------------------------
+async function init() {
+    // 1. Load Theme First
+    loadTheme();
+    
+    // 2. Add Listener for Theme Toggle
+    document.getElementById(THEME_TOGGLE_ID).addEventListener('click', toggleTheme);
+    
+    // 3. Continue with Data Fetch
+    const searchInput = document.getElementById(SEARCH_INPUT_ID);
+    const status = document.getElementById(STATUS_MESSAGE_ID);
+    
+    status.textContent = 'Loading data in the background...';
+
+    const csvText = await fetchCSVData();
+    if (!csvText) return;
+
+    bookData = parseCSV(csvText);
+    
+    if (bookData.length > 0) {
+        status.textContent = "Start typing above to search by Book Name or Author.";
+        status.className = 'info';
+    } else {
+        status.textContent = `⚠️ Data loaded but no books found.`;
+        status.className = 'error';
+        return;
+    }
+
+    // 4. Add Search Listener
+    searchInput.addEventListener('input', (e) => {
+        filterData(e.target.value);
+    });
 }
 
-#bookTable tbody tr:hover {
-    background-color: var(--hover-bg);
-}
-
-/* Highlighting Selected Row */
-#bookTable tbody tr.selected-row {
-    background-color: var(--hover-bg) !important;
-}
-
-/* Highlighting Available/Not */
-.available {
-    color: #388e3c; 
-    font-weight: bold;
-}
-
-.not-available {
-    color: #e64a19;
-    font-weight: bold;
-}
-
-/* --- 7. Description Box Styling --- */
-.description-box {
-    margin-top: 30px;
-    padding: 20px;
-    border-left: 5px solid var(--primary-color);
-    background-color: var(--description-bg);
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.description-box h3 {
-    color: var(--text-color);
-    margin-top: 0;
-    margin-bottom: 10px;
-    font-size: 1.2em;
-}
+// Run the initialization function when the page is fully loaded
+document.addEventListener('DOMContentLoaded', init);
