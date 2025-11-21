@@ -5,6 +5,9 @@ const GOOGLE_SHEET_CSV = "https://docs.google.com/spreadsheets/d/10foSwd8HyCbltV
 const TABLE_BODY_ID = 'bookTableBody';
 const SEARCH_INPUT_ID = 'searchInput';
 const STATUS_MESSAGE_ID = 'statusMessage';
+const DESCRIPTION_AREA_ID = 'descriptionArea';
+const DESCRIPTION_TITLE_ID = 'descriptionTitle';
+const DESCRIPTION_TEXT_ID = 'descriptionText';
 
 let bookData = []; // Global array to hold the parsed data
 
@@ -14,11 +17,10 @@ let bookData = []; // Global array to hold the parsed data
 
 /**
  * Fetches the CSV data from the Google Sheet URL.
- * @returns {Promise<string>} The raw CSV text.
+ * (No change to this function, it remains the same)
  */
 async function fetchCSVData() {
-    const status = document.getElementById(STATUS_MESSAGE_ID);
-    status.textContent = 'Fetching data from Google Sheet...';
+    // We update the message *after* the user starts searching, not here.
     try {
         const response = await fetch(GOOGLE_SHEET_CSV);
         if (!response.ok) {
@@ -26,8 +28,8 @@ async function fetchCSVData() {
         }
         return await response.text();
     } catch (error) {
-        status.textContent = `⚠️ Failed to load book data: ${error.message}`;
-        status.className = 'error';
+        document.getElementById(STATUS_MESSAGE_ID).textContent = `⚠️ Failed to load book data: ${error.message}`;
+        document.getElementById(STATUS_MESSAGE_ID).className = 'error';
         console.error("Fetch Error:", error);
         return null;
     }
@@ -35,9 +37,7 @@ async function fetchCSVData() {
 
 /**
  * Parses the CSV text into an array of book objects.
- * Expects the first row to be headers.
- * @param {string} csvText - The raw CSV string.
- * @returns {Array<Object>} The parsed data.
+ * (No change to this function, it remains the same)
  */
 function parseCSV(csvText) {
     // Simple parser: split by newline, then split by comma/separator
@@ -67,8 +67,27 @@ function parseCSV(csvText) {
     return data;
 }
 
+
 /**
- * Renders the table rows based on the filtered data.
+ * Displays the description for a selected book.
+ * @param {Object} book - The book object to display.
+ */
+function displayDescription(book) {
+    const titleElement = document.getElementById(DESCRIPTION_TITLE_ID);
+    const textElement = document.getElementById(DESCRIPTION_TEXT_ID);
+    const area = document.getElementById(DESCRIPTION_AREA_ID);
+
+    titleElement.textContent = `📝 ${book['Name of Book']}`;
+    
+    let description = book['Description'] || "No description available.";
+    textElement.textContent = description;
+
+    area.style.display = 'block'; // Show the description box
+}
+
+
+/**
+ * Renders the table rows based on the filtered data and adds click handlers.
  * @param {Array<Object>} dataToDisplay - The filtered book data.
  */
 function renderTable(dataToDisplay) {
@@ -76,9 +95,10 @@ function renderTable(dataToDisplay) {
     const status = document.getElementById(STATUS_MESSAGE_ID);
     
     tbody.innerHTML = ''; // Clear existing rows
+    document.getElementById(DESCRIPTION_AREA_ID).style.display = 'none'; // Hide description
 
     if (dataToDisplay.length === 0) {
-        status.textContent = "❌ No matches found.";
+        status.textContent = "❌ No matches found. Try a different search term.";
         status.className = 'error';
         return;
     }
@@ -91,6 +111,19 @@ function renderTable(dataToDisplay) {
 
     dataToDisplay.forEach(book => {
         const row = tbody.insertRow();
+        
+        // --- ADD CLICK HANDLER ---
+        row.style.cursor = 'pointer'; 
+        row.addEventListener('click', () => {
+            // Remove selection highlight from all rows
+            Array.from(tbody.children).forEach(r => r.style.backgroundColor = '');
+            // Highlight the clicked row
+            row.style.backgroundColor = '#eef7ff'; 
+            displayDescription(book);
+        });
+        // --- END CLICK HANDLER ---
+
+
         displayKeys.forEach(key => {
             const cell = row.insertCell();
             let value = book[key] || ''; // Use empty string if key is missing
@@ -109,7 +142,7 @@ function renderTable(dataToDisplay) {
         });
     });
 
-    status.textContent = `🔎 ${dataToDisplay.length} book(s) displayed.`;
+    status.textContent = `🔎 ${dataToDisplay.length} match(es) found. Click a row to view the description.`;
     status.className = 'info';
 }
 
@@ -119,9 +152,14 @@ function renderTable(dataToDisplay) {
  */
 function filterData(query) {
     const queryLower = query.toLowerCase().trim();
+    const status = document.getElementById(STATUS_MESSAGE_ID);
+
     if (!queryLower) {
-        // If query is empty, show all data
-        renderTable(bookData);
+        // Clear table and show introductory message when search box is empty
+        document.getElementById(TABLE_BODY_ID).innerHTML = '';
+        document.getElementById(DESCRIPTION_AREA_ID).style.display = 'none';
+        status.textContent = "Start typing above to search by Book Name or Author.";
+        status.className = 'info';
         return;
     }
 
@@ -138,27 +176,30 @@ function filterData(query) {
 // Initialization (Main Execution)
 // ------------------------------------------
 async function init() {
+    const searchInput = document.getElementById(SEARCH_INPUT_ID);
+    
+    // Initial fetch of data (hidden from user)
+    const status = document.getElementById(STATUS_MESSAGE_ID);
+    status.textContent = 'Loading data in the background...';
+
     const csvText = await fetchCSVData();
     if (!csvText) return;
 
     bookData = parseCSV(csvText);
     
-    // Initial render of all books
-    renderTable(bookData); 
+    if (bookData.length > 0) {
+        status.textContent = "Start typing above to search by Book Name or Author.";
+        status.className = 'info';
+    } else {
+        status.textContent = `⚠️ Data loaded but no books found.`;
+        status.className = 'error';
+        return;
+    }
 
     // Add event listener for real-time filtering
-    const searchInput = document.getElementById(SEARCH_INPUT_ID);
     searchInput.addEventListener('input', (e) => {
         filterData(e.target.value);
     });
-
-    // Initial message update if data loaded successfully
-    if (bookData.length > 0) {
-        document.getElementById(STATUS_MESSAGE_ID).textContent = `✅ Successfully loaded ${bookData.length} books.`;
-    } else {
-        document.getElementById(STATUS_MESSAGE_ID).textContent = `⚠️ Data loaded but no books found.`;
-        document.getElementById(STATUS_MESSAGE_ID).className = 'error';
-    }
 }
 
 // Run the initialization function when the page is fully loaded
