@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Yadu's Book Library</title>
+    <title>📚 Yadu's Static Book Library</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1> Yadu's Book Library</h1>
+        <h1>📚 Yadu's Static Book Library</h1>
         
         <div class="controls">
             <input type="text" id="searchInput" placeholder="🔍 Search by Book Name or Author...">
         </div>
 
-        <p id="statusMessage" class="info">Loading book data...</p>
+        <p id="statusMessage" class="info">Start typing above to search by Book Name or Author.</p>
 
         <div id="bookTableContainer">
             <table id="bookTable">
@@ -32,6 +32,12 @@
                     </tbody>
             </table>
         </div>
+
+        <div id="descriptionArea" class="description-box" style="display:none;">
+            <h3 id="descriptionTitle"></h3>
+            <p id="descriptionText"></p>
+        </div>
+        
     </div>
     
     <script src="script.js"></script>
