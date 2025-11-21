@@ -1,6 +1,4 @@
-// ------------------------------------------
-// Configuration
-// ------------------------------------------
+
 const GOOGLE_SHEET_CSV = "https://docs.google.com/spreadsheets/d/10foSwd8HyCbltVFYT5HpuiiQMk9FFIkn-aVhH93_A78/gviz/tq?tqx=out:csv";
 const TABLE_BODY_ID = 'bookTableBody';
 const SEARCH_INPUT_ID = 'searchInput';
@@ -9,18 +7,10 @@ const DESCRIPTION_AREA_ID = 'descriptionArea';
 const DESCRIPTION_TITLE_ID = 'descriptionTitle';
 const DESCRIPTION_TEXT_ID = 'descriptionText';
 
-let bookData = []; // Global array to hold the parsed data
+let bookData = []; 
 
-// ------------------------------------------
-// Core Functions
-// ------------------------------------------
-
-/**
- * Fetches the CSV data from the Google Sheet URL.
- * (No change to this function, it remains the same)
- */
 async function fetchCSVData() {
-    // We update the message *after* the user starts searching, not here.
+
     try {
         const response = await fetch(GOOGLE_SHEET_CSV);
         if (!response.ok) {
@@ -35,30 +25,25 @@ async function fetchCSVData() {
     }
 }
 
-/**
- * Parses the CSV text into an array of book objects.
- * (No change to this function, it remains the same)
- */
 function parseCSV(csvText) {
-    // Simple parser: split by newline, then split by comma/separator
+    
     const lines = csvText.trim().split('\n');
     if (lines.length === 0) return [];
     
-    // Clean headers: remove quotes and trim whitespace
     const headers = lines[0].split(',').map(header => 
         header.replace(/"/g, '').trim()
     );
 
     const data = [];
     for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // Split by comma, ignoring commas inside quotes
+        const values = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); 
         if (values.length === headers.length) {
             let book = {};
             values.forEach((value, index) => {
                 const cleanValue = value.replace(/"/g, '').trim();
                 book[headers[index]] = cleanValue;
             });
-            // Only include books with a name
+            
             if (book['Name of Book']) {
                  data.push(book);
             }
@@ -68,10 +53,6 @@ function parseCSV(csvText) {
 }
 
 
-/**
- * Displays the description for a selected book.
- * @param {Object} book - The book object to display.
- */
 function displayDescription(book) {
     const titleElement = document.getElementById(DESCRIPTION_TITLE_ID);
     const textElement = document.getElementById(DESCRIPTION_TEXT_ID);
@@ -82,20 +63,16 @@ function displayDescription(book) {
     let description = book['Description'] || "No description available.";
     textElement.textContent = description;
 
-    area.style.display = 'block'; // Show the description box
+    area.style.display = 'block';
 }
 
 
-/**
- * Renders the table rows based on the filtered data and adds click handlers.
- * @param {Array<Object>} dataToDisplay - The filtered book data.
- */
 function renderTable(dataToDisplay) {
     const tbody = document.getElementById(TABLE_BODY_ID);
     const status = document.getElementById(STATUS_MESSAGE_ID);
     
-    tbody.innerHTML = ''; // Clear existing rows
-    document.getElementById(DESCRIPTION_AREA_ID).style.display = 'none'; // Hide description
+    tbody.innerHTML = ''; 
+    document.getElementById(DESCRIPTION_AREA_ID).style.display = 'none'; 
 
     if (dataToDisplay.length === 0) {
         status.textContent = "❌ No matches found. Try a different search term.";
@@ -103,7 +80,6 @@ function renderTable(dataToDisplay) {
         return;
     }
 
-    // List of columns to display, matching the <thead> in index.html
     const displayKeys = [
         'Name of Book', 'Author', 'Language', 'N.o of Copies', 
         'Available/Not', 'Checked Out By'
@@ -112,22 +88,16 @@ function renderTable(dataToDisplay) {
     dataToDisplay.forEach(book => {
         const row = tbody.insertRow();
         
-        // --- ADD CLICK HANDLER ---
         row.style.cursor = 'pointer'; 
         row.addEventListener('click', () => {
-            // Remove selection highlight from all rows
             Array.from(tbody.children).forEach(r => r.style.backgroundColor = '');
-            // Highlight the clicked row
             row.style.backgroundColor = '#eef7ff'; 
             displayDescription(book);
         });
-        // --- END CLICK HANDLER ---
-
 
         displayKeys.forEach(key => {
             const cell = row.insertCell();
-            let value = book[key] || ''; // Use empty string if key is missing
-
+            let value = book[key] || ''; 
             if (key === 'Available/Not') {
                 cell.textContent = value;
                 // Add styling class
@@ -146,16 +116,12 @@ function renderTable(dataToDisplay) {
     status.className = 'info';
 }
 
-/**
- * Filters the global bookData based on the search query.
- * @param {string} query - The text to search for.
- */
 function filterData(query) {
     const queryLower = query.toLowerCase().trim();
     const status = document.getElementById(STATUS_MESSAGE_ID);
 
     if (!queryLower) {
-        // Clear table and show introductory message when search box is empty
+        
         document.getElementById(TABLE_BODY_ID).innerHTML = '';
         document.getElementById(DESCRIPTION_AREA_ID).style.display = 'none';
         status.textContent = "Start typing above to search by Book Name or Author.";
@@ -172,13 +138,10 @@ function filterData(query) {
     renderTable(filtered);
 }
 
-// ------------------------------------------
-// Initialization (Main Execution)
-// ------------------------------------------
+
 async function init() {
     const searchInput = document.getElementById(SEARCH_INPUT_ID);
     
-    // Initial fetch of data (hidden from user)
     const status = document.getElementById(STATUS_MESSAGE_ID);
     status.textContent = 'Loading data in the background...';
 
@@ -196,7 +159,6 @@ async function init() {
         return;
     }
 
-    // Add event listener for real-time filtering
     searchInput.addEventListener('input', (e) => {
         filterData(e.target.value);
     });
