@@ -2,7 +2,7 @@
 // Configuration
 // ------------------------------------------
 // !!! UPDATE THIS WITH YOUR NEW DICTIONARY SHEET URL !!!
-const GOOGLE_SHEET_CSV = "https://docs.google.com/spreadsheets/d/YOUR_NEW_DICTIONARY_SHEET_ID/gviz/tq?tqx=out:csv"; 
+const GOOGLE_SHEET_CSV = "https://docs.google.com/spreadsheets/d/1vujnZVEBTGzsRctZ5rhevnsqdEPMlfdS/edit?usp=drive_link&ouid=107803050628093341974&rtpof=true&sd=true"; 
 
 const TABLE_BODY_ID = 'bookTableBody';
 const SEARCH_INPUT_ID = 'searchInput';
