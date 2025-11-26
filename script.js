@@ -1,9 +1,7 @@
 // ------------------------------------------
 // Configuration
 // ------------------------------------------
-// **** NEW GOOGLE SHEET URL ****
-// NOTE: Sheet ID is extracted from your shared link, but you MUST ensure the sheet 
-// is publicly shared and the URL format is correct for CSV export.
+// **** CORRECT PUBLIC CSV LINK ****
 const GOOGLE_SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1yXM-26NcSPpkrOMGFgvCRwYcFfzcaSSYGiD8mztHs_tJjUXLoFf7F-J2kwEWEw/pub?output=csv";
 
 const TABLE_BODY_ID = 'bookTableBody';
@@ -11,21 +9,21 @@ const SEARCH_INPUT_ID = 'searchInput';
 const STATUS_MESSAGE_ID = 'statusMessage';
 const DESCRIPTION_AREA_ID = 'descriptionArea';
 const DESCRIPTION_TITLE_ID = 'descriptionTitle';
-const DEFINITION_TEXT_ID = 'definitionText'; // Renamed element
-const EXAMPLE_TEXT_ID = 'exampleText';      // New element
+const DEFINITION_TEXT_ID = 'definitionText';
+const EXAMPLE_TEXT_ID = 'exampleText';
 const THEME_TOGGLE_ID = 'themeToggle';
 const BACK_BUTTON_ID = 'backButton';
 const THEME_STORAGE_KEY = 'dictionaryTheme'; 
 
-// Define standardized display columns (uses normalized keys)
-// These keys must match the normalized headers in your sheet (word, synonyms, language)
+// Define standardized display columns (assuming sheet headers are Word, Synonyms, Language)
+// These keys MUST match the normalized header output (e.g., "Word" becomes 'word')
 const DISPLAY_COLUMNS = [
     { key: 'word', label: 'Word' },
     { key: 'synonyms', label: 'Synonyms (Preview)' },
     { key: 'language', label: 'Language' },
 ];
 
-let dictionaryData = []; // Renamed from bookData
+let dictionaryData = []; 
 let lastFilterResults = []; 
 
 // ------------------------------------------
@@ -42,14 +40,18 @@ function debounce(func, delay) {
 
 /**
  * Normalizes a header string into camelCase for reliable object keys.
+ * This function is critical for matching sheet headers to JS keys.
  */
 function normalizeHeader(header) {
     if (!header) return '';
+    // Strip quotes, trim, convert to lower case, and remove all non-alphanumeric/whitespace
     return header
-        .replace(/[.\/]/g, '')
+        .replace(/"/g, '') // Remove quotes
+        .replace(/[^a-zA-Z0-9\s]/g, '') // Remove punctuation
         .trim()
         .toLowerCase()
-        .replace(/\s(.)/g, (match, char) => char.toUpperCase());
+        .replace(/\s(.)/g, (match, char) => char.toUpperCase()) // CamelCase remaining spaces
+        .replace(/\s/g, ''); // Remove any final spaces
 }
 
 
@@ -67,7 +69,7 @@ async function fetchCSVData() {
         }
         return await response.text();
     } catch (error) {
-        status.textContent = `⚠️ Failed to load data. Check your Google Sheet URL or network: ${error.message}`;
+        status.textContent = `⚠️ Failed to load data. Ensure your Google Sheet is published to the web as CSV. ${error.message}`;
         status.className = 'error';
         console.error("Fetch Error:", error);
         return null;
@@ -78,13 +80,23 @@ async function fetchCSVData() {
  * Parses the CSV text into an array of dictionary objects, using normalized keys.
  */
 function parseCSV(csvText) {
+    // Note: The CSV from Google Sheets is typically double-quoted, so we handle that.
     const lines = csvText.trim().split('\n');
     if (lines.length === 0) return [];
     
+    // Find the headers (first line)
     const rawHeaders = lines[0].split(',').map(header => header.replace(/"/g, '').trim());
     const headers = rawHeaders.map(normalizeHeader);
+    
+    // Check if critical headers are present (helpful for debugging)
+    if (!headers.includes('word') || !headers.includes('definition')) {
+        console.error("Critical Error: 'word' or 'definition' columns not found after normalization.");
+        // This is where the error likely occurs if the sheet headers are named differently.
+        return [];
+    }
 
     const data = [];
+    // Regex to split CSV columns while ignoring commas inside double quotes
     const csvRegex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/; 
 
     for (let i = 1; i < lines.length; i++) {
@@ -96,8 +108,7 @@ function parseCSV(csvText) {
                 const cleanValue = value.replace(/^"|"$/g, '').trim(); 
                 entry[headers[index]] = cleanValue; 
             });
-            // Ensure we only include entries that have a 'word'
-            if (entry.word) {
+            if (entry.word) { // Ensure the entry has a word before pushing
                 entry.id = i; 
                 data.push(entry);
             }
@@ -107,7 +118,7 @@ function parseCSV(csvText) {
 }
 
 // ------------------------------------------
-// Theme Functions
+// Theme Functions (Unchanged)
 // ------------------------------------------
 
 function toggleTheme() {
@@ -149,7 +160,6 @@ function handleWordSelect(entry, selectedRow) {
     const backButton = document.getElementById(BACK_BUTTON_ID);
     const tableContainer = document.getElementById('bookTableContainer');
 
-    // 1. Hide all rows except the selected one
     Array.from(tbody.children).forEach(row => {
         row.classList.remove('selected-row');
         if (row !== selectedRow) {
@@ -160,10 +170,8 @@ function handleWordSelect(entry, selectedRow) {
         }
     });
 
-    // 2. Hide the entire table container
     tableContainer.style.display = 'none';
 
-    // 3. Display the definition area
     const titleElement = document.getElementById(DESCRIPTION_TITLE_ID);
     const definitionElement = document.getElementById(DEFINITION_TEXT_ID);
     const exampleElement = document.getElementById(EXAMPLE_TEXT_ID); 
@@ -174,6 +182,7 @@ function handleWordSelect(entry, selectedRow) {
     let definition = entry.definition || "No definition available."; 
     definitionElement.textContent = definition;
     
+    // Use normalized key 'example'
     let example = entry.example || "";
     if (example) {
         exampleElement.textContent = example;
@@ -194,20 +203,16 @@ function resetTable() {
     const area = document.getElementById(DESCRIPTION_AREA_ID);
     const backButton = document.getElementById(BACK_BUTTON_ID);
 
-    // 1. Show the table container
     tableContainer.style.display = 'block';
 
-    // 2. Restore all rows 
     Array.from(tbody.children).forEach(row => {
         row.classList.remove('hidden-row');
         row.classList.remove('selected-row');
     });
 
-    // 3. Hide definition area
     area.style.display = 'none';
     backButton.style.display = 'none';
     
-    // 4. Re-render the last search result
     renderTable(lastFilterResults);
 }
 
@@ -239,11 +244,9 @@ function renderTable(dataToDisplay) {
             handleWordSelect(entry, row);
         });
 
-        // Use the DISPLAY_COLUMNS configuration for rendering
         DISPLAY_COLUMNS.forEach(col => {
             const cell = row.insertCell();
             let value = entry[col.key] || '';
-            
             cell.textContent = value;
         });
     });
@@ -267,7 +270,6 @@ function filterData(query) {
     document.getElementById(BACK_BUTTON_ID).style.display = 'none';
 
     if (!queryLower) {
-        // HIDE table and clear content when search is empty
         document.getElementById(TABLE_BODY_ID).innerHTML = '';
         tableContainer.style.display = 'none';
         status.textContent = "Start typing above to search for a word.";
@@ -311,19 +313,23 @@ async function init() {
     status.textContent = 'Loading dictionary data...';
 
     const csvText = await fetchCSVData();
-    if (!csvText) return;
+    if (!csvText) {
+        status.textContent = `❌ Data load failed. Check the browser console (F12) for network errors.`;
+        status.className = 'error';
+        return;
+    }
 
     dictionaryData = parseCSV(csvText); 
     
     if (dictionaryData.length > 0) {
-        // Ensure the table is visually empty and hidden on load.
         document.getElementById(TABLE_BODY_ID).innerHTML = ''; 
         tableContainer.style.display = 'none';
 
-        status.textContent = "Start typing above to search for a word.";
+        status.textContent = `Successfully loaded ${dictionaryData.length} words. Start typing above to search.`;
         status.className = 'info';
     } else {
-        status.textContent = `⚠️ Failed to load dictionary entries. Check your Google Sheet data.`;
+        // This likely means the headers are wrong, or the sheet is truly empty
+        status.textContent = `⚠️ Failed to parse dictionary entries. Please verify the column headers in your Google Sheet (expecting 'Word', 'Definition', etc.).`;
         status.className = 'error';
     }
 }
