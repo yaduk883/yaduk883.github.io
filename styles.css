@@ -1,264 +1,66 @@
-/* --- 1. CSS Variables (The Core of Theming) --- */
-:root {
-    /* Light Theme Defaults */
-    --primary-color: #1e88e5; 
-    --background-color: #f4f7f6;
-    --card-background: #ffffff;
-    --text-color: #333;
-    --border-color: #eee;
-    --input-border-color: #ccc;
-    --table-header-bg: #f0f0f0;
-    --hover-bg: #eef7ff;
-    --description-bg: #f9f9f9;
+/* --- Add these styles to your styles.css --- */
+
+/* 1. Control Bar Layout */
+.controls-bar {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 15px;
 }
 
-/* --- 2. Dark Theme Overrides --- */
-body.dark-theme {
-    --background-color: #1e1e1e;
-    --card-background: #2d2d2d;
-    --text-color: #f0f0f0;
-    --border-color: #444;
-    --input-border-color: #555;
-    --table-header-bg: #3c3c3c;
-    --hover-bg: #4a4a4a;
-    --description-bg: #3a3a3a;
-}
-
-/* --- 3. Basic Reset and Typography --- */
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: var(--background-color);
-    color: var(--text-color);
-    transition: background-color 0.3s, color 0.3s;
-    scroll-behavior: smooth; 
-}
-
-.container {
-    max-width: 1200px;
-    margin: 40px auto;
-    padding: 20px;
-    background-color: var(--card-background);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-h1 {
-    text-align: center;
-    color: var(--primary-color);
-    margin-bottom: 25px;
-}
-
-/* --- 4. Search Input and Controls --- */
+/* 2. Controls (now specifically for the search input) */
 .controls {
     margin-bottom: 20px;
     display: flex; 
     gap: 15px;
 }
 
-#searchInput {
-    flex-grow: 1; 
-    padding: 12px 15px;
-    border: 1px solid var(--input-border-color);
-    border-radius: 6px;
-    font-size: 16px;
-    box-sizing: border-box;
-    background-color: var(--card-background);
-    color: var(--text-color);
-    transition: border-color 0.3s;
+/* 3. New Contact Button */
+.contact-button {
+    /* Reuses the base styling of theme-button */
+    background-color: #6c757d; /* A muted gray color */
+}
+.contact-button:hover {
+    background-color: #5a6268;
 }
 
-#searchInput:focus {
-    border-color: var(--primary-color);
-    outline: none;
-}
-
-/* Theme Button and Back Button Styling */
-.theme-button, .back-button { 
-    padding: 12px 15px;
-    border: none;
-    border-radius: 6px;
-    background-color: var(--primary-color);
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s, opacity 0.3s;
-    white-space: nowrap;
-}
-.theme-button:hover, .back-button:hover {
-    opacity: 0.9;
-}
-
-
-/* --- 5. Status Message --- */
-#statusMessage {
-    padding: 10px;
-    margin: 15px 0;
-    border-radius: 4px;
-    font-weight: bold;
+/* 4. Contact Area Styling */
+.contact-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 30px 20px;
+    margin-top: 20px;
     text-align: center;
 }
-.info { background-color: #e3f2fd; color: #1e88e5; }
-.error { background-color: #ffebee; color: #d32f2f; }
-/* Dark Theme Status Message adjustments */
-body.dark-theme .info { background-color: #0b375b; color: #79b0e8; }
-body.dark-theme .error { background-color: #5d1717; color: #ff8a80; }
-
-
-/* --- 6. Table Styling --- */
-#bookTableContainer {
-    overflow-x: auto;
-    margin-top: 20px;
+.contact-box h3 {
+    margin-bottom: 15px;
+    font-size: 1.5em;
+    color: var(--primary-color);
 }
 
-#bookTable {
-    width: 100%;
-    border-collapse: collapse;
-    background-color: var(--card-background);
-}
-
-#bookTable th, #bookTable td {
+/* 5. Link Button Styling (Replicating ttkb button feel) */
+.contact-link-button {
+    width: 250px;
     padding: 12px 15px;
-    text-align: left;
-}
-
-#bookTable th {
-    background-color: var(--table-header-bg);
-    font-weight: 600;
-    color: var(--text-color);
-    position: sticky;
-    top: 0;
-    border-bottom: 2px solid var(--primary-color); 
-}
-
-#bookTable tbody tr {
-    border-bottom: 1px solid var(--border-color); 
-    transition: background-color 0.2s, opacity 0.3s;
-}
-
-#bookTable tbody tr:hover {
-    background-color: var(--hover-bg);
-    cursor: pointer; 
-}
-
-/* Styles for row hiding when definition is shown */
-.hidden-row {
-    display: none;
-}
-.selected-row {
-    background-color: var(--hover-bg) !important;
-}
-
-/* --- 7. Description/Definition Box Styling --- */
-.description-box {
-    margin-top: 30px;
-    padding: 20px;
-    border-left: 5px solid var(--primary-color);
-    background-color: var(--description-bg);
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.description-box h3 {
-    color: var(--text-color);
-    margin-top: 0;
-    margin-bottom: 10px;
-    font-size: 1.4em; 
-}
-
-.description-box p {
-    line-height: 1.6;
-    margin-top: 0;
-}
-
-/* Style for the new Example text */
-#exampleText {
-    margin-top: 15px;
-    padding-top: 10px;
-    border-top: 1px dashed var(--border-color);
-    font-style: italic;
-    font-size: 0.95em;
-    color: var(--text-color);
-}
-#exampleText::before {
-    content: "Example: ";
-    font-weight: bold;
-    font-style: normal;
-}
-
-/* Style for the back button inside the description box */
-.description-box .back-button {
-    margin-top: 15px;
-}
-/* --- Add this block to your styles.css --- */
-.copy-button {
-    background: none;
-    border: 1px solid var(--primary-color);
-    color: var(--primary-color);
-    padding: 4px 8px;
-    margin-left: 10px;
-    font-size: 0.8em;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.copy-button:hover {
-    background-color: var(--primary-color);
-    color: white;
-}
-
-/* Ensure list items for definitions are styled nicely */
-#definitionText ul {
-    list-style: disc;
-    padding-left: 20px;
-    margin-top: 10px;
-}
-
-#definitionText ul li {
-    margin-bottom: 5px;
-    line-height: 1.5;
-}
-/* Add/Modify this section in your styles.css */
-
-/* Style for the general English word copy button */
-.copy-word-button {
-    font-size: 0.8em; /* Slightly smaller */
-    padding: 4px 8px;
-    margin-left: 10px;
-}
-
-/* Style for the copy button next to each Malayalam meaning */
-.copy-meaning-button {
-    background: none;
     border: none;
-    color: var(--primary-color);
-    padding: 0 4px; /* Minimal padding */
-    margin-left: 8px;
-    font-size: 1em; 
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
     cursor: pointer;
-    opacity: 0.6; /* Make it subtle */
-    transition: opacity 0.2s;
+    transition: opacity 0.3s;
+    text-align: center;
+}
+.contact-link-button:hover {
+    opacity: 0.9;
+}
+.contact-box a {
+    text-decoration: none; /* Remove underline from the link wrapping the button */
 }
 
-.copy-meaning-button:hover {
-    opacity: 1;
-    background: none;
-    color: var(--primary-color);
-}
-
-/* Ensure list items for definitions are styled nicely (Already done, but repeating for context) */
-#definitionText ul {
-    list-style: disc;
-    padding-left: 20px;
-    margin-top: 10px;
-}
-
-#definitionText ul li {
-    margin-bottom: 5px;
-    line-height: 1.5;
-    /* Ensure the button aligns well with the text */
-    display: flex;
-    align-items: center; 
-}
+/* Specific Link Button Colors (based on your input) */
+.email-button { background-color: #dc3545; } /* Danger/Red for Email */
+.github-button { background-color: #343a40; } /* Dark/Black for GitHub */
+.instagram-button { background-color: #6f42c1; } /* Purple/Violet for Instagram */
+.close-button { background-color: #6c757d; margin-top: 15px; } /* Secondary/Gray for Close */
