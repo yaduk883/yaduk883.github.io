@@ -204,7 +204,7 @@ function handleWordSelect(groupedEntries, selectedRow) {
     const mainWord = groupedEntries[0].fromContent;
     
     // Title: English word with general copy button
-    titleElement.innerHTML = `📜 ${mainWord} <button class="copy-button copy-word-button" onclick="copyWord('${mainWord.replace(/'/g, "\\'")}')">Copy Word</button>`;
+    titleElement.innerHTML = `Copy ${mainWord} <button class="copy-button copy-word-button" onclick="copyWord('${mainWord.replace(/'/g, "\\'")}')">Copy Word</button>`;
     
     // Aggregate all Malayalam meanings and types
     let allMeanings = [];
