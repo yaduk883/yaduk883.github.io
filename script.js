@@ -1,5 +1,5 @@
 // ------------------------------------------
-// Configuration
+// Configuration (UNCHANGED)
 // ------------------------------------------
 // **** CORRECT PUBLIC CSV LINK ****
 const GOOGLE_SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1yXM-26NcSPpkrOMGFgvCRwYcFfzcaSSYGiD8mztHs_tJjUXLoFf7F-J2kwEWEw/pub?output=csv";
@@ -15,9 +15,6 @@ const THEME_TOGGLE_ID = 'themeToggle';
 const BACK_BUTTON_ID = 'backButton';
 const THEME_STORAGE_KEY = 'dictionaryTheme'; 
 
-// --- UPDATED COLUMN CONFIGURATION ---
-// 1. We change the 'key' to match your normalized headers (from_content -> fromContent, to_content -> toContent).
-// 2. We change the 'label' to display "English" and "Malayalam".
 const DISPLAY_COLUMNS = [
     { key: 'fromContent', label: 'English' }, 
     { key: 'toContent', label: 'Malayalam' }, 
@@ -27,9 +24,8 @@ let dictionaryData = [];
 let lastFilterResults = []; 
 
 // ------------------------------------------
-// Utility Functions
+// Utility Functions (UNCHANGED)
 // ------------------------------------------
-
 function debounce(func, delay) {
     let timeoutId;
     return function(...args) {
@@ -38,34 +34,24 @@ function debounce(func, delay) {
     };
 }
 
-/**
- * Normalizes a header string (e.g., "from_content") into camelCase (e.g., "fromContent").
- * The 'word' key used for the main entry and search logic is now mapped to 'fromContent'.
- */
 function normalizeHeader(header) {
     if (!header) return '';
-    
-    // 1. Remove quotes, remove punctuation/special chars, trim, and convert to lower case
     let normalized = header
         .replace(/"/g, '')
-        .replace(/[^a-zA-Z0-9_\s]/g, '') // Keep underscores for now
+        .replace(/[^a-zA-Z0-9_\s]/g, '')
         .trim()
         .toLowerCase();
-
-    // 2. Convert snake_case/space to camelCase
     normalized = normalized.replace(/(_\w)|(\s\w)/g, (match) => {
         return match.toUpperCase().replace(/[_ ]/g, '');
     });
-    
     return normalized;
 }
 
-
 // ------------------------------------------
-// Data Fetching and Parsing Functions
+// Data Fetching and Parsing Functions (UNCHANGED)
 // ------------------------------------------
-
 async function fetchCSVData() {
+    // ... (fetchCSVData implementation remains the same) ...
     const status = document.getElementById(STATUS_MESSAGE_ID);
     try {
         const response = await fetch(GOOGLE_SHEET_CSV); 
@@ -82,21 +68,16 @@ async function fetchCSVData() {
     }
 }
 
-/**
- * Parses the CSV text into an array of dictionary objects, using normalized keys.
- */
 function parseCSV(csvText) {
+    // ... (parseCSV implementation remains the same) ...
     const lines = csvText.trim().split('\n');
     if (lines.length === 0) return [];
     
     const rawHeaders = lines[0].split(',').map(header => header.replace(/"/g, '').trim());
     const headers = rawHeaders.map(normalizeHeader);
     
-    // --- CRITICAL CHECK FOR NEW HEADERS ---
-    // The script previously used 'word' and 'definition'. We must now use 'fromContent' and 'toContent'.
-    // We will map 'fromContent' to the primary search key.
     if (!headers.includes('fromContent') || !headers.includes('toContent')) {
-        console.error("Critical Error: 'fromContent' or 'toContent' columns not found after normalization. Check your Sheet headers.");
+        console.error("Critical Parsing Error: The script expects 'fromContent' and 'toContent' keys. Check your Sheet headers.");
         return [];
     }
 
@@ -112,7 +93,6 @@ function parseCSV(csvText) {
                 const cleanValue = value.replace(/^"|"$/g, '').trim(); 
                 entry[headers[index]] = cleanValue; 
             });
-            // Use 'fromContent' as the key to validate the entry
             if (entry.fromContent) { 
                 entry.id = i; 
                 data.push(entry);
@@ -123,10 +103,10 @@ function parseCSV(csvText) {
 }
 
 // ------------------------------------------
-// Theme Functions (Unchanged)
+// Theme Functions (UNCHANGED)
 // ------------------------------------------
-
 function toggleTheme() {
+    // ... (toggleTheme implementation remains the same) ...
     const body = document.body;
     const button = document.getElementById(THEME_TOGGLE_ID);
     
@@ -142,6 +122,7 @@ function toggleTheme() {
 }
 
 function loadTheme() {
+    // ... (loadTheme implementation remains the same) ...
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
     const button = document.getElementById(THEME_TOGGLE_ID);
     const body = document.body;
@@ -157,10 +138,10 @@ function loadTheme() {
 
 
 // ------------------------------------------
-// Table & Description Management
+// Table & Description Management (UNCHANGED)
 // ------------------------------------------
-
 function handleWordSelect(entry, selectedRow) {
+    // ... (handleWordSelect implementation remains the same) ...
     const tbody = document.getElementById(TABLE_BODY_ID);
     const backButton = document.getElementById(BACK_BUTTON_ID);
     const tableContainer = document.getElementById('bookTableContainer');
@@ -182,14 +163,11 @@ function handleWordSelect(entry, selectedRow) {
     const exampleElement = document.getElementById(EXAMPLE_TEXT_ID); 
     const area = document.getElementById(DESCRIPTION_AREA_ID);
 
-    // Use 'fromContent' for the main title
     titleElement.textContent = `📜 ${entry.fromContent}`;
     
-    // Use 'toContent' as the main definition body
     let definition = entry.toContent || "No Malayalam translation available."; 
     definitionElement.textContent = definition;
     
-    // Check if 'types' column exists and use it as 'Example'
     let example = entry.types || ""; 
     if (example) {
         exampleElement.textContent = example;
@@ -205,6 +183,7 @@ function handleWordSelect(entry, selectedRow) {
 }
 
 function resetTable() {
+    // ... (resetTable implementation remains the same) ...
     const tableContainer = document.getElementById('bookTableContainer');
     const tbody = document.getElementById(TABLE_BODY_ID);
     const area = document.getElementById(DESCRIPTION_AREA_ID);
@@ -224,6 +203,7 @@ function resetTable() {
 }
 
 function renderTable(dataToDisplay) {
+    // ... (renderTable implementation remains the same) ...
     const tableContainer = document.getElementById('bookTableContainer');
     const tbody = document.getElementById(TABLE_BODY_ID);
     const status = document.getElementById(STATUS_MESSAGE_ID);
@@ -260,14 +240,14 @@ function renderTable(dataToDisplay) {
 
     const currentQuery = document.getElementById(SEARCH_INPUT_ID).value.toLowerCase().trim();
     if (currentQuery) {
-        status.textContent = `🔎 ${dataToDisplay.length} word(s) found. Click a row to view the full definition.`;
+        status.textContent = `🔎 ${dataToDisplay.length} entry(s) found. Click a row to view the translation details.`;
         status.className = 'info';
     }
 }
 
 /**
  * Filters dictionaryData based on the search query.
- * Now searches against 'fromContent' (English) and 'toContent' (Malayalam).
+ * NOW USES .startsWith() for prefix matching, as requested.
  */
 function filterData(query) {
     const queryLower = query.toLowerCase().trim();
@@ -287,10 +267,10 @@ function filterData(query) {
     }
 
     const filtered = dictionaryData.filter(entry => {
-        // Search against the English content
-        const fromMatch = entry.fromContent && entry.fromContent.toLowerCase().includes(queryLower);
-        // Search against the Malayalam content
-        const toMatch = entry.toContent && entry.toContent.toLowerCase().includes(queryLower);
+        // Search must NOW start with the query (prefix match)
+        const fromMatch = entry.fromContent && entry.fromContent.toLowerCase().startsWith(queryLower);
+        // We will keep the Malayalam search as prefix match too for consistency
+        const toMatch = entry.toContent && entry.toContent.toLowerCase().startsWith(queryLower);
         
         return fromMatch || toMatch;
     });
@@ -300,10 +280,10 @@ function filterData(query) {
 
 
 // ------------------------------------------
-// Initialization (Main Execution)
+// Initialization (UNCHANGED)
 // ------------------------------------------
-
 function registerEventListeners() {
+    // ... (registerEventListeners implementation remains the same) ...
     document.getElementById(THEME_TOGGLE_ID).addEventListener('click', toggleTheme);
     document.getElementById(BACK_BUTTON_ID).addEventListener('click', resetTable);
     
@@ -314,6 +294,7 @@ function registerEventListeners() {
 }
 
 async function init() {
+    // ... (init implementation remains the same) ...
     loadTheme();
     registerEventListeners();
     
@@ -335,7 +316,7 @@ async function init() {
         document.getElementById(TABLE_BODY_ID).innerHTML = ''; 
         tableContainer.style.display = 'none';
 
-        status.textContent = `Successfully loaded ${dictionaryData.length} entries. Start typing above to search in English or Malayalam.`;
+        status.textContent = `Successfully loaded ${dictionaryData.length} entries. Start typing above to search.`;
         status.className = 'info';
     } else {
         status.textContent = `⚠️ Failed to parse dictionary entries. Verify your sheet has 'from_content' and 'to_content' headers.`;
