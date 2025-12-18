@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>📖 Yadu's Dictionary</title>
-    
-    <link rel="icon" type="image/png" href="favicon.png"> 
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -25,40 +23,31 @@
 
         <div id="contactArea" class="description-box contact-box" style="display:none;">
             <h3>📬 Contact</h3>
-            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=yaduk883@gmail.com" target="_blank">
-                <button class="contact-link-button email-button">📧 Email</button>
-            </a>
-            <a href="https://github.com/yaduk883" target="_blank">
-                <button class="contact-link-button github-button">🐙 GitHub</button>
-            </a>
-            <a href="https://instagram.com/ig.yadu/" target="_blank">
-                <button class="contact-link-button instagram-button">📸 Instagram</button>
-            </a>
+            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=yaduk883@gmail.com" target="_blank"><button class="contact-link-button email-button">📧 Email</button></a>
+            <a href="https://github.com/yaduk883" target="_blank"><button class="contact-link-button github-button">🐙 GitHub</button></a>
+            <a href="https://instagram.com/ig.yadu/" target="_blank"><button class="contact-link-button instagram-button">📸 Instagram</button></a>
             <button onclick="contactMe()" class="contact-link-button close-button">Close</button>
         </div>
         
         <div id="descriptionArea" class="description-box" style="display:none;">
             <h3 id="descriptionTitle"></h3>
-            <p id="definitionText"></p>
+            <div id="definitionText"></div>
             <p id="exampleText" class="example-text"></p>
-            <button id="backButton" class="back-button" style="display:none;">← Back to Results</button>
+            <button id="backButton" class="back-button">← Back to Results</button>
         </div>
 
-        <div id="bookTableContainer">
+        <div id="bookTableContainer" style="display:none;">
             <table id="bookTable">
                 <thead>
                     <tr>
-                        <th scope="col">English</th> 
-                        <th scope="col">Malayalam</th> 
+                        <th>English</th> 
+                        <th>Malayalam</th> 
                     </tr>
                 </thead>
-                <tbody id="bookTableBody">
-                    </tbody>
+                <tbody id="bookTableBody"></tbody>
             </table>
         </div>
-        
     </div>
-    
-    <script src="script.js" defer></script>
+    <script src="script.js"></script>
 </body>
 </html>
