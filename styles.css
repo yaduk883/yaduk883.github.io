@@ -1,66 +1,136 @@
-/* --- Add these styles to your styles.css --- */
+/* --- 1. CSS Variables & Themes --- */
+:root {
+    --primary-color: #1e88e5; 
+    --background-color: #f4f7f6;
+    --card-background: #ffffff;
+    --text-color: #333;
+    --border-color: #eee;
+    --input-border-color: #ccc;
+    --table-header-bg: #f0f0f0;
+    --hover-bg: #eef7ff;
+    --description-bg: #f9f9f9;
+}
 
-/* 1. Control Bar Layout */
+body.dark-theme {
+    --background-color: #1e1e1e;
+    --card-background: #2d2d2d;
+    --text-color: #f0f0f0;
+    --border-color: #444;
+    --input-border-color: #555;
+    --table-header-bg: #3c3c3c;
+    --hover-bg: #4a4a4a;
+    --description-bg: #3a3a3a;
+}
+
+/* --- 2. Base Layout --- */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: var(--card-background);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+h1 { text-align: center; color: var(--primary-color); }
+
+/* --- 3. Controls & Buttons --- */
 .controls-bar {
     display: flex;
     justify-content: space-between;
-    gap: 15px;
     margin-bottom: 15px;
 }
 
-/* 2. Controls (now specifically for the search input) */
-.controls {
-    margin-bottom: 20px;
-    display: flex; 
-    gap: 15px;
+.theme-button, .contact-button, .back-button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    color: white;
+    background-color: var(--primary-color);
 }
 
-/* 3. New Contact Button */
-.contact-button {
-    /* Reuses the base styling of theme-button */
-    background-color: #6c757d; /* A muted gray color */
-}
-.contact-button:hover {
-    background-color: #5a6268;
+.contact-button { background-color: #6c757d; }
+
+#searchInput {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--input-border-color);
+    border-radius: 6px;
+    background-color: var(--card-background);
+    color: var(--text-color);
+    box-sizing: border-box;
 }
 
-/* 4. Contact Area Styling */
+/* --- 4. Dictionary Elements --- */
+.description-box {
+    margin-top: 20px;
+    padding: 20px;
+    border-left: 5px solid var(--primary-color);
+    background-color: var(--description-bg);
+    border-radius: 4px;
+}
+
+.english-title-word { font-weight: bold; font-size: 1.4em; }
+
+.copy-button {
+    padding: 4px 8px;
+    margin-left: 10px;
+    font-size: 0.8em;
+    cursor: pointer;
+    border-radius: 4px;
+    border: 1px solid var(--primary-color);
+    background: none;
+    color: var(--primary-color);
+}
+
+/* --- 5. Table Styling --- */
+#bookTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+#bookTable th, #bookTable td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#bookTable th { background-color: var(--table-header-bg); }
+#bookTable tbody tr:hover { background-color: var(--hover-bg); cursor: pointer; }
+
+/* --- 6. Contact Area Buttons --- */
 .contact-box {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 10px;
-    padding: 30px 20px;
-    margin-top: 20px;
-    text-align: center;
-}
-.contact-box h3 {
-    margin-bottom: 15px;
-    font-size: 1.5em;
-    color: var(--primary-color);
 }
 
-/* 5. Link Button Styling (Replicating ttkb button feel) */
 .contact-link-button {
     width: 250px;
-    padding: 12px 15px;
+    padding: 12px;
     border: none;
     border-radius: 6px;
     color: white;
     font-weight: bold;
     cursor: pointer;
-    transition: opacity 0.3s;
-    text-align: center;
-}
-.contact-link-button:hover {
-    opacity: 0.9;
-}
-.contact-box a {
-    text-decoration: none; /* Remove underline from the link wrapping the button */
 }
 
-/* Specific Link Button Colors (based on your input) */
-.email-button { background-color: #dc3545; } /* Danger/Red for Email */
-.github-button { background-color: #343a40; } /* Dark/Black for GitHub */
-.instagram-button { background-color: #6f42c1; } /* Purple/Violet for Instagram */
-.close-button { background-color: #6c757d; margin-top: 15px; } /* Secondary/Gray for Close */
+.email-button { background-color: #dc3545; }
+.github-button { background-color: #343a40; }
+.instagram-button { background-color: #6f42c1; }
+.close-button { background-color: #6c757d; }
+
+.info { text-align: center; font-weight: bold; padding: 10px; color: var(--primary-color); }
