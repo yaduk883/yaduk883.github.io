@@ -77,10 +77,12 @@ h1 {
 
 .theme-button:active, .save-btn:active { transform: scale(0.95); }
 
+/* Button Color Variants */
 .language-select { background-color: #4caf50; appearance: none; }
 .admin-btn { background-color: #ff9800; }
 .contact-button { background-color: #6c757d; }
 .save-btn { background-color: #2e7d32; width: 100%; margin-top: 10px; }
+.back-button { background-color: #6c757d; margin-top: 15px; }
 
 /* --- 4. Search Input --- */
 #searchInput {
@@ -100,7 +102,7 @@ h1 {
     border-color: var(--primary-color);
 }
 
-/* --- 5. Info & Status Messages --- */
+/* --- 5. Status Messages --- */
 .info {
     text-align: center;
     padding: 20px;
@@ -110,12 +112,16 @@ h1 {
 }
 
 /* --- 6. Results Table --- */
+#bookTableContainer {
+    margin-top: 20px;
+    overflow-x: auto;
+}
+
 #bookTable {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
-    overflow: hidden;
     border-radius: 8px;
+    overflow: hidden;
 }
 
 #bookTable th {
@@ -138,7 +144,7 @@ h1 {
     cursor: pointer;
 }
 
-/* --- 7. Description & Admin Boxes --- */
+/* --- 7. Dictionary Entry Boxes --- */
 .description-box {
     margin: 20px 0;
     padding: 25px;
@@ -176,7 +182,17 @@ h1 {
     color: white;
 }
 
-/* --- 8. Contact Section --- */
+/* --- 8. Admin & Contact Specifics --- */
+.admin-box { border-color: #ff9800; }
+.admin-form { display: flex; flex-direction: column; gap: 10px; }
+.admin-form input { 
+    padding: 12px; 
+    border-radius: 6px; 
+    border: 1px solid var(--input-border-color); 
+    background: var(--card-background); 
+    color: var(--text-color);
+}
+
 .contact-box {
     display: flex;
     flex-direction: column;
@@ -195,7 +211,10 @@ h1 {
     cursor: pointer;
     text-decoration: none;
     text-align: center;
+    transition: opacity 0.2s;
 }
+
+.contact-link-button:hover { opacity: 0.9; }
 
 .email-button { background-color: #d44638; }
 .github-button { background-color: #24292e; }
@@ -209,4 +228,5 @@ h1 {
     .controls-bar { flex-direction: column; }
     .theme-button, .contact-button, .language-select { width: 100%; }
     #bookTable th, #bookTable td { padding: 12px 10px; font-size: 0.9rem; }
+    .english-title-word { font-size: 1.4rem; }
 }
