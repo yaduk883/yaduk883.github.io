@@ -5,7 +5,7 @@ const ADMIN_API_URL = "https://script.google.com/macros/s/AKfycby6ZYrMlmhDhjm5G2
 
 const DICTIONARIES = {
     MALAYALAM: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1yXM-26NcSPpkrOMGFgvCRwYcFfzcaSSYGiD8mztHs_tJjUXLoFf7F-J2kwEWEw/pub?output=csv",
-    BODO: "PASTE_YOUR_BODO_CSV_LINK_HERE" 
+    BODO: "https://docs.google.com/spreadsheets/d/1Hyh9tIqKHYt6F3JhRjJ9QDZYx-cp7gkV/edit?usp=sharing&ouid=107803050628093341974&rtpof=true&sd=true" 
 };
 
 let currentLanguage = "MALAYALAM";
