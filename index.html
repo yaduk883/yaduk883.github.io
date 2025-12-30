@@ -3,44 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📖 Dictionary Pro</title>
+    <title>📖 Multi-Language Dictionary</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>📖 Dictionary Pro</h1>
+        <h1>📖 Multi-Language Dictionary</h1>
         
         <div class="controls-bar">
-            <select id="languageSelect" class="theme-button" style="background-color: #4caf50;">
+            <select id="languageSelect" class="language-select">
                 <option value="MALAYALAM">English - Malayalam</option>
                 <option value="BODO">English - Bodo</option>
             </select>
-            <button id="adminLoginBtn" class="theme-button" style="background-color: #ff9800;">🔑 Admin</button>
+            <button id="adminLoginBtn" class="theme-button admin-btn">🔑 Admin</button>
             <button id="contactButton" class="contact-button">📞 Contact</button>
             <button id="themeToggle" class="theme-button">☀️ Theme</button>
         </div>
         
-        <div id="adminPanel" class="description-box" style="display:none; border-color: #ff9800;">
-            <h3>🛠 Admin: Add New Word</h3>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div id="adminPanel" class="description-box admin-box" style="display:none;">
+            <h3 id="adminPanelTitle">🛠 Admin Panel</h3>
+            <div class="admin-form">
                 <input type="text" id="newEnglish" placeholder="English Word">
                 <input type="text" id="newTranslation" placeholder="Translation">
-                <input type="text" id="newType" placeholder="Explanation/Type">
-                <button onclick="saveNewWord()" class="theme-button" style="background-color: #4caf50;">Save to Sheet</button>
-                <button onclick="logout()" class="back-button">Logout</button>
+                <input type="text" id="newType" placeholder="Explanation / Part of Speech">
+                <button onclick="saveNewWord()" class="save-btn">Save to Sheet</button>
+                <button onclick="logout()" class="back-button" style="background-color: #666; width: 100%; margin-top: 5px;">Logout</button>
             </div>
         </div>
 
         <div id="contactArea" class="description-box contact-box" style="display:none;">
             <h3>📬 Contact</h3>
-            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=yaduk883@gmail.com" target="_blank"><button class="contact-link-button email-button">📧 Email</button></a>
-            <a href="https://github.com/yaduk883" target="_blank"><button class="contact-link-button github-button">🐙 GitHub</button></a>
-            <a href="https://instagram.com/ig.yadu/" target="_blank"><button class="contact-link-button instagram-button">📸 Instagram</button></a>
+            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=yaduk883@gmail.com" target="_blank" class="contact-link-button email-button">📧 Email</a>
+            <a href="https://github.com/yaduk883" target="_blank" class="contact-link-button github-button">🐙 GitHub</a>
+            <a href="https://instagram.com/ig.yadu/" target="_blank" class="contact-link-button instagram-button">📸 Instagram</a>
             <button onclick="contactMe()" class="contact-link-button close-button">Close</button>
         </div>
 
-        <div id="searchArea" class="controls">
-            <input type="text" id="searchInput" placeholder="🔍 Search English or Bodo/Malayalam Word...">
+        <div id="searchArea">
+            <input type="text" id="searchInput" placeholder="🔍 Search for a Word...">
         </div>
 
         <p id="statusMessage" class="info">Loading dictionary...</p>
@@ -48,12 +48,17 @@
         <div id="descriptionArea" class="description-box" style="display:none;">
             <h3 id="descriptionTitle"></h3>
             <div id="definitionText"></div>
-            <button id="backButton" class="back-button" style="margin-top: 15px;">← Back to Results</button>
+            <button id="backButton" class="back-button">← Back to Results</button>
         </div>
 
         <div id="bookTableContainer" style="display:none;">
             <table id="bookTable">
-                <thead><tr><th>English</th><th>Translation</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>English</th>
+                        <th>Translation</th>
+                    </tr>
+                </thead>
                 <tbody id="bookTableBody"></tbody>
             </table>
         </div>
