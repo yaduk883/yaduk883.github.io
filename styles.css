@@ -1,4 +1,4 @@
-/* --- 1. Themes & Variables --- */
+/* --- 1. Variables & Themes --- */
 :root {
     --primary-color: #1e88e5; 
     --background-color: #f4f7f6;
@@ -22,9 +22,9 @@ body.dark-theme {
     --description-bg: #3a3a3a;
 }
 
-/* --- 2. Layout --- */
+/* --- 2. Base Style --- */
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0; padding: 0;
     background-color: var(--background-color);
     color: var(--text-color);
@@ -32,63 +32,75 @@ body {
 }
 
 .container {
-    max-width: 800px;
+    max-width: 850px;
     margin: 40px auto;
-    padding: 20px;
+    padding: 25px;
     background-color: var(--card-background);
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
+h1 { text-align: center; color: var(--primary-color); margin-bottom: 25px; }
+
+/* --- 3. Controls & Admin --- */
 .controls-bar {
-    display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+    display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;
 }
 
-.theme-button, .contact-button, .back-button {
-    padding: 10px 15px; border: none; border-radius: 6px;
+.theme-button, .contact-button, .back-button, .save-btn {
+    padding: 10px 18px; border: none; border-radius: 6px;
     cursor: pointer; font-weight: bold; color: white;
     background-color: var(--primary-color);
+    transition: transform 0.1s;
 }
 
+.language-select { background-color: #4caf50; color: white; }
+.admin-btn { background-color: #ff9800; }
 .contact-button { background-color: #6c757d; }
+.save-btn { background-color: #4caf50; margin-top: 10px; }
 
 #searchInput {
-    width: 100%; padding: 12px; border-radius: 6px;
+    width: 100%; padding: 14px; border-radius: 8px; margin-top: 10px;
     border: 1px solid var(--input-border-color);
     background: var(--card-background); color: var(--text-color);
+    font-size: 1rem;
 }
 
-/* --- 3. Dictionary & Admin --- */
+/* --- 4. Admin & Contact Boxes --- */
 .description-box {
-    margin-top: 20px; padding: 20px;
+    margin: 20px 0; padding: 20px;
     border-left: 5px solid var(--primary-color);
     background-color: var(--description-bg);
+    border-radius: 4px;
 }
 
-#adminPanel input {
-    padding: 10px; border: 1px solid var(--input-border-color);
-    border-radius: 4px; background: var(--card-background); color: var(--text-color);
-}
+.admin-box { border-color: #ff9800; }
+.admin-form { display: flex; flex-direction: column; gap: 10px; }
+.admin-form input { padding: 10px; border-radius: 4px; border: 1px solid var(--input-border-color); }
 
-.english-title-word { font-weight: bold; font-size: 1.4em; }
-
-.copy-button {
-    padding: 4px 8px; margin-left: 10px; font-size: 0.8em;
-    cursor: pointer; border: 1px solid var(--primary-color);
-    color: var(--primary-color); background: none; border-radius: 4px;
-}
-
-/* --- 4. Contact Buttons --- */
 .contact-box { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.contact-link-button { width: 250px; padding: 12px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; }
+.contact-link-button { width: 260px; padding: 12px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; }
 .email-button { background-color: #dc3545; }
 .github-button { background-color: #343a40; }
 .instagram-button { background-color: #6f42c1; }
-.close-button { background-color: #6c757d; }
+.close-button { background-color: #6c757d; margin-top: 10px; }
 
-/* --- 5. Table --- */
+/* --- 5. Table & Results --- */
 #bookTable { width: 100%; border-collapse: collapse; margin-top: 20px; }
-#bookTable th, #bookTable td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+#bookTable th, #bookTable td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
 #bookTable th { background-color: var(--table-header-bg); }
 #bookTable tr:hover { background-color: var(--hover-bg); cursor: pointer; }
-.info { text-align: center; padding: 10px; font-weight: bold; color: var(--primary-color); }
+
+.english-title-word { font-weight: bold; font-size: 1.5em; }
+.copy-button {
+    padding: 5px 10px; margin-left: 10px; font-size: 0.8em;
+    cursor: pointer; border: 1px solid var(--primary-color);
+    color: var(--primary-color); background: none; border-radius: 4px;
+}
+.info { text-align: center; padding: 15px; font-weight: 500; color: var(--primary-color); }
+
+#definitionText ul { list-style: none; padding: 0; margin-top: 15px; }
+#definitionText li { 
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px; border-bottom: 1px solid var(--border-color);
+}
