@@ -3,23 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> മലയാളം നിഘണ്ടു</title>
+    <title>📖 Dictionary Pro</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1> മലയാളം നിഘണ്ടു</h1>
+        <h1>📖 Dictionary Pro</h1>
         
         <div class="controls-bar">
-            <button id="themeToggle" class="theme-button">☀️ Switch to Dark</button>
+            <select id="languageSelect" class="theme-button" style="background-color: #4caf50;">
+                <option value="MALAYALAM">English - Malayalam</option>
+                <option value="BODO">English - Bodo</option>
+            </select>
+            <button id="adminLoginBtn" class="theme-button" style="background-color: #ff9800;">🔑 Admin</button>
             <button id="contactButton" class="contact-button">📞 Contact</button>
+            <button id="themeToggle" class="theme-button">☀️ Theme</button>
         </div>
         
-        <div id="searchArea" class="controls">
-            <input type="text" id="searchInput" placeholder="🔍 Search for a Word...">
+        <div id="adminPanel" class="description-box" style="display:none; border-color: #ff9800;">
+            <h3>🛠 Admin: Add New Word</h3>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <input type="text" id="newEnglish" placeholder="English Word">
+                <input type="text" id="newTranslation" placeholder="Translation">
+                <input type="text" id="newType" placeholder="Type (e.g. Noun, Verb)">
+                <button onclick="saveNewWord()" class="theme-button" style="background-color: #4caf50;">Save to Sheet</button>
+                <button onclick="logout()" class="back-button">Logout</button>
+            </div>
         </div>
-
-        <p id="statusMessage" class="info">Start typing above to search for a word.</p>
 
         <div id="contactArea" class="description-box contact-box" style="display:none;">
             <h3>📬 Contact</h3>
@@ -28,7 +38,13 @@
             <a href="https://instagram.com/ig.yadu/" target="_blank"><button class="contact-link-button instagram-button">📸 Instagram</button></a>
             <button onclick="contactMe()" class="contact-link-button close-button">Close</button>
         </div>
-        
+
+        <div id="searchArea" class="controls">
+            <input type="text" id="searchInput" placeholder="🔍 Search for a Word...">
+        </div>
+
+        <p id="statusMessage" class="info">Loading dictionary data...</p>
+
         <div id="descriptionArea" class="description-box" style="display:none;">
             <h3 id="descriptionTitle"></h3>
             <div id="definitionText"></div>
@@ -41,7 +57,7 @@
                 <thead>
                     <tr>
                         <th>English</th> 
-                        <th>Malayalam</th> 
+                        <th>Translation</th> 
                     </tr>
                 </thead>
                 <tbody id="bookTableBody"></tbody>
