@@ -25,7 +25,7 @@
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 <input type="text" id="newEnglish" placeholder="English Word">
                 <input type="text" id="newTranslation" placeholder="Translation">
-                <input type="text" id="newType" placeholder="Type (Noun/Verb)">
+                <input type="text" id="newType" placeholder="Explanation/Type">
                 <button onclick="saveNewWord()" class="theme-button" style="background-color: #4caf50;">Save to Sheet</button>
                 <button onclick="logout()" class="back-button">Logout</button>
             </div>
@@ -40,7 +40,7 @@
         </div>
 
         <div id="searchArea" class="controls">
-            <input type="text" id="searchInput" placeholder="🔍 Search for a Word...">
+            <input type="text" id="searchInput" placeholder="🔍 Search English or Bodo/Malayalam Word...">
         </div>
 
         <p id="statusMessage" class="info">Loading dictionary...</p>
@@ -48,7 +48,7 @@
         <div id="descriptionArea" class="description-box" style="display:none;">
             <h3 id="descriptionTitle"></h3>
             <div id="definitionText"></div>
-            <button id="backButton" class="back-button">← Back</button>
+            <button id="backButton" class="back-button" style="margin-top: 15px;">← Back to Results</button>
         </div>
 
         <div id="bookTableContainer" style="display:none;">
