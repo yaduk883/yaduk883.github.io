@@ -5,7 +5,7 @@ const ADMIN_API_URL = "https://script.google.com/macros/s/AKfycby6ZYrMlmhDhjm5G2
 
 const DICTIONARIES = {
     MALAYALAM: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1yXM-26NcSPpkrOMGFgvCRwYcFfzcaSSYGiD8mztHs_tJjUXLoFf7F-J2kwEWEw/pub?output=csv",
-    BODO: "https://docs.google.com/spreadsheets/d/1Hyh9tIqKHYt6F3JhRjJ9QDZYx-cp7gkV/edit?usp=sharing&ouid=107803050628093341974&rtpof=true&sd=true" 
+    BODO: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQLtdSVACMT2lwL9zKyOMuhrFiIpzKrZSjR0leijaTbBV5akRBlQCNwa8zVRxqvqA/pub?output=csv" 
 };
 
 let currentLanguage = "MALAYALAM";
@@ -28,13 +28,17 @@ async function handleLogin() {
             body: JSON.stringify({ action: "login", user, pass })
         });
         const result = await response.json();
+        
         if (result.success) {
             document.getElementById('adminPanel').style.display = 'block';
             alert("✅ Welcome Admin!");
         } else {
-            alert("❌ Incorrect Credentials.");
+            alert("❌ Login Failed: Incorrect credentials. Check your Google Apps Script Code.gs variables.");
         }
-    } catch (e) { alert("Server connection failed."); }
+    } catch (e) { 
+        console.error("Login Error:", e);
+        alert("⚠️ Connection failed. \n1. Ensure your Web App is deployed for 'Anyone'.\n2. Ensure you authorised the script in the Apps Script editor."); 
+    }
 }
 
 async function saveNewWord() {
@@ -74,7 +78,7 @@ function contactMe() {
 
 function copyWord(text) {
     navigator.clipboard.writeText(text).then(() => {
-        alert("Copied to clipboard!");
+        alert("Copied: " + text);
     });
 }
 
@@ -92,9 +96,9 @@ function debounce(func, delay) {
 
 async function fetchCSVData() {
     const url = DICTIONARIES[currentLanguage];
-    if (url.startsWith("PASTE")) return null;
     try {
         const response = await fetch(url);
+        if (!response.ok) throw new Error();
         return await response.text();
     } catch (e) { return null; }
 }
@@ -107,9 +111,11 @@ function parseCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(normalizeHeader);
     
-    // Find the correct column indexes automatically
-    const fromIdx = headers.findIndex(h => h.includes('from'));
-    const toIdx = headers.findIndex(h => h.includes('to'));
+    // Automatically find columns by your headings
+    const fromIdx = headers.findIndex(h => h.includes('english') || h.includes('from'));
+    const toIdx = headers.findIndex(h => h.includes('meaning') || h.includes('to'));
+    const expIdx = headers.findIndex(h => h.includes('explanation'));
+    const transIdx = headers.findIndex(h => h.includes('transliteration'));
     
     const data = [];
     const csvRegex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/; 
@@ -119,7 +125,9 @@ function parseCSV(csvText) {
         if (values[fromIdx]) {
             data.push({
                 fromContent: values[fromIdx].replace(/^"|"$/g, '').trim(),
-                toContent: values[toIdx] ? values[toIdx].replace(/^"|"$/g, '').trim() : ''
+                toContent: values[toIdx] ? values[toIdx].replace(/^"|"$/g, '').trim() : '',
+                explanation: expIdx !== -1 && values[expIdx] ? values[expIdx].replace(/^"|"$/g, '').trim() : '',
+                transliteration: transIdx !== -1 && values[transIdx] ? values[transIdx].replace(/^"|"$/g, '').trim() : ''
             });
         }
     }
@@ -183,14 +191,16 @@ function showDetails(word) {
     
     title.innerHTML = `📜 <span class="english-title-word">${word}</span> <button class="copy-button" onclick="copyWord('${word}')">Copy Word</button>`;
     
-    const listItems = group.map(e => `
-        <li>
-            <span>${e.toContent}</span>
-            <button class="copy-button" onclick="copyWord('${e.toContent}')">📋</button>
-        </li>
+    // Display Bodo Specific fields (Explanation/Transliteration)
+    const detailHTML = group.map(e => `
+        <div style="margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #ddd;">
+            <p><strong>Translation:</strong> ${e.toContent} <button class="copy-button" onclick="copyWord('${e.toContent}')">📋</button></p>
+            ${e.transliteration ? `<p><em>Pronunciation:</em> ${e.transliteration}</p>` : ''}
+            ${e.explanation ? `<p><strong>Explanation:</strong> ${e.explanation}</p>` : ''}
+        </div>
     `).join('');
     
-    def.innerHTML = `<ul>${listItems}</ul>`;
+    def.innerHTML = detailHTML;
     document.getElementById('descriptionArea').style.display = 'block';
 }
 
@@ -225,5 +235,4 @@ document.getElementById('backButton').onclick = () => {
 };
 document.getElementById('searchInput').oninput = debounce((e) => filterData(e.target.value), 300);
 
-// Startup
 init();
