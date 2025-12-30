@@ -244,7 +244,7 @@ function handleWordSelect(groupedEntries, selectedRow) {
             const escapedMeaning = meaning.replace(/'/g, "\\'");
             return `<li>
                 ${meaning} 
-                <button class="copy-button copy-meaning-button" onclick="copyWord('${escapedMeaning}')">📋</button>
+                <button class="copy-button copy-meaning-button" onclick="copyWord('${escapedMeaning}')">🗍</button>
             </li>`;
         });
         meaningListHTML = `<ul>${listItems.join('')}</ul>`;
