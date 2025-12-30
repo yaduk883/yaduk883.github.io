@@ -1,4 +1,4 @@
-/* --- 1. Variables & Themes --- */
+/* --- 1. CSS Variables & Themes --- */
 :root {
     --primary-color: #1e88e5; 
     --background-color: #f4f7f6;
@@ -9,98 +9,204 @@
     --table-header-bg: #f0f0f0;
     --hover-bg: #eef7ff;
     --description-bg: #f9f9f9;
+    --shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
 body.dark-theme {
-    --background-color: #1e1e1e;
-    --card-background: #2d2d2d;
-    --text-color: #f0f0f0;
-    --border-color: #444;
-    --input-border-color: #555;
-    --table-header-bg: #3c3c3c;
-    --hover-bg: #4a4a4a;
-    --description-bg: #3a3a3a;
+    --background-color: #121212;
+    --card-background: #1e1e1e;
+    --text-color: #e0e0e0;
+    --border-color: #333;
+    --input-border-color: #444;
+    --table-header-bg: #2d2d2d;
+    --hover-bg: #2c3e50;
+    --description-bg: #252525;
+    --shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
-/* --- 2. Base Style --- */
+/* --- 2. Base Layout --- */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0; padding: 0;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 20px;
     background-color: var(--background-color);
     color: var(--text-color);
-    transition: 0.3s;
+    transition: all 0.3s ease;
+    line-height: 1.6;
 }
 
 .container {
     max-width: 850px;
-    margin: 40px auto;
-    padding: 25px;
+    margin: 20px auto;
+    padding: 30px;
     background-color: var(--card-background);
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
 }
 
-h1 { text-align: center; color: var(--primary-color); margin-bottom: 25px; }
+h1 {
+    text-align: center;
+    color: var(--primary-color);
+    margin-bottom: 30px;
+    font-size: 2rem;
+}
 
-/* --- 3. Controls & Admin --- */
+/* --- 3. Controls Bar & Buttons --- */
 .controls-bar {
-    display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;
+    display: flex;
+    gap: 12px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
-.theme-button, .contact-button, .back-button, .save-btn {
-    padding: 10px 18px; border: none; border-radius: 6px;
-    cursor: pointer; font-weight: bold; color: white;
+.theme-button, .contact-button, .back-button, .save-btn, .language-select {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    color: white;
     background-color: var(--primary-color);
-    transition: transform 0.1s;
+    transition: transform 0.2s, background-color 0.2s;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.language-select { background-color: #4caf50; color: white; }
+.theme-button:active, .save-btn:active { transform: scale(0.95); }
+
+.language-select { background-color: #4caf50; appearance: none; }
 .admin-btn { background-color: #ff9800; }
 .contact-button { background-color: #6c757d; }
-.save-btn { background-color: #4caf50; margin-top: 10px; }
+.save-btn { background-color: #2e7d32; width: 100%; margin-top: 10px; }
 
+/* --- 4. Search Input --- */
 #searchInput {
-    width: 100%; padding: 14px; border-radius: 8px; margin-top: 10px;
-    border: 1px solid var(--input-border-color);
-    background: var(--card-background); color: var(--text-color);
-    font-size: 1rem;
+    width: 100%;
+    padding: 16px;
+    border-radius: 12px;
+    border: 2px solid var(--input-border-color);
+    background: var(--card-background);
+    color: var(--text-color);
+    font-size: 1.1rem;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+    outline: none;
 }
 
-/* --- 4. Admin & Contact Boxes --- */
+#searchInput:focus {
+    border-color: var(--primary-color);
+}
+
+/* --- 5. Info & Status Messages --- */
+.info {
+    text-align: center;
+    padding: 20px;
+    font-weight: 500;
+    color: var(--primary-color);
+    font-style: italic;
+}
+
+/* --- 6. Results Table --- */
+#bookTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+#bookTable th {
+    background-color: var(--table-header-bg);
+    color: var(--text-color);
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+}
+
+#bookTable th, #bookTable td {
+    padding: 18px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#bookTable tr:hover {
+    background-color: var(--hover-bg);
+    cursor: pointer;
+}
+
+/* --- 7. Description & Admin Boxes --- */
 .description-box {
-    margin: 20px 0; padding: 20px;
-    border-left: 5px solid var(--primary-color);
+    margin: 20px 0;
+    padding: 25px;
+    border-left: 6px solid var(--primary-color);
     background-color: var(--description-bg);
-    border-radius: 4px;
+    border-radius: 8px;
+    animation: fadeIn 0.4s ease;
 }
 
-.admin-box { border-color: #ff9800; }
-.admin-form { display: flex; flex-direction: column; gap: 10px; }
-.admin-form input { padding: 10px; border-radius: 4px; border: 1px solid var(--input-border-color); }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
-.contact-box { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.contact-link-button { width: 260px; padding: 12px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; }
-.email-button { background-color: #dc3545; }
-.github-button { background-color: #343a40; }
-.instagram-button { background-color: #6f42c1; }
-.close-button { background-color: #6c757d; margin-top: 10px; }
+.english-title-word {
+    font-weight: 800;
+    font-size: 1.8rem;
+    color: var(--primary-color);
+}
 
-/* --- 5. Table & Results --- */
-#bookTable { width: 100%; border-collapse: collapse; margin-top: 20px; }
-#bookTable th, #bookTable td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
-#bookTable th { background-color: var(--table-header-bg); }
-#bookTable tr:hover { background-color: var(--hover-bg); cursor: pointer; }
-
-.english-title-word { font-weight: bold; font-size: 1.5em; }
 .copy-button {
-    padding: 5px 10px; margin-left: 10px; font-size: 0.8em;
-    cursor: pointer; border: 1px solid var(--primary-color);
-    color: var(--primary-color); background: none; border-radius: 4px;
+    padding: 6px 12px;
+    margin-left: 10px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    background: transparent;
+    border-radius: 6px;
+    transition: 0.2s;
 }
-.info { text-align: center; padding: 15px; font-weight: 500; color: var(--primary-color); }
 
-#definitionText ul { list-style: none; padding: 0; margin-top: 15px; }
-#definitionText li { 
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 8px; border-bottom: 1px solid var(--border-color);
+.copy-button:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* --- 8. Contact Section --- */
+.contact-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.contact-link-button {
+    width: 100%;
+    max-width: 300px;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+}
+
+.email-button { background-color: #d44638; }
+.github-button { background-color: #24292e; }
+.instagram-button { background-color: #e1306c; }
+.close-button { background-color: #666; }
+
+/* --- 9. Mobile Responsiveness --- */
+@media (max-width: 600px) {
+    .container { padding: 15px; margin: 10px; }
+    h1 { font-size: 1.5rem; }
+    .controls-bar { flex-direction: column; }
+    .theme-button, .contact-button, .language-select { width: 100%; }
+    #bookTable th, #bookTable td { padding: 12px 10px; font-size: 0.9rem; }
 }
