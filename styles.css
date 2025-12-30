@@ -1,4 +1,4 @@
-/* --- 1. CSS Variables & Themes --- */
+/* --- 1. Themes & Variables --- */
 :root {
     --primary-color: #1e88e5; 
     --background-color: #f4f7f6;
@@ -22,14 +22,13 @@ body.dark-theme {
     --description-bg: #3a3a3a;
 }
 
-/* --- 2. Base Layout --- */
+/* --- 2. Layout --- */
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    margin: 0;
-    padding: 0;
+    margin: 0; padding: 0;
     background-color: var(--background-color);
     color: var(--text-color);
-    transition: background-color 0.3s, color 0.3s;
+    transition: 0.3s;
 }
 
 .container {
@@ -38,99 +37,58 @@ body {
     padding: 20px;
     background-color: var(--card-background);
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-h1 { text-align: center; color: var(--primary-color); }
-
-/* --- 3. Controls & Buttons --- */
 .controls-bar {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 15px;
+    display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
 }
 
 .theme-button, .contact-button, .back-button {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    color: white;
+    padding: 10px 15px; border: none; border-radius: 6px;
+    cursor: pointer; font-weight: bold; color: white;
     background-color: var(--primary-color);
 }
 
 .contact-button { background-color: #6c757d; }
 
 #searchInput {
-    width: 100%;
-    padding: 12px;
+    width: 100%; padding: 12px; border-radius: 6px;
     border: 1px solid var(--input-border-color);
-    border-radius: 6px;
-    background-color: var(--card-background);
-    color: var(--text-color);
-    box-sizing: border-box;
+    background: var(--card-background); color: var(--text-color);
 }
 
-/* --- 4. Dictionary Elements --- */
+/* --- 3. Dictionary & Admin --- */
 .description-box {
-    margin-top: 20px;
-    padding: 20px;
+    margin-top: 20px; padding: 20px;
     border-left: 5px solid var(--primary-color);
     background-color: var(--description-bg);
-    border-radius: 4px;
+}
+
+#adminPanel input {
+    padding: 10px; border: 1px solid var(--input-border-color);
+    border-radius: 4px; background: var(--card-background); color: var(--text-color);
 }
 
 .english-title-word { font-weight: bold; font-size: 1.4em; }
 
 .copy-button {
-    padding: 4px 8px;
-    margin-left: 10px;
-    font-size: 0.8em;
-    cursor: pointer;
-    border-radius: 4px;
-    border: 1px solid var(--primary-color);
-    background: none;
-    color: var(--primary-color);
+    padding: 4px 8px; margin-left: 10px; font-size: 0.8em;
+    cursor: pointer; border: 1px solid var(--primary-color);
+    color: var(--primary-color); background: none; border-radius: 4px;
 }
 
-/* --- 5. Table Styling --- */
-#bookTable {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-#bookTable th, #bookTable td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
-}
-
-#bookTable th { background-color: var(--table-header-bg); }
-#bookTable tbody tr:hover { background-color: var(--hover-bg); cursor: pointer; }
-
-/* --- 6. Contact Area Buttons --- */
-.contact-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-.contact-link-button {
-    width: 250px;
-    padding: 12px;
-    border: none;
-    border-radius: 6px;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-}
-
+/* --- 4. Contact Buttons --- */
+.contact-box { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.contact-link-button { width: 250px; padding: 12px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; }
 .email-button { background-color: #dc3545; }
 .github-button { background-color: #343a40; }
 .instagram-button { background-color: #6f42c1; }
 .close-button { background-color: #6c757d; }
 
-.info { text-align: center; font-weight: bold; padding: 10px; color: var(--primary-color); }
+/* --- 5. Table --- */
+#bookTable { width: 100%; border-collapse: collapse; margin-top: 20px; }
+#bookTable th, #bookTable td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+#bookTable th { background-color: var(--table-header-bg); }
+#bookTable tr:hover { background-color: var(--hover-bg); cursor: pointer; }
+.info { text-align: center; padding: 10px; font-weight: bold; color: var(--primary-color); }
