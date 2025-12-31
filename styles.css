@@ -4,10 +4,10 @@
     --background-color: #f4f7f6;
     --card-background: #ffffff;
     --text-color: #333;
-    --border-color: #eee;
-    --input-border-color: #ccc;
+    --border-color: #ddd;
+    --input-border-color: #bbb;
     --table-header-bg: #f0f0f0;
-    --hover-bg: #eef7ff;
+    --hover-bg: #e3f2fd;
     --description-bg: #f9f9f9;
     --shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
@@ -19,7 +19,7 @@ body.dark-theme {
     --border-color: #333;
     --input-border-color: #444;
     --table-header-bg: #2d2d2d;
-    --hover-bg: #2c3e50;
+    --hover-bg: #263238;
     --description-bg: #252525;
     --shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
@@ -52,24 +52,29 @@ h1 {
 /* --- 3. LARGE INPUT FIELDS (Search & Admin) --- */
 #searchInput, .admin-form input {
     width: 100%;
-    padding: 22px; /* Large height */
+    padding: 22px !important; /* Forces a very tall input box */
     border-radius: 12px;
     border: 2px solid var(--input-border-color);
     background: var(--card-background);
     color: var(--text-color);
-    font-size: 1.3rem; /* Large text */
+    font-size: 1.4rem !important; /* Large, readable text */
     box-sizing: border-box;
     margin-bottom: 15px;
     outline: none;
+    transition: border-color 0.3s;
     display: block;
 }
 
-/* --- 4. RESULTS TABLE (MINIMUM GAP) --- */
+#searchInput:focus, .admin-form input:focus {
+    border-color: var(--primary-color);
+}
+
+/* --- 4. ULTRA-TIGHT RESULTS TABLE --- */
 #bookTable {
     width: 100%;
-    border-collapse: collapse; /* Merges borders */
-    border-spacing: 0;         /* Removes space between cells */
-    margin-top: 10px;
+    border-collapse: collapse;
+    border-spacing: 0;
+    margin-top: 5px;
 }
 
 #bookTable th {
@@ -82,10 +87,11 @@ h1 {
 }
 
 #bookTable td {
-    padding: 4px 15px !important; /* VERY SMALL VERTICAL GAP */
+    padding: 2px 15px !important; /* MINIMUM VERTICAL GAP between words */
     border-bottom: 1px solid var(--border-color);
-    font-size: 1.1rem;
-    line-height: 1.2; /* Tighter text lines */
+    font-size: 1.15rem;
+    line-height: 1.1;             /* Keeps lines of text tight */
+    height: 32px;                 /* Forces rows to stay small */
     vertical-align: middle;
 }
 
@@ -94,7 +100,14 @@ h1 {
     cursor: pointer;
 }
 
-/* --- 5. Buttons & Controls --- */
+/* Highlight for the Exact Match (Top Result) */
+#bookTable tr:first-child td {
+    font-weight: bold;
+    color: var(--primary-color);
+    background-color: rgba(30, 136, 229, 0.05);
+}
+
+/* --- 5. Controls & Buttons --- */
 .controls-bar {
     display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;
 }
@@ -107,7 +120,10 @@ h1 {
     font-weight: 600;
     color: white;
     background-color: var(--primary-color);
+    transition: transform 0.1s;
 }
+
+.theme-button:active { transform: scale(0.95); }
 
 .language-select { background-color: #4caf50; }
 .admin-btn { background-color: #ff9800; }
@@ -118,13 +134,19 @@ h1 {
     width: 100%;
 }
 
-/* --- 6. Description & Definition Areas --- */
+/* --- 6. Word Detail Areas --- */
 .description-box {
     margin: 20px 0;
     padding: 20px;
     border-left: 6px solid var(--primary-color);
     background-color: var(--description-bg);
     border-radius: 8px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .english-title-word { 
@@ -142,6 +164,11 @@ h1 {
     color: var(--primary-color);
     background: none;
     border-radius: 4px;
+}
+
+.copy-button:hover {
+    background-color: var(--primary-color);
+    color: white;
 }
 
 /* --- 7. Contact Section --- */
@@ -173,6 +200,6 @@ h1 {
 
 @media (max-width: 600px) {
     .container { padding: 15px; margin: 10px; }
-    #searchInput, .admin-form input { font-size: 1.1rem; padding: 15px; }
-    #bookTable td { padding: 4px 8px !important; }
+    #searchInput, .admin-form input { font-size: 1.1rem !important; padding: 16px !important; }
+    #bookTable td { padding: 4px 8px !important; font-size: 1rem; }
 }
