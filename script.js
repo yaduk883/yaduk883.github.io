@@ -75,8 +75,8 @@ function parseCSV(csvText) {
 
 function filterData(query) {
     const q = query.toLowerCase().trim();
-    document.getElementById('descriptionArea').style.display = 'none';
     const status = document.getElementById('statusMessage');
+    document.getElementById('descriptionArea').style.display = 'none';
     
     if (!q) {
         document.getElementById('bookTableContainer').style.display = 'none';
@@ -84,21 +84,27 @@ function filterData(query) {
         return;
     }
 
-    // --- NEW STRICT FILTERING LOGIC ---
-    const keys = Object.keys(groupedDictionaryData).filter(key => {
-        const lowerKey = key.toLowerCase();
-        // Option A: Exact Match (Only shows the exact word)
-        // return lowerKey === q; 
+    const allKeys = Object.keys(groupedDictionaryData);
+    
+    // 1. Find the Exact Match first
+    const exactMatch = allKeys.filter(key => key.toLowerCase() === q);
+    
+    // 2. Find Closely Related (words that START with the search term)
+    // We exclude the exact match from this list to avoid duplicates
+    const relatedMatches = allKeys.filter(key => 
+        key.toLowerCase().startsWith(q) && key.toLowerCase() !== q
+    );
 
-        // Option B: Starts With (Much cleaner than 'includes')
-        return lowerKey.startsWith(q) || 
-               groupedDictionaryData[key].some(e => e.translation.toLowerCase().startsWith(q));
-    });
+    // 3. Combine them: Exact match always goes to index [0]
+    const finalResults = [...exactMatch, ...relatedMatches];
 
-    // Sort results so the shortest (most relevant) words appear first
-    keys.sort((a, b) => a.length - b.length);
-
-    renderTable(keys);
+    if (finalResults.length > 0) {
+        status.textContent = ""; 
+        renderTable(finalResults);
+    } else {
+        document.getElementById('bookTableContainer').style.display = 'none';
+        status.textContent = "❌ No matching words found.";
+    }
 }
 
 function renderTable(keys) {
