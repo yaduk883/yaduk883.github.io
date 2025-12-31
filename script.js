@@ -76,16 +76,29 @@ function parseCSV(csvText) {
 function filterData(query) {
     const q = query.toLowerCase().trim();
     document.getElementById('descriptionArea').style.display = 'none';
+    const status = document.getElementById('statusMessage');
     
     if (!q) {
         document.getElementById('bookTableContainer').style.display = 'none';
+        status.textContent = "Start typing above to search.";
         return;
     }
 
-    const matches = Object.keys(groupedDictionaryData).filter(key => 
-        key.toLowerCase().includes(q) || groupedDictionaryData[key].some(e => e.translation.toLowerCase().includes(q))
-    );
-    renderTable(matches);
+    // --- NEW STRICT FILTERING LOGIC ---
+    const keys = Object.keys(groupedDictionaryData).filter(key => {
+        const lowerKey = key.toLowerCase();
+        // Option A: Exact Match (Only shows the exact word)
+        // return lowerKey === q; 
+
+        // Option B: Starts With (Much cleaner than 'includes')
+        return lowerKey.startsWith(q) || 
+               groupedDictionaryData[key].some(e => e.translation.toLowerCase().startsWith(q));
+    });
+
+    // Sort results so the shortest (most relevant) words appear first
+    keys.sort((a, b) => a.length - b.length);
+
+    renderTable(keys);
 }
 
 function renderTable(keys) {
