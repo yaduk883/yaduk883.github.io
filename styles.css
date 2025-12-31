@@ -49,45 +49,44 @@ h1 {
     margin-bottom: 25px;
 }
 
-/* --- 3. Large Input Fields (Search & Admin) --- */
-/* This makes the boxes much bigger as you requested */
+/* --- 3. LARGE INPUT FIELDS (Search & Admin) --- */
 #searchInput, .admin-form input {
     width: 100%;
-    padding: 20px; /* Large padding for height */
+    padding: 22px; /* Large height */
     border-radius: 12px;
     border: 2px solid var(--input-border-color);
     background: var(--card-background);
     color: var(--text-color);
-    font-size: 1.25rem; /* Large text inside box */
+    font-size: 1.3rem; /* Large text */
     box-sizing: border-box;
     margin-bottom: 15px;
     outline: none;
-    transition: border-color 0.3s;
+    display: block;
 }
 
-#searchInput:focus, .admin-form input:focus {
-    border-color: var(--primary-color);
-}
-
-/* --- 4. Results Table (Minimized Vertical Gap) --- */
+/* --- 4. RESULTS TABLE (MINIMUM GAP) --- */
 #bookTable {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: collapse; /* Merges borders */
+    border-spacing: 0;         /* Removes space between cells */
     margin-top: 10px;
 }
 
 #bookTable th {
     background-color: var(--table-header-bg);
-    padding: 10px 15px;
+    padding: 8px 15px;
     font-size: 0.85rem;
     text-align: left;
     text-transform: uppercase;
+    border-bottom: 2px solid var(--border-color);
 }
 
 #bookTable td {
-    padding: 6px 15px; /* DECREASED GAP: Tightens the vertical space between rows */
+    padding: 4px 15px !important; /* VERY SMALL VERTICAL GAP */
     border-bottom: 1px solid var(--border-color);
     font-size: 1.1rem;
+    line-height: 1.2; /* Tighter text lines */
+    vertical-align: middle;
 }
 
 #bookTable tr:hover {
@@ -95,7 +94,7 @@ h1 {
     cursor: pointer;
 }
 
-/* --- 5. Controls & Buttons --- */
+/* --- 5. Buttons & Controls --- */
 .controls-bar {
     display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;
 }
@@ -108,7 +107,6 @@ h1 {
     font-weight: 600;
     color: white;
     background-color: var(--primary-color);
-    transition: transform 0.2s;
 }
 
 .language-select { background-color: #4caf50; }
@@ -116,7 +114,7 @@ h1 {
 .save-btn { 
     background-color: #2e7d32; 
     font-size: 1.2rem; 
-    padding: 18px; /* Matching the size of large inputs */
+    padding: 18px; 
     width: 100%;
 }
 
@@ -146,12 +144,7 @@ h1 {
     border-radius: 4px;
 }
 
-.copy-button:hover {
-    background-color: var(--primary-color);
-    color: white;
-}
-
-/* --- 7. Contact Section Icons --- */
+/* --- 7. Contact Section --- */
 .contact-box {
     display: flex;
     flex-direction: column;
@@ -175,12 +168,11 @@ h1 {
 .github-button { background-color: #24292e; }
 .instagram-button { background-color: #e1306c; }
 
-/* --- 8. Status & Info --- */
+/* --- 8. Status & Mobile --- */
 .info { text-align: center; padding: 15px; color: var(--primary-color); font-weight: 500; }
 
-/* --- 9. Responsive adjustments --- */
 @media (max-width: 600px) {
     .container { padding: 15px; margin: 10px; }
     #searchInput, .admin-form input { font-size: 1.1rem; padding: 15px; }
-    #bookTable td { padding: 8px 10px; }
+    #bookTable td { padding: 4px 8px !important; }
 }
