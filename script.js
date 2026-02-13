@@ -22,36 +22,36 @@ let groupedDictionaryData = {};
 let lastFilterResults = [];
 
 // ------------------------------------------
-// 2. Load & Sync Logic
+// 2. Core Load Logic
 // ------------------------------------------
 
 async function init() {
     const status = document.getElementById('statusMessage');
-    status.textContent = `Syncing ${currentLanguage} Dictionary...`;
+    status.textContent = `🔄 Syncing ${currentLanguage}...`;
     
-    // Clear old data for a clean refresh
     dictionaryData = [];
     groupedDictionaryData = {};
 
     try {
-        // Cache-busting ensures you get the LATEST data from the sheet immediately
-        const cacheBuster = `&t=${new Date().getTime()}`;
-        const response = await fetch(CONFIG[currentLanguage].db + cacheBuster);
+        // Cache busting helps if you just added a word
+        const response = await fetch(CONFIG[currentLanguage].db + '&t=' + new Date().getTime());
         const csvText = await response.text();
+        
+        if (!csvText || csvText.length < 10) {
+            throw new Error("CSV Empty");
+        }
+
         dictionaryData = parseCSV(csvText);
         
-        // Group by English word for the detail view
         dictionaryData.forEach(item => {
             if (!groupedDictionaryData[item.english]) groupedDictionaryData[item.english] = [];
             groupedDictionaryData[item.english].push(item);
         });
 
-        status.textContent = "✅ Dictionary Ready!";
-        // Reset status message after 2 seconds
-        setTimeout(() => { if(status.textContent.includes("Ready")) status.textContent = "Search English or Native words."; }, 2000);
+        status.textContent = "✅ Ready!";
     } catch (e) {
-        console.error(e);
-        status.textContent = "⚠️ Sync Error. Please check your internet connection.";
+        console.error("Load Error:", e);
+        status.textContent = "⚠️ Error: Make sure Sheet is Published to Web.";
     }
 }
 
@@ -59,9 +59,18 @@ function parseCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
     
-    // Dynamic index mapping to handle different column names across sheets
-    const engIdx = headers.findIndex(h => h.includes('word') || h.includes('english'));
-    const meaningIdx = headers.findIndex(h => h.includes('maithili') || h.includes('meaning') || h.includes('translation') || h.includes('bodo') || h.includes('malayalam'));
+    // --- ADVANCED COLUMN DETECTION ---
+    // Look for English column
+    let engIdx = headers.findIndex(h => h.includes('word') || h.includes('english'));
+    if (engIdx === -1) engIdx = 0; // Fallback to column 1
+
+    // Look for Translation column
+    let meaningIdx = headers.findIndex(h => 
+        h.includes('meaning') || h.includes('translation') || 
+        h.includes('maithili') || h.includes('bodo') || h.includes('malayalam')
+    );
+    if (meaningIdx === -1) meaningIdx = 1; // Fallback to column 2
+
     const transIdx = headers.findIndex(h => h.includes('transliteration'));
     const expIdx = headers.findIndex(h => h.includes('explanation') || h.includes('example'));
 
@@ -73,9 +82,9 @@ function parseCSV(csvText) {
         if (row[engIdx]) {
             data.push({
                 english: row[engIdx].replace(/^"|"$/g, '').trim(),
-                translation: row[meaningIdx] ? row[meaningIdx].replace(/^"|"$/g, '').trim() : '',
-                explanation: expIdx !== -1 && row[expIdx] ? row[expIdx].replace(/^"|"$/g, '').trim() : '',
-                transliteration: transIdx !== -1 && row[transIdx] ? row[transIdx].replace(/^"|"$/g, '').trim() : ''
+                translation: row[meaningIdx] ? row[meaningIdx].replace(/^"|"$/g, '').trim() : 'N/A',
+                explanation: (expIdx !== -1 && row[expIdx]) ? row[expIdx].replace(/^"|"$/g, '').trim() : '',
+                transliteration: (transIdx !== -1 && row[transIdx]) ? row[transIdx].replace(/^"|"$/g, '').trim() : ''
             });
         }
     }
@@ -86,6 +95,11 @@ function parseCSV(csvText) {
 // 3. Search & UI (Silent Copy)
 // ------------------------------------------
 
+function copyWord(t) {
+    navigator.clipboard.writeText(t);
+    // Silent copy - no alert popup
+}
+
 function filterData(query) {
     const q = query.toLowerCase().trim();
     const status = document.getElementById('statusMessage');
@@ -93,13 +107,12 @@ function filterData(query) {
     
     if (!q) {
         document.getElementById('bookTableContainer').style.display = 'none';
-        status.textContent = "Start typing above to search.";
+        status.textContent = "Search English or Native word...";
         return;
     }
 
     const allKeys = Object.keys(groupedDictionaryData);
     
-    // Bidirectional Check
     const exactMatch = allKeys.filter(key => 
         key.toLowerCase() === q || 
         groupedDictionaryData[key].some(e => e.translation.toLowerCase() === q)
@@ -118,7 +131,7 @@ function filterData(query) {
         renderTable(finalResults);
     } else {
         document.getElementById('bookTableContainer').style.display = 'none';
-        status.textContent = "❌ No matching words found.";
+        status.textContent = "❌ No results found.";
     }
 }
 
@@ -161,17 +174,12 @@ function showDetails(word) {
 }
 
 // ------------------------------------------
-// 4. Admin Panel & Helper Actions
+// 4. Admin & Events
 // ------------------------------------------
 
-function copyWord(t) { 
-    // SILENT COPY: No alert pop-up shown
-    navigator.clipboard.writeText(t); 
-}
-
 async function handleLogin() {
-    const user = prompt("Admin Username:");
-    const pass = prompt("Admin Password:");
+    const user = prompt("Admin User:");
+    const pass = prompt("Admin Pass:");
     if (!user || !pass) return;
 
     try {
@@ -183,8 +191,8 @@ async function handleLogin() {
         if (result.success) {
             document.getElementById('adminPanel').style.display = 'block';
             document.getElementById('adminPanelTitle').textContent = `🛠 Admin: ${currentLanguage}`;
-        } else { alert("❌ Incorrect Credentials."); }
-    } catch (e) { alert("Server connection failed."); }
+        } else { alert("❌ Wrong credentials."); }
+    } catch (e) { alert("Connection Error"); }
 }
 
 async function saveNewWord() {
@@ -192,7 +200,7 @@ async function saveNewWord() {
     const to = document.getElementById('newTranslation').value.trim();
     const type = document.getElementById('newType').value.trim();
 
-    if (!from || !to) return alert("Fill English and Translation.");
+    if (!from || !to) return;
 
     try {
         const response = await fetch(CONFIG[currentLanguage].api, {
@@ -201,21 +209,16 @@ async function saveNewWord() {
         });
         const result = await response.json();
         if (result.success) {
-            alert("🚀 Saved! Refreshing dictionary...");
+            alert("Saved!");
             document.getElementById('newEnglish').value = '';
             document.getElementById('newTranslation').value = '';
-            document.getElementById('newType').value = '';
-            init(); // Refresh data immediately
+            init(); // Auto refresh
         }
-    } catch (e) { alert("Failed to save."); }
+    } catch (e) { alert("Save failed."); }
 }
 
 function contactMe() { const a = document.getElementById('contactArea'); a.style.display = a.style.display==='none'?'block':'none'; }
 function logout() { document.getElementById('adminPanel').style.display='none'; }
-
-// ------------------------------------------
-// 5. Event Listeners
-// ------------------------------------------
 
 document.getElementById('languageSelect').onchange = (e) => { currentLanguage = e.target.value; init(); };
 document.getElementById('themeToggle').onclick = () => document.body.classList.toggle('dark-theme');
@@ -224,5 +227,4 @@ document.getElementById('contactButton').onclick = contactMe;
 document.getElementById('backButton').onclick = () => { document.getElementById('descriptionArea').style.display='none'; renderTable(lastFilterResults); };
 document.getElementById('searchInput').oninput = (e) => filterData(e.target.value);
 
-// First Load
 init();
