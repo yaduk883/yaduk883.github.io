@@ -9,6 +9,11 @@ const CONFIG = {
     BODO: {
         db: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQLtdSVACMT2lwL9zKyOMuhrFiIpzKrZSjR0leijaTbBV5akRBlQCNwa8zVRxqvqA/pub?output=csv",
         api: "https://script.google.com/macros/s/AKfycbxPo_6gATFfSkQv6Juy8eme2AH9Q5SwKYWkeEzS20_7CnHAQen3_I6DsSvw0STRXju9vg/exec"
+    },
+    MAITHILI: {
+        db: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQqfZN9eJsap8DysSBopEJNkWqgtSpYR6i_fQHyjUBaEefbYmDHPxBY-AR0nlbv8w/pub?output=csv",
+        // PASTE YOUR DEPLOYED WEB APP URL BELOW
+        api: "YOUR_MAITHILI_WEB_APP_URL_HERE"
     }
 };
 
@@ -18,7 +23,7 @@ let groupedDictionaryData = {};
 let lastFilterResults = [];
 
 // ------------------------------------------
-// 2. Core Logic
+// 2. Data Initialization & Parsing
 // ------------------------------------------
 
 async function init() {
@@ -26,19 +31,22 @@ async function init() {
     status.textContent = `Loading ${currentLanguage} Dictionary...`;
     
     try {
+        // Fetch CSV from Google Sheets
         const response = await fetch(CONFIG[currentLanguage].db);
         const csvText = await response.text();
         dictionaryData = parseCSV(csvText);
         
+        // Group data by English word for detailed view
         groupedDictionaryData = {};
         dictionaryData.forEach(item => {
             if (!groupedDictionaryData[item.english]) groupedDictionaryData[item.english] = [];
             groupedDictionaryData[item.english].push(item);
         });
 
-        status.textContent = "Ready! Search English or Translation words.";
+        status.textContent = "Ready! Search English or Native words.";
     } catch (e) {
-        status.textContent = "⚠️ Error loading data. Ensure Sheet is Published to Web as CSV.";
+        console.error(e);
+        status.textContent = "⚠️ Error loading data. Ensure the Sheet is 'Published to Web' as CSV.";
     }
 }
 
@@ -46,11 +54,11 @@ function parseCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
     
-    // Mapping your Bodo Headings
-    const engIdx = headers.findIndex(h => h.includes('english word') || h.includes('from'));
-    const meaningIdx = headers.findIndex(h => h.includes('meaning') || h.includes('to'));
-    const expIdx = headers.findIndex(h => h.includes('explanation'));
+    // Auto-detect columns based on headers (works for Maithili, Bodo, and Malayalam)
+    const engIdx = headers.findIndex(h => h.includes('word') || h.includes('english'));
+    const meaningIdx = headers.findIndex(h => h.includes('maithili') || h.includes('meaning') || h.includes('translation') || h.includes('bodo') || h.includes('malayalam'));
     const transIdx = headers.findIndex(h => h.includes('transliteration'));
+    const expIdx = headers.findIndex(h => h.includes('explanation') || h.includes('example'));
 
     const data = [];
     const csvRegex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/; 
@@ -70,7 +78,7 @@ function parseCSV(csvText) {
 }
 
 // ------------------------------------------
-// 3. UI & Search
+// 3. Search & Rendering Logic
 // ------------------------------------------
 
 function filterData(query) {
@@ -86,16 +94,20 @@ function filterData(query) {
 
     const allKeys = Object.keys(groupedDictionaryData);
     
-    // 1. Find the Exact Match first
-    const exactMatch = allKeys.filter(key => key.toLowerCase() === q);
-    
-    // 2. Find Closely Related (words that START with the search term)
-    // We exclude the exact match from this list to avoid duplicates
-    const relatedMatches = allKeys.filter(key => 
-        key.toLowerCase().startsWith(q) && key.toLowerCase() !== q
+    // BIDIRECTIONAL SEARCH: 
+    // 1. Find Exact Match in English OR Native Word
+    const exactMatch = allKeys.filter(key => 
+        key.toLowerCase() === q || 
+        groupedDictionaryData[key].some(e => e.translation.toLowerCase() === q)
     );
+    
+    // 2. Find Closely Related (starts with) in English OR Native Word
+    const relatedMatches = allKeys.filter(key => {
+        const matchesEnglish = key.toLowerCase().startsWith(q);
+        const matchesTranslation = groupedDictionaryData[key].some(e => e.translation.toLowerCase().startsWith(q));
+        return (matchesEnglish || matchesTranslation) && !exactMatch.includes(key);
+    });
 
-    // 3. Combine them: Exact match always goes to index [0]
     const finalResults = [...exactMatch, ...relatedMatches];
 
     if (finalResults.length > 0) {
@@ -123,6 +135,7 @@ function renderTable(keys) {
         const row = tbody.insertRow();
         row.onclick = () => showDetails(key);
         row.insertCell().textContent = key;
+        // Show all translations if word has multiple meanings
         row.insertCell().textContent = groupedDictionaryData[key].map(e => e.translation).join(' / ');
     });
 }
@@ -133,7 +146,10 @@ function showDetails(word) {
     const title = document.getElementById('descriptionTitle');
     const def = document.getElementById('definitionText');
     
-    title.innerHTML = `<span class="english-title-word">${word}</span> <button class="copy-button" onclick="copyWord('${word}')">Copy</button>`;
+    title.innerHTML = `
+        <span class="english-title-word">${word}</span> 
+        <button class="copy-button" onclick="copyWord('${word}')">Copy English</button>
+    `;
     
     let html = '';
     entries.forEach(e => {
@@ -141,7 +157,7 @@ function showDetails(word) {
             <div style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                 <p><strong>Translation:</strong> ${e.translation} <button class="copy-button" onclick="copyWord('${e.translation}')">📋</button></p>
                 ${e.transliteration ? `<p><em>Pronunciation:</em> ${e.transliteration}</p>` : ''}
-                ${e.explanation ? `<p><strong>Explanation:</strong> ${e.explanation}</p>` : ''}
+                ${e.explanation ? `<p><strong>Details:</strong> ${e.explanation}</p>` : ''}
             </div>
         `;
     });
@@ -151,7 +167,7 @@ function showDetails(word) {
 }
 
 // ------------------------------------------
-// 4. Admin & Auth
+// 4. Admin Management
 // ------------------------------------------
 
 async function handleLogin() {
@@ -169,8 +185,12 @@ async function handleLogin() {
             document.getElementById('adminPanel').style.display = 'block';
             document.getElementById('adminPanelTitle').textContent = `🛠 Admin: ${currentLanguage}`;
             alert("✅ Welcome Admin!");
-        } else { alert("❌ Incorrect Credentials."); }
-    } catch (e) { alert("Server connection failed. Ensure Web App is deployed correctly."); }
+        } else {
+            alert("❌ Incorrect Credentials.");
+        }
+    } catch (e) {
+        alert("Server connection failed. Ensure the Web App for this language is deployed.");
+    }
 }
 
 async function saveNewWord() {
@@ -178,7 +198,7 @@ async function saveNewWord() {
     const to = document.getElementById('newTranslation').value.trim();
     const type = document.getElementById('newType').value.trim();
 
-    if (!from || !to) return alert("Fill English and Translation.");
+    if (!from || !to) return alert("Please fill at least English and Translation.");
 
     try {
         const response = await fetch(CONFIG[currentLanguage].api, {
@@ -187,26 +207,52 @@ async function saveNewWord() {
         });
         const result = await response.json();
         if (result.success) {
-            alert("🚀 Saved to Google Sheet!");
+            alert(`🚀 Successfully saved to ${currentLanguage} Sheet!`);
             document.getElementById('newEnglish').value = '';
             document.getElementById('newTranslation').value = '';
+            document.getElementById('newType').value = '';
+            init(); // Refresh data
         }
-    } catch (e) { alert("Failed to save."); }
+    } catch (e) {
+        alert("Failed to save word. Check console for details.");
+    }
 }
 
 // ------------------------------------------
-// 5. Events
+// 5. Global Events & Initializer
 // ------------------------------------------
 
-function copyWord(t) { navigator.clipboard.writeText(t).then(() => alert("Copied!")); }
-function contactMe() { const a = document.getElementById('contactArea'); a.style.display = a.style.display==='none'?'block':'none'; }
-function logout() { document.getElementById('adminPanel').style.display='none'; }
+function copyWord(t) { 
+    navigator.clipboard.writeText(t).then(() => alert("Text Copied!")); 
+}
 
-document.getElementById('languageSelect').onchange = (e) => { currentLanguage = e.target.value; init(); };
-document.getElementById('themeToggle').onclick = () => document.body.classList.toggle('dark-theme');
+function contactMe() { 
+    const a = document.getElementById('contactArea'); 
+    a.style.display = (a.style.display === 'none') ? 'block' : 'none'; 
+}
+
+function logout() { 
+    document.getElementById('adminPanel').style.display = 'none'; 
+}
+
+// Event Listeners
+document.getElementById('languageSelect').onchange = (e) => { 
+    currentLanguage = e.target.value; 
+    init(); 
+};
+
+document.getElementById('themeToggle').onclick = () => {
+    document.body.classList.toggle('dark-theme');
+};
+
 document.getElementById('adminLoginBtn').onclick = handleLogin;
 document.getElementById('contactButton').onclick = contactMe;
-document.getElementById('backButton').onclick = () => { document.getElementById('descriptionArea').style.display='none'; renderTable(lastFilterResults); };
+document.getElementById('backButton').onclick = () => { 
+    document.getElementById('descriptionArea').style.display = 'none'; 
+    renderTable(lastFilterResults); 
+};
+
 document.getElementById('searchInput').oninput = (e) => filterData(e.target.value);
 
+// Initialize application
 init();
