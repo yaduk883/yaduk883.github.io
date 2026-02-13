@@ -12,8 +12,7 @@ const CONFIG = {
     },
     MAITHILI: {
         db: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQqfZN9eJsap8DysSBopEJNkWqgtSpYR6i_fQHyjUBaEefbYmDHPxBY-AR0nlbv8w/pub?output=csv",
-        // PASTE YOUR DEPLOYED WEB APP URL BELOW
-        api: "YOUR_MAITHILI_WEB_APP_URL_HERE"
+        api: "https://script.google.com/macros/s/AKfycbwoppmiL23b37fFf8kntY-JHPUXW6D8IM26wFET0Dni8Z3wIvI_X67ZM0O_HDXP7OVA/exec"
     }
 };
 
@@ -23,30 +22,36 @@ let groupedDictionaryData = {};
 let lastFilterResults = [];
 
 // ------------------------------------------
-// 2. Data Initialization & Parsing
+// 2. Load & Sync Logic
 // ------------------------------------------
 
 async function init() {
     const status = document.getElementById('statusMessage');
-    status.textContent = `Loading ${currentLanguage} Dictionary...`;
+    status.textContent = `Syncing ${currentLanguage} Dictionary...`;
     
+    // Clear old data for a clean refresh
+    dictionaryData = [];
+    groupedDictionaryData = {};
+
     try {
-        // Fetch CSV from Google Sheets
-        const response = await fetch(CONFIG[currentLanguage].db);
+        // Cache-busting ensures you get the LATEST data from the sheet immediately
+        const cacheBuster = `&t=${new Date().getTime()}`;
+        const response = await fetch(CONFIG[currentLanguage].db + cacheBuster);
         const csvText = await response.text();
         dictionaryData = parseCSV(csvText);
         
-        // Group data by English word for detailed view
-        groupedDictionaryData = {};
+        // Group by English word for the detail view
         dictionaryData.forEach(item => {
             if (!groupedDictionaryData[item.english]) groupedDictionaryData[item.english] = [];
             groupedDictionaryData[item.english].push(item);
         });
 
-        status.textContent = "Ready! Search English or Native words.";
+        status.textContent = "✅ Dictionary Ready!";
+        // Reset status message after 2 seconds
+        setTimeout(() => { if(status.textContent.includes("Ready")) status.textContent = "Search English or Native words."; }, 2000);
     } catch (e) {
         console.error(e);
-        status.textContent = "⚠️ Error loading data. Ensure the Sheet is 'Published to Web' as CSV.";
+        status.textContent = "⚠️ Sync Error. Please check your internet connection.";
     }
 }
 
@@ -54,7 +59,7 @@ function parseCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
     
-    // Auto-detect columns based on headers (works for Maithili, Bodo, and Malayalam)
+    // Dynamic index mapping to handle different column names across sheets
     const engIdx = headers.findIndex(h => h.includes('word') || h.includes('english'));
     const meaningIdx = headers.findIndex(h => h.includes('maithili') || h.includes('meaning') || h.includes('translation') || h.includes('bodo') || h.includes('malayalam'));
     const transIdx = headers.findIndex(h => h.includes('transliteration'));
@@ -78,7 +83,7 @@ function parseCSV(csvText) {
 }
 
 // ------------------------------------------
-// 3. Search & Rendering Logic
+// 3. Search & UI (Silent Copy)
 // ------------------------------------------
 
 function filterData(query) {
@@ -94,14 +99,12 @@ function filterData(query) {
 
     const allKeys = Object.keys(groupedDictionaryData);
     
-    // BIDIRECTIONAL SEARCH: 
-    // 1. Find Exact Match in English OR Native Word
+    // Bidirectional Check
     const exactMatch = allKeys.filter(key => 
         key.toLowerCase() === q || 
         groupedDictionaryData[key].some(e => e.translation.toLowerCase() === q)
     );
     
-    // 2. Find Closely Related (starts with) in English OR Native Word
     const relatedMatches = allKeys.filter(key => {
         const matchesEnglish = key.toLowerCase().startsWith(q);
         const matchesTranslation = groupedDictionaryData[key].some(e => e.translation.toLowerCase().startsWith(q));
@@ -125,17 +128,11 @@ function renderTable(keys) {
     tbody.innerHTML = '';
     lastFilterResults = keys;
 
-    if (keys.length === 0) {
-        container.style.display = 'none';
-        return;
-    }
-
     container.style.display = 'block';
     keys.forEach(key => {
         const row = tbody.insertRow();
         row.onclick = () => showDetails(key);
         row.insertCell().textContent = key;
-        // Show all translations if word has multiple meanings
         row.insertCell().textContent = groupedDictionaryData[key].map(e => e.translation).join(' / ');
     });
 }
@@ -146,10 +143,7 @@ function showDetails(word) {
     const title = document.getElementById('descriptionTitle');
     const def = document.getElementById('definitionText');
     
-    title.innerHTML = `
-        <span class="english-title-word">${word}</span> 
-        <button class="copy-button" onclick="copyWord('${word}')">Copy English</button>
-    `;
+    title.innerHTML = `<span class="english-title-word">${word}</span> <button class="copy-button" onclick="copyWord('${word}')">Copy</button>`;
     
     let html = '';
     entries.forEach(e => {
@@ -167,8 +161,13 @@ function showDetails(word) {
 }
 
 // ------------------------------------------
-// 4. Admin Management
+// 4. Admin Panel & Helper Actions
 // ------------------------------------------
+
+function copyWord(t) { 
+    // SILENT COPY: No alert pop-up shown
+    navigator.clipboard.writeText(t); 
+}
 
 async function handleLogin() {
     const user = prompt("Admin Username:");
@@ -184,13 +183,8 @@ async function handleLogin() {
         if (result.success) {
             document.getElementById('adminPanel').style.display = 'block';
             document.getElementById('adminPanelTitle').textContent = `🛠 Admin: ${currentLanguage}`;
-            alert("✅ Welcome Admin!");
-        } else {
-            alert("❌ Incorrect Credentials.");
-        }
-    } catch (e) {
-        alert("Server connection failed. Ensure the Web App for this language is deployed.");
-    }
+        } else { alert("❌ Incorrect Credentials."); }
+    } catch (e) { alert("Server connection failed."); }
 }
 
 async function saveNewWord() {
@@ -198,7 +192,7 @@ async function saveNewWord() {
     const to = document.getElementById('newTranslation').value.trim();
     const type = document.getElementById('newType').value.trim();
 
-    if (!from || !to) return alert("Please fill at least English and Translation.");
+    if (!from || !to) return alert("Fill English and Translation.");
 
     try {
         const response = await fetch(CONFIG[currentLanguage].api, {
@@ -207,52 +201,28 @@ async function saveNewWord() {
         });
         const result = await response.json();
         if (result.success) {
-            alert(`🚀 Successfully saved to ${currentLanguage} Sheet!`);
+            alert("🚀 Saved! Refreshing dictionary...");
             document.getElementById('newEnglish').value = '';
             document.getElementById('newTranslation').value = '';
             document.getElementById('newType').value = '';
-            init(); // Refresh data
+            init(); // Refresh data immediately
         }
-    } catch (e) {
-        alert("Failed to save word. Check console for details.");
-    }
+    } catch (e) { alert("Failed to save."); }
 }
+
+function contactMe() { const a = document.getElementById('contactArea'); a.style.display = a.style.display==='none'?'block':'none'; }
+function logout() { document.getElementById('adminPanel').style.display='none'; }
 
 // ------------------------------------------
-// 5. Global Events & Initializer
+// 5. Event Listeners
 // ------------------------------------------
 
-function copyWord(t) { 
-    navigator.clipboard.writeText(t).then(() => alert("Text Copied!")); 
-}
-
-function contactMe() { 
-    const a = document.getElementById('contactArea'); 
-    a.style.display = (a.style.display === 'none') ? 'block' : 'none'; 
-}
-
-function logout() { 
-    document.getElementById('adminPanel').style.display = 'none'; 
-}
-
-// Event Listeners
-document.getElementById('languageSelect').onchange = (e) => { 
-    currentLanguage = e.target.value; 
-    init(); 
-};
-
-document.getElementById('themeToggle').onclick = () => {
-    document.body.classList.toggle('dark-theme');
-};
-
+document.getElementById('languageSelect').onchange = (e) => { currentLanguage = e.target.value; init(); };
+document.getElementById('themeToggle').onclick = () => document.body.classList.toggle('dark-theme');
 document.getElementById('adminLoginBtn').onclick = handleLogin;
 document.getElementById('contactButton').onclick = contactMe;
-document.getElementById('backButton').onclick = () => { 
-    document.getElementById('descriptionArea').style.display = 'none'; 
-    renderTable(lastFilterResults); 
-};
-
+document.getElementById('backButton').onclick = () => { document.getElementById('descriptionArea').style.display='none'; renderTable(lastFilterResults); };
 document.getElementById('searchInput').oninput = (e) => filterData(e.target.value);
 
-// Initialize application
+// First Load
 init();
