@@ -14,6 +14,7 @@
             <select id="languageSelect" class="language-select">
                 <option value="MALAYALAM">English - Malayalam</option>
                 <option value="BODO">English - Bodo</option>
+                <option value="MAITHILI">English - Maithili</option>
             </select>
             <button id="adminLoginBtn" class="theme-button admin-btn">🔑 Admin</button>
             <button id="contactButton" class="contact-button">📞 Contact</button>
@@ -24,10 +25,10 @@
             <h3 id="adminPanelTitle">🛠 Admin Panel</h3>
             <div class="admin-form">
                 <input type="text" id="newEnglish" placeholder="English Word">
-                <input type="text" id="newTranslation" placeholder="Translation">
-                <input type="text" id="newType" placeholder="Explanation / Part of Speech">
+                <input type="text" id="newTranslation" placeholder="Native Translation">
+                <input type="text" id="newType" placeholder="Transliteration / Explanation">
                 <button onclick="saveNewWord()" class="save-btn">Save to Sheet</button>
-                <button onclick="logout()" class="back-button" style="background-color: #666; width: 100%; margin-top: 5px;">Logout</button>
+                <button onclick="logout()" class="back-button" style="background-color: #666; margin-top: 10px;">Logout</button>
             </div>
         </div>
 
@@ -35,12 +36,12 @@
             <h3>📬 Contact</h3>
             <a href="https://mail.google.com/mail/?view=cm&fs=1&to=yaduk883@gmail.com" target="_blank" class="contact-link-button email-button">📧 Email</a>
             <a href="https://github.com/yaduk883" target="_blank" class="contact-link-button github-button">🐙 GitHub</a>
-            <a href="https://instagram.com/ig.yadu/" target="_blank" class="contact-link-button instagram-button">📸 Instagram</a>
-            <button onclick="contactMe()" class="contact-link-button close-button">Close</button>
+            <a href="https://instagram.com/ig.yadu/\" target="_blank" class="contact-link-button instagram-button">📸 Instagram</a>
+            <button onclick="contactMe()" class="contact-link-button close-button" style="background-color: #444; margin-top: 10px;">Close</button>
         </div>
 
         <div id="searchArea">
-            <input type="text" id="searchInput" placeholder="🔍 Search for a Word...">
+            <input type="text" id="searchInput" placeholder="🔍 Search English or Native word...">
         </div>
 
         <p id="statusMessage" class="info">Loading dictionary...</p>
@@ -55,7 +56,7 @@
             <table id="bookTable">
                 <thead>
                     <tr>
-                        <th>English</th>
+                        <th>English Word</th>
                         <th>Translation</th>
                     </tr>
                 </thead>
@@ -63,6 +64,7 @@
             </table>
         </div>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>
