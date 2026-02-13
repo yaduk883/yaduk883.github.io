@@ -1,4 +1,4 @@
-/* --- 1. CSS Variables & Themes --- */
+/* --- 1. Variables & Themes --- */
 :root {
     --primary-color: #1e88e5; 
     --background-color: #f4f7f6;
@@ -26,137 +26,102 @@ body.dark-theme {
 
 /* --- 2. Base Layout --- */
 body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    margin: 0;
-    padding: 20px;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0; padding: 20px;
     background-color: var(--background-color);
     color: var(--text-color);
-    transition: all 0.3s ease;
+    transition: 0.3s;
 }
 
 .container {
     max-width: 850px;
-    margin: 20px auto;
+    margin: 0 auto;
     padding: 25px;
     background-color: var(--card-background);
     border-radius: 16px;
     box-shadow: var(--shadow);
 }
 
-h1 {
-    text-align: center;
-    color: var(--primary-color);
-    margin-bottom: 25px;
+h1 { text-align: center; color: var(--primary-color); margin-bottom: 20px; }
+
+/* --- 3. Unified Controls & Search --- */
+.controls-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+    justify-content: center;
 }
 
-/* --- 3. LARGE INPUT FIELDS (Search & Admin) --- */
+.controls-bar button, .language-select {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: white;
+    background-color: var(--primary-color);
+}
+
+.language-select { background-color: #4caf50; }
+.refresh-btn { background-color: #607d8b !important; }
+.admin-btn { background-color: #ff9800; }
+.contact-button { background-color: #673ab7; }
+
 #searchInput, .admin-form input {
     width: 100%;
-    padding: 22px !important; /* LARGE HEIGHT */
-    border-radius: 12px;
+    padding: 20px !important;
+    font-size: 1.3rem !important;
     border: 2px solid var(--input-border-color);
+    border-radius: 12px;
     background: var(--card-background);
     color: var(--text-color);
-    font-size: 1.4rem !important; /* LARGE TEXT */
     box-sizing: border-box;
-    margin-bottom: 15px;
     outline: none;
-    transition: border-color 0.3s;
-    display: block;
+    margin-bottom: 10px;
 }
 
-#searchInput:focus, .admin-form input:focus {
-    border-color: var(--primary-color);
-}
+#searchInput:focus { border-color: var(--primary-color); }
 
-/* --- 4. ULTRA-TIGHT RESULTS TABLE --- */
+/* --- 4. Tight Results Table --- */
 #bookTable {
     width: 100%;
-    border-collapse: collapse; 
-    border-spacing: 0;         
+    border-collapse: collapse;
     margin-top: 5px;
 }
 
 #bookTable th {
     background-color: var(--table-header-bg);
-    padding: 8px 15px;
-    font-size: 0.85rem;
+    padding: 10px;
+    font-size: 0.8rem;
     text-align: left;
-    text-transform: uppercase;
     border-bottom: 2px solid var(--border-color);
 }
 
 #bookTable td {
-    padding: 2px 15px !important; /* MINIMUM VERTICAL GAP */
+    padding: 6px 12px !important; /* Tight gaps */
     border-bottom: 1px solid var(--border-color);
-    font-size: 1.15rem;
-    line-height: 1.1;             /* TIGHT TEXT LINES */
-    height: 32px;                 /* SMALL ROW HEIGHT */
+    font-size: 1.1rem;
+    height: 35px;
     vertical-align: middle;
 }
 
-#bookTable tr:hover {
-    background-color: var(--hover-bg);
-    cursor: pointer;
-}
+#bookTable tr:hover { background-color: var(--hover-bg); cursor: pointer; }
 
-/* Highlight for the very first result */
-#bookTableBody tr:first-child td {
-    background-color: rgba(30, 136, 229, 0.05);
-}
-
-/* --- 5. Controls & Buttons --- */
-.controls-bar {
-    display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;
-}
-
-.theme-button, .contact-button, .back-button, .save-btn, .language-select {
-    padding: 12px 24px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    color: white;
-    background-color: var(--primary-color);
-    transition: filter 0.2s;
-}
-
-.theme-button:hover, .contact-button:hover, .back-button:hover, .save-btn:hover {
-    filter: brightness(1.1);
-}
-
-.language-select { background-color: #4caf50; color: white; }
-.admin-btn { background-color: #ff9800; }
-.save-btn { 
-    background-color: #2e7d32; 
-    font-size: 1.2rem; 
-    padding: 18px; 
-    width: 100%;
-}
-
-/* --- 6. Description & Definition Areas --- */
+/* --- 5. Detail & Boxes --- */
 .description-box {
     margin: 20px 0;
     padding: 20px;
-    border-left: 6px solid var(--primary-color);
+    border-left: 5px solid var(--primary-color);
     background-color: var(--description-bg);
     border-radius: 8px;
-    animation: fadeIn 0.3s ease;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.english-title-word { 
-    font-weight: 800; 
-    font-size: 1.8rem; 
-    color: var(--primary-color); 
-}
+.english-title-word { font-weight: 800; font-size: 1.6rem; color: var(--primary-color); }
 
 .copy-button {
-    padding: 5px 12px;
+    padding: 4px 10px;
     margin-left: 10px;
     font-size: 0.8rem;
     cursor: pointer;
@@ -166,40 +131,25 @@ h1 {
     border-radius: 4px;
 }
 
-.copy-button:hover {
-    background-color: var(--primary-color);
-    color: white;
-}
-
-/* --- 7. Contact Section --- */
-.contact-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-}
-
+/* --- 6. Contact & Mobile --- */
+.contact-links { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 .contact-link-button {
-    width: 100%;
-    max-width: 300px;
-    padding: 15px;
-    border: none;
-    border-radius: 8px;
-    color: white;
-    font-weight: bold;
+    padding: 12px;
     text-align: center;
+    color: white;
     text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
 }
-
 .email-button { background-color: #d44638; }
 .github-button { background-color: #24292e; }
 .instagram-button { background-color: #e1306c; }
 
-/* --- 8. Status & Mobile Optimization --- */
-.info { text-align: center; padding: 15px; color: var(--primary-color); font-weight: 500; }
+.info { text-align: center; color: var(--primary-color); font-weight: bold; }
+.back-button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; background: #555; color: white; }
 
 @media (max-width: 600px) {
-    .container { padding: 15px; margin: 10px; }
-    #searchInput, .admin-form input { font-size: 1.1rem !important; padding: 16px !important; }
-    #bookTable td { padding: 4px 8px !important; font-size: 1rem; }
+    .container { padding: 15px; }
+    .controls-bar button { flex: 1 1 45%; font-size: 0.8rem; }
+    #searchInput { font-size: 1.1rem !important; padding: 15px !important; }
 }
