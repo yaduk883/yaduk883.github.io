@@ -51,6 +51,17 @@
             <div id="definitionText"></div>
             <button id="backButton" class="back-button">← Back to Results</button>
         </div>
+        <div class="controls-bar">
+    <select id="languageSelect" class="language-select">
+        <option value="MALAYALAM">English - Malayalam</option>
+        <option value="BODO">English - Bodo</option>
+        <option value="MAITHILI">English - Maithili</option>
+    </select>
+    <button onclick="init()" class="theme-button" style="background-color: #607d8b;">🔄 Refresh</button>
+    <button id="adminLoginBtn" class="theme-button admin-btn">🔑 Admin</button>
+    <button id="contactButton" class="contact-button">📞 Contact</button>
+    <button id="themeToggle" class="theme-button">☀️ Theme</button>
+</div>
 
         <div id="bookTableContainer" style="display:none;">
             <table id="bookTable">
