@@ -52,12 +52,12 @@ h1 {
 /* --- 3. LARGE INPUT FIELDS (Search & Admin) --- */
 #searchInput, .admin-form input {
     width: 100%;
-    padding: 22px !important; /* Forces a very tall input box */
+    padding: 22px !important; /* LARGE HEIGHT */
     border-radius: 12px;
     border: 2px solid var(--input-border-color);
     background: var(--card-background);
     color: var(--text-color);
-    font-size: 1.4rem !important; /* Large, readable text */
+    font-size: 1.4rem !important; /* LARGE TEXT */
     box-sizing: border-box;
     margin-bottom: 15px;
     outline: none;
@@ -72,8 +72,8 @@ h1 {
 /* --- 4. ULTRA-TIGHT RESULTS TABLE --- */
 #bookTable {
     width: 100%;
-    border-collapse: collapse;
-    border-spacing: 0;
+    border-collapse: collapse; 
+    border-spacing: 0;         
     margin-top: 5px;
 }
 
@@ -87,11 +87,11 @@ h1 {
 }
 
 #bookTable td {
-    padding: 2px 15px !important; /* MINIMUM VERTICAL GAP between words */
+    padding: 2px 15px !important; /* MINIMUM VERTICAL GAP */
     border-bottom: 1px solid var(--border-color);
     font-size: 1.15rem;
-    line-height: 1.1;             /* Keeps lines of text tight */
-    height: 32px;                 /* Forces rows to stay small */
+    line-height: 1.1;             /* TIGHT TEXT LINES */
+    height: 32px;                 /* SMALL ROW HEIGHT */
     vertical-align: middle;
 }
 
@@ -100,10 +100,8 @@ h1 {
     cursor: pointer;
 }
 
-/* Highlight for the Exact Match (Top Result) */
-#bookTable tr:first-child td {
-    font-weight: bold;
-    color: var(--primary-color);
+/* Highlight for the very first result */
+#bookTableBody tr:first-child td {
     background-color: rgba(30, 136, 229, 0.05);
 }
 
@@ -120,12 +118,14 @@ h1 {
     font-weight: 600;
     color: white;
     background-color: var(--primary-color);
-    transition: transform 0.1s;
+    transition: filter 0.2s;
 }
 
-.theme-button:active { transform: scale(0.95); }
+.theme-button:hover, .contact-button:hover, .back-button:hover, .save-btn:hover {
+    filter: brightness(1.1);
+}
 
-.language-select { background-color: #4caf50; }
+.language-select { background-color: #4caf50; color: white; }
 .admin-btn { background-color: #ff9800; }
 .save-btn { 
     background-color: #2e7d32; 
@@ -134,7 +134,7 @@ h1 {
     width: 100%;
 }
 
-/* --- 6. Word Detail Areas --- */
+/* --- 6. Description & Definition Areas --- */
 .description-box {
     margin: 20px 0;
     padding: 20px;
@@ -195,7 +195,7 @@ h1 {
 .github-button { background-color: #24292e; }
 .instagram-button { background-color: #e1306c; }
 
-/* --- 8. Status & Mobile --- */
+/* --- 8. Status & Mobile Optimization --- */
 .info { text-align: center; padding: 15px; color: var(--primary-color); font-weight: 500; }
 
 @media (max-width: 600px) {
