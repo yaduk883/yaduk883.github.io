@@ -16,17 +16,22 @@
                 <option value="BODO">English - Bodo</option>
                 <option value="MAITHILI">English - Maithili</option>
             </select>
+            <button onclick="init()" class="theme-button refresh-btn">🔄 Refresh</button>
             <button id="adminLoginBtn" class="theme-button admin-btn">🔑 Admin</button>
-            <button id="contactButton" class="contact-button">📞 Contact</button>
             <button id="themeToggle" class="theme-button">☀️ Theme</button>
+            <button id="contactButton" class="contact-button">📞 Contact</button>
         </div>
         
+        <div id="searchArea">
+            <input type="text" id="searchInput" placeholder="🔍 Search English or Native word...">
+        </div>
+
         <div id="adminPanel" class="description-box admin-box" style="display:none;">
             <h3 id="adminPanelTitle">🛠 Admin Panel</h3>
             <div class="admin-form">
                 <input type="text" id="newEnglish" placeholder="English Word">
                 <input type="text" id="newTranslation" placeholder="Native Translation">
-                <input type="text" id="newType" placeholder="Transliteration / Explanation">
+                <input type="text" id="newType" placeholder="Transliteration / Details">
                 <button onclick="saveNewWord()" class="save-btn">Save to Sheet</button>
                 <button onclick="logout()" class="back-button" style="background-color: #666; margin-top: 10px;">Logout</button>
             </div>
@@ -34,34 +39,21 @@
 
         <div id="contactArea" class="description-box contact-box" style="display:none;">
             <h3>📬 Contact</h3>
-            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=yaduk883@gmail.com" target="_blank" class="contact-link-button email-button">📧 Email</a>
-            <a href="https://github.com/yaduk883" target="_blank" class="contact-link-button github-button">🐙 GitHub</a>
-            <a href="https://instagram.com/ig.yadu/\" target="_blank" class="contact-link-button instagram-button">📸 Instagram</a>
-            <button onclick="contactMe()" class="contact-link-button close-button" style="background-color: #444; margin-top: 10px;">Close</button>
+            <div class="contact-links">
+                <a href="https://mail.google.com/mail/?view=cm&fs=1&to=yaduk883@gmail.com" target="_blank" class="contact-link-button email-button">📧 Email</a>
+                <a href="https://github.com/yaduk883" target="_blank" class="contact-link-button github-button">🐙 GitHub</a>
+                <a href="https://instagram.com/ig.yadu/" target="_blank" class="contact-link-button instagram-button">📸 Instagram</a>
+            </div>
+            <button onclick="contactMe()" class="back-button" style="margin-top: 15px; width: 100%;">Close</button>
         </div>
 
-        <div id="searchArea">
-            <input type="text" id="searchInput" placeholder="🔍 Search English or Native word...">
-        </div>
-
-        <p id="statusMessage" class="info">Loading dictionary...</p>
+        <p id="statusMessage" class="info">Ready!</p>
 
         <div id="descriptionArea" class="description-box" style="display:none;">
             <h3 id="descriptionTitle"></h3>
             <div id="definitionText"></div>
             <button id="backButton" class="back-button">← Back to Results</button>
         </div>
-        <div class="controls-bar">
-    <select id="languageSelect" class="language-select">
-        <option value="MALAYALAM">English - Malayalam</option>
-        <option value="BODO">English - Bodo</option>
-        <option value="MAITHILI">English - Maithili</option>
-    </select>
-    <button onclick="init()" class="theme-button" style="background-color: #607d8b;">🔄 Refresh</button>
-    <button id="adminLoginBtn" class="theme-button admin-btn">🔑 Admin</button>
-    <button id="contactButton" class="contact-button">📞 Contact</button>
-    <button id="themeToggle" class="theme-button">☀️ Theme</button>
-</div>
 
         <div id="bookTableContainer" style="display:none;">
             <table id="bookTable">
