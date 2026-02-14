@@ -1,6 +1,4 @@
-// ------------------------------------------
 // 1. Configuration
-// ------------------------------------------
 const CONFIG = {
     MALAYALAM: {
         db: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1yXM-26NcSPpkrOMGFgvCRwYcFfzcaSSYGiD8mztHs_tJjUXLoFf7F-J2kwEWEw/pub?output=csv",
@@ -21,210 +19,171 @@ let dictionaryData = [];
 let groupedDictionaryData = {};
 let lastFilterResults = [];
 
-// ------------------------------------------
-// 2. Core Load Logic
-// ------------------------------------------
-
+// 2. Data Fetching
 async function init() {
     const status = document.getElementById('statusMessage');
     status.textContent = `🔄 Syncing ${currentLanguage}...`;
-    
-    dictionaryData = [];
-    groupedDictionaryData = {};
-
     try {
-        // Cache busting helps if you just added a word
         const response = await fetch(CONFIG[currentLanguage].db + '&t=' + new Date().getTime());
         const csvText = await response.text();
-        
-        if (!csvText || csvText.length < 10) {
-            throw new Error("CSV Empty");
-        }
-
         dictionaryData = parseCSV(csvText);
         
+        groupedDictionaryData = {};
         dictionaryData.forEach(item => {
             if (!groupedDictionaryData[item.english]) groupedDictionaryData[item.english] = [];
             groupedDictionaryData[item.english].push(item);
         });
-
         status.textContent = "✅ Ready!";
-    } catch (e) {
-        console.error("Load Error:", e);
-        status.textContent = "⚠️ Error: Make sure Sheet is Published to Web.";
+    } catch (e) { 
+        status.textContent = "⚠️ Load Error."; 
+        console.error(e);
     }
 }
 
+// 3. Specialized Parser
 function parseCSV(csvText) {
     const lines = csvText.trim().split('\n');
-    const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
-    
-    // --- ADVANCED COLUMN DETECTION ---
-    // Look for English column
-    let engIdx = headers.findIndex(h => h.includes('word') || h.includes('english'));
-    if (engIdx === -1) engIdx = 0; // Fallback to column 1
-
-    // Look for Translation column
-    let meaningIdx = headers.findIndex(h => 
-        h.includes('meaning') || h.includes('translation') || 
-        h.includes('maithili') || h.includes('bodo') || h.includes('malayalam')
-    );
-    if (meaningIdx === -1) meaningIdx = 1; // Fallback to column 2
-
-    const transIdx = headers.findIndex(h => h.includes('transliteration'));
-    const expIdx = headers.findIndex(h => h.includes('explanation') || h.includes('example'));
-
     const data = [];
-    const csvRegex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/; 
-
     for (let i = 1; i < lines.length; i++) {
-        const row = lines[i].split(csvRegex);
-        if (row[engIdx]) {
-            data.push({
-                english: row[engIdx].replace(/^"|"$/g, '').trim(),
-                translation: row[meaningIdx] ? row[meaningIdx].replace(/^"|"$/g, '').trim() : 'N/A',
-                explanation: (expIdx !== -1 && row[expIdx]) ? row[expIdx].replace(/^"|"$/g, '').trim() : '',
-                transliteration: (transIdx !== -1 && row[transIdx]) ? row[transIdx].replace(/^"|"$/g, '').trim() : ''
+        let rowStr = lines[i].trim();
+        if (!rowStr) continue;
+
+        if (currentLanguage === "MALAYALAM") {
+            // Regex to split: English {Tag} Meaning
+            const match = rowStr.match(/^"?([^\{]+)\s*\{([^}]+)\}\s*([^"]+)"?$/);
+            if (match) {
+                data.push({ 
+                    english: match[1].trim(), 
+                    translation: match[3].trim(), 
+                    tag: match[2].trim() 
+                });
+            } else {
+                const parts = rowStr.split(',');
+                data.push({ 
+                    english: (parts[0] || '').replace(/"/g, '').trim(), 
+                    translation: (parts[1] || '').replace(/"/g, '').trim(), 
+                    tag: '' 
+                });
+            }
+        } else {
+            // Standard Comma Split for other languages
+            const parts = rowStr.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+            data.push({ 
+                english: (parts[0] || '').replace(/"/g, '').trim(), 
+                translation: (parts[1] || '').replace(/"/g, '').trim(), 
+                tag: '' 
             });
         }
     }
     return data;
 }
 
-// ------------------------------------------
-// 3. Search & UI (Silent Copy)
-// ------------------------------------------
-
-function copyWord(t) {
-    navigator.clipboard.writeText(t);
-    // Silent copy - no alert popup
-}
+// 4. UI & Filtering
+function copyWord(t) { navigator.clipboard.writeText(t); }
 
 function filterData(query) {
     const q = query.toLowerCase().trim();
-    const status = document.getElementById('statusMessage');
-    document.getElementById('descriptionArea').style.display = 'none';
+    const container = document.getElementById('bookTableContainer');
+    if (!q) { container.style.display = 'none'; return; }
     
-    if (!q) {
-        document.getElementById('bookTableContainer').style.display = 'none';
-        status.textContent = "Search English or Native word...";
-        return;
-    }
-
     const allKeys = Object.keys(groupedDictionaryData);
-    
-    const exactMatch = allKeys.filter(key => 
-        key.toLowerCase() === q || 
-        groupedDictionaryData[key].some(e => e.translation.toLowerCase() === q)
+    const results = allKeys.filter(key => 
+        key.toLowerCase().includes(q) || 
+        groupedDictionaryData[key].some(e => e.translation.toLowerCase().includes(q))
     );
-    
-    const relatedMatches = allKeys.filter(key => {
-        const matchesEnglish = key.toLowerCase().startsWith(q);
-        const matchesTranslation = groupedDictionaryData[key].some(e => e.translation.toLowerCase().startsWith(q));
-        return (matchesEnglish || matchesTranslation) && !exactMatch.includes(key);
-    });
-
-    const finalResults = [...exactMatch, ...relatedMatches];
-
-    if (finalResults.length > 0) {
-        status.textContent = ""; 
-        renderTable(finalResults);
-    } else {
-        document.getElementById('bookTableContainer').style.display = 'none';
-        status.textContent = "❌ No results found.";
-    }
+    renderTable(results);
 }
 
 function renderTable(keys) {
     const container = document.getElementById('bookTableContainer');
     const tbody = document.getElementById('bookTableBody');
-    tbody.innerHTML = '';
+    tbody.innerHTML = ''; 
     lastFilterResults = keys;
+
+    if (keys.length === 0) { container.style.display = 'none'; return; }
 
     container.style.display = 'block';
     keys.forEach(key => {
         const row = tbody.insertRow();
         row.onclick = () => showDetails(key);
         row.insertCell().textContent = key;
-        row.insertCell().textContent = groupedDictionaryData[key].map(e => e.translation).join(' / ');
+        row.insertCell().textContent = groupedDictionaryData[key][0].translation;
     });
 }
 
 function showDetails(word) {
     document.getElementById('bookTableContainer').style.display = 'none';
     const entries = groupedDictionaryData[word];
-    const title = document.getElementById('descriptionTitle');
-    const def = document.getElementById('definitionText');
-    
-    title.innerHTML = `<span class="english-title-word">${word}</span> <button class="copy-button" onclick="copyWord('${word}')">Copy</button>`;
-    
     let html = '';
     entries.forEach(e => {
-        html += `
-            <div style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
-                <p><strong>Translation:</strong> ${e.translation} <button class="copy-button" onclick="copyWord('${e.translation}')">📋</button></p>
-                ${e.transliteration ? `<p><em>Pronunciation:</em> ${e.transliteration}</p>` : ''}
-                ${e.explanation ? `<p><strong>Details:</strong> ${e.explanation}</p>` : ''}
-            </div>
-        `;
+        html += `<p><strong>Meaning:</strong> ${e.translation} <button onclick="copyWord('${e.translation}')" style="cursor:pointer; background:none; border:1px solid #ccc; padding:2px 5px; border-radius:3px;">📋</button></p>`;
+        if(e.tag) html += `<p><em>Grammar: {${e.tag}}</em></p>`;
     });
-    
-    def.innerHTML = html;
+    document.getElementById('definitionText').innerHTML = html;
+    document.getElementById('descriptionTitle').textContent = word;
     document.getElementById('descriptionArea').style.display = 'block';
 }
 
-// ------------------------------------------
-// 4. Admin & Events
-// ------------------------------------------
-
-async function handleLogin() {
-    const user = prompt("Admin User:");
-    const pass = prompt("Admin Pass:");
-    if (!user || !pass) return;
-
+// 5. Admin & Auth Logic
+async function performLogin() {
+    const user = document.getElementById('adminUser').value;
+    const pass = document.getElementById('adminPass').value;
     try {
-        const response = await fetch(CONFIG[currentLanguage].api, {
-            method: "POST",
-            body: JSON.stringify({ action: "login", user, pass })
+        const resp = await fetch(CONFIG[currentLanguage].api, { 
+            method: "POST", 
+            body: JSON.stringify({ action: "login", user, pass }) 
         });
-        const result = await response.json();
-        if (result.success) {
-            document.getElementById('adminPanel').style.display = 'block';
-            document.getElementById('adminPanelTitle').textContent = `🛠 Admin: ${currentLanguage}`;
-        } else { alert("❌ Wrong credentials."); }
-    } catch (e) { alert("Connection Error"); }
+        const res = await resp.json();
+        if(res.success) {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('entryForm').style.display = 'block';
+        } else {
+            alert("Login Failed: Incorrect Username or Password");
+        }
+    } catch(e) { alert("Server error during login."); }
 }
 
 async function saveNewWord() {
-    const from = document.getElementById('newEnglish').value.trim();
-    const to = document.getElementById('newTranslation').value.trim();
-    const type = document.getElementById('newType').value.trim();
-
-    if (!from || !to) return;
-
+    const from = document.getElementById('newEnglish').value;
+    const to = document.getElementById('newTranslation').value;
+    const tag = document.getElementById('newType').value;
+    
+    const payload = currentLanguage === "MALAYALAM" ? `${from} {${tag}} ${to}` : from;
+    
     try {
-        const response = await fetch(CONFIG[currentLanguage].api, {
-            method: "POST",
-            body: JSON.stringify({ action: "add", from, to, type })
+        await fetch(CONFIG[currentLanguage].api, { 
+            method: "POST", 
+            body: JSON.stringify({ action: "add", from: payload, to: to }) 
         });
-        const result = await response.json();
-        if (result.success) {
-            alert("Saved!");
-            document.getElementById('newEnglish').value = '';
-            document.getElementById('newTranslation').value = '';
-            init(); // Auto refresh
-        }
-    } catch (e) { alert("Save failed."); }
+        alert("Success: Saved to Google Sheet!"); 
+        init(); 
+    } catch(e) { alert("Error: Could not save word."); }
 }
 
-function contactMe() { const a = document.getElementById('contactArea'); a.style.display = a.style.display==='none'?'block':'none'; }
-function logout() { document.getElementById('adminPanel').style.display='none'; }
+function logout() {
+    document.getElementById('adminPanel').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('entryForm').style.display = 'none';
+    document.getElementById('adminUser').value = '';
+    document.getElementById('adminPass').value = '';
+}
 
+// 6. Listeners
 document.getElementById('languageSelect').onchange = (e) => { currentLanguage = e.target.value; init(); };
 document.getElementById('themeToggle').onclick = () => document.body.classList.toggle('dark-theme');
-document.getElementById('adminLoginBtn').onclick = handleLogin;
-document.getElementById('contactButton').onclick = contactMe;
-document.getElementById('backButton').onclick = () => { document.getElementById('descriptionArea').style.display='none'; renderTable(lastFilterResults); };
 document.getElementById('searchInput').oninput = (e) => filterData(e.target.value);
+document.getElementById('backButton').onclick = () => { 
+    document.getElementById('descriptionArea').style.display='none'; 
+    renderTable(lastFilterResults); 
+};
+document.getElementById('adminLoginBtn').onclick = () => { 
+    const p = document.getElementById('adminPanel'); 
+    p.style.display = p.style.display==='none' ? 'block' : 'none'; 
+};
+document.getElementById('contactButton').onclick = () => { 
+    const c = document.getElementById('contactArea'); 
+    c.style.display = c.style.display==='none' ? 'block' : 'none'; 
+};
 
+// Start
 init();
