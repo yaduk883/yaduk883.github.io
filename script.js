@@ -18,10 +18,11 @@ let dictionaryData = [];
 let groupedDictionaryData = {};
 let lastFilterResults = [];
 
-// Initialize and Fetch Data
+// Initialize & Load Data
 async function init() {
     const status = document.getElementById('statusMessage');
-    status.textContent = `🔄 Syncing ${currentLanguage}...`;
+    if (status) status.textContent = `🔄 Syncing ${currentLanguage}...`;
+    
     try {
         const response = await fetch(CONFIG[currentLanguage].db + '&t=' + new Date().getTime());
         const csvText = await response.text();
@@ -32,18 +33,19 @@ async function init() {
             if (!groupedDictionaryData[item.english]) groupedDictionaryData[item.english] = [];
             groupedDictionaryData[item.english].push(item);
         });
-        status.textContent = "✅ Ready!";
+        if (status) status.textContent = "✅ Ready!";
     } catch (e) { 
-        status.textContent = "⚠️ Load Error."; 
+        if (status) status.textContent = "⚠️ Load Error."; 
         console.error(e);
     }
 }
 
-// Corrected Parser for your 3-column Malayalam Sheet
+
+
+// The Heart of the App: The Multi-Format Parser
 function parseCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const data = [];
-    // This regex correctly handles commas inside quotes in CSV cells
     const csvRegex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/; 
 
     for (let i = 1; i < lines.length; i++) {
@@ -51,29 +53,44 @@ function parseCSV(csvText) {
         if (row.length < 2) continue;
 
         let english = row[0].replace(/"/g, '').trim();
-        let tag = (row[1] || "").replace(/"/g, '').trim(); // {n}, {v}, etc.
-        let meaning = (row[2] || "").replace(/"/g, '').trim(); // Malayalam Text
+        let translation = "";
+        let extra = ""; // For Grammar or Transliteration
+        let explanation = "";
+
+        if (currentLanguage === "MALAYALAM") {
+            // Pattern: English, Type, Meaning
+            extra = (row[1] || "").replace(/"/g, '').trim(); 
+            translation = (row[2] || "").replace(/"/g, '').trim();
+        } 
+        else if (currentLanguage === "BODO") {
+            // Pattern: English, Explanation, Bodo Meaning, Transliteration
+            explanation = (row[1] || "").replace(/"/g, '').trim();
+            translation = (row[2] || "").replace(/"/g, '').trim();
+            extra = (row[3] || "").replace(/"/g, '').trim();
+        } 
+        else if (currentLanguage === "MAITHILI") {
+            // Pattern: English, Maithili Meaning, Transliteration
+            translation = (row[1] || "").replace(/"/g, '').trim();
+            extra = (row[2] || "").replace(/"/g, '').trim();
+        }
 
         if (english) {
-            data.push({
-                english: english,
-                translation: (currentLanguage === "MALAYALAM") ? meaning : (meaning || tag),
-                typeTag: (currentLanguage === "MALAYALAM") ? tag : ""
-            });
+            data.push({ english, translation, extra, explanation });
         }
     }
     return data;
 }
 
-// Search Logic
+// Search & Filter Logic
 function filterData(query) {
     const q = query.toLowerCase().trim();
+    const container = document.getElementById('bookTableContainer');
     if (!q) { 
-        document.getElementById('bookTableContainer').style.display = 'none'; 
+        if (container) container.style.display = 'none'; 
         return; 
     }
-    const allKeys = Object.keys(groupedDictionaryData);
-    const results = allKeys.filter(key => 
+    
+    const results = Object.keys(groupedDictionaryData).filter(key => 
         key.toLowerCase().includes(q) || 
         groupedDictionaryData[key].some(e => e.translation.toLowerCase().includes(q))
     );
@@ -84,6 +101,8 @@ function filterData(query) {
 function renderTable(keys) {
     const container = document.getElementById('bookTableContainer');
     const tbody = document.getElementById('bookTableBody');
+    if (!tbody || !container) return;
+
     tbody.innerHTML = ''; 
     lastFilterResults = keys;
 
@@ -97,81 +116,49 @@ function renderTable(keys) {
         const row = tbody.insertRow();
         row.onclick = () => showDetails(key);
         row.insertCell().textContent = key;
-        // Show meaning ONLY (Clean look)
         row.insertCell().textContent = groupedDictionaryData[key][0].translation;
     });
 }
 
-// Show Full Details
+// Show Detail View
 function showDetails(word) {
-    document.getElementById('bookTableContainer').style.display = 'none';
+    const tableContainer = document.getElementById('bookTableContainer');
+    const descArea = document.getElementById('descriptionArea');
+    const defText = document.getElementById('definitionText');
+    const titleText = document.getElementById('descriptionTitle');
+
+    if (tableContainer) tableContainer.style.display = 'none';
     const entries = groupedDictionaryData[word];
     let html = '';
+
     entries.forEach(e => {
-        html += `
-            <div style="margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">
-                <p style="font-size: 1.1rem; margin:0;">
-                    ${e.translation} 
-                    <button onclick="navigator.clipboard.writeText('${e.translation}')" class="copy-btn-mini">📋</button>
-                </p>
-                ${e.typeTag ? `<p style="font-size: 0.85rem; color: #888; margin: 2px 0 0 0;"><em>Grammar: ${e.typeTag}</em></p>` : ''}
-            </div>
-        `;
-    });
-    document.getElementById('definitionText').innerHTML = html;
-    document.getElementById('descriptionTitle').textContent = word;
-    document.getElementById('descriptionArea').style.display = 'block';
-}
-
-// In-page Admin Login
-async function performLogin() {
-    const user = document.getElementById('adminUser').value;
-    const pass = document.getElementById('adminPass').value;
-    try {
-        const resp = await fetch(CONFIG[currentLanguage].api, { 
-            method: "POST", 
-            body: JSON.stringify({ action: "login", user, pass }) 
-        });
-        const res = await resp.json();
-        if(res.success) {
-            document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('entryForm').style.display = 'block';
-        } else {
-            alert("Login Denied");
+        let label = (currentLanguage === "MALAYALAM") ? "Grammar" : "Transliteration";
+        html += `<div class="detail-item">
+            <p class="meaning-text">
+                <strong>Meaning:</strong> ${e.translation} 
+                <button onclick="navigator.clipboard.writeText('${e.translation}')" class="copy-btn-mini">📋</button>
+            </p>`;
+        
+        if(e.extra) {
+            html += `<p class="extra-text"><em>${label}: ${e.extra}</em></p>`;
         }
-    } catch(e) { alert("Error connecting to login server."); }
+        
+        if(e.explanation && currentLanguage === "BODO") {
+            html += `<p class="explanation-text"><strong>Explanation:</strong> ${e.explanation}</p>`;
+        }
+        html += `</div>`;
+    });
+
+    if (defText) defText.innerHTML = html;
+    if (titleText) titleText.textContent = word;
+    if (descArea) descArea.style.display = 'block';
 }
 
-// Save New Word to Sheet
-async function saveNewWord() {
-    const from = document.getElementById('newEnglish').value;
-    const tag = document.getElementById('newType').value;
-    const to = document.getElementById('newTranslation').value;
-    try {
-        await fetch(CONFIG[currentLanguage].api, { 
-            method: "POST", 
-            body: JSON.stringify({ action: "add", from, tag, to }) 
-        });
-        alert("Saved!"); 
-        init(); 
-    } catch(e) { alert("Failed to save."); }
-}
-
-// Global UI Handlers
-function logout() {
-    document.getElementById('adminPanel').style.display = 'none';
-    document.getElementById('loginForm').style.display = 'block';
-    document.getElementById('entryForm').style.display = 'none';
-    document.getElementById('adminUser').value = '';
-    document.getElementById('adminPass').value = '';
-}
-
+// Global UI Listeners
 document.getElementById('languageSelect').onchange = (e) => { 
     currentLanguage = e.target.value; 
     init(); 
 };
-
-document.getElementById('themeToggle').onclick = () => document.body.classList.toggle('dark-theme');
 
 document.getElementById('searchInput').oninput = (e) => filterData(e.target.value);
 
@@ -180,15 +167,5 @@ document.getElementById('backButton').onclick = () => {
     renderTable(lastFilterResults); 
 };
 
-document.getElementById('adminLoginBtn').onclick = () => { 
-    const p = document.getElementById('adminPanel'); 
-    p.style.display = p.style.display==='none' ? 'block' : 'none'; 
-};
-
-document.getElementById('contactButton').onclick = () => { 
-    const c = document.getElementById('contactArea'); 
-    c.style.display = c.style.display==='none' ? 'block' : 'none'; 
-};
-
-// Start App
+// Start
 init();
