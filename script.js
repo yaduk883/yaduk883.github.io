@@ -18,11 +18,10 @@ let dictionaryData = [];
 let groupedDictionaryData = {};
 let lastFilterResults = [];
 
-// Initialize & Load Data
+// --- INITIALIZATION ---
 async function init() {
     const status = document.getElementById('statusMessage');
     if (status) status.textContent = `🔄 Syncing ${currentLanguage}...`;
-    
     try {
         const response = await fetch(CONFIG[currentLanguage].db + '&t=' + new Date().getTime());
         const csvText = await response.text();
@@ -36,13 +35,11 @@ async function init() {
         if (status) status.textContent = "✅ Ready!";
     } catch (e) { 
         if (status) status.textContent = "⚠️ Load Error."; 
-        console.error(e);
+        console.error("Fetch error:", e);
     }
 }
 
-
-
-// The Heart of the App: The Multi-Format Parser
+// --- DATA PARSER (BODO LOGIC FIXED) ---
 function parseCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const data = [];
@@ -54,22 +51,20 @@ function parseCSV(csvText) {
 
         let english = row[0].replace(/"/g, '').trim();
         let translation = "";
-        let extra = ""; // For Grammar or Transliteration
+        let extra = ""; 
         let explanation = "";
 
-        if (currentLanguage === "MALAYALAM") {
-            // Pattern: English, Type, Meaning
-            extra = (row[1] || "").replace(/"/g, '').trim(); 
-            translation = (row[2] || "").replace(/"/g, '').trim();
-        } 
-        else if (currentLanguage === "BODO") {
-            // Pattern: English, Explanation, Bodo Meaning, Transliteration
+        if (currentLanguage === "BODO") {
+            // Index 1: Explanation, Index 2: Bodo Meaning, Index 3: Transliteration
             explanation = (row[1] || "").replace(/"/g, '').trim();
             translation = (row[2] || "").replace(/"/g, '').trim();
             extra = (row[3] || "").replace(/"/g, '').trim();
         } 
+        else if (currentLanguage === "MALAYALAM") {
+            extra = (row[1] || "").replace(/"/g, '').trim(); 
+            translation = (row[2] || "").replace(/"/g, '').trim();
+        } 
         else if (currentLanguage === "MAITHILI") {
-            // Pattern: English, Maithili Meaning, Transliteration
             translation = (row[1] || "").replace(/"/g, '').trim();
             extra = (row[2] || "").replace(/"/g, '').trim();
         }
@@ -81,28 +76,24 @@ function parseCSV(csvText) {
     return data;
 }
 
-// Search & Filter Logic
+// --- SEARCH LOGIC ---
 function filterData(query) {
     const q = query.toLowerCase().trim();
-    const container = document.getElementById('bookTableContainer');
     if (!q) { 
-        if (container) container.style.display = 'none'; 
+        document.getElementById('bookTableContainer').style.display = 'none'; 
         return; 
     }
-    
-    const results = Object.keys(groupedDictionaryData).filter(key => 
+    const allKeys = Object.keys(groupedDictionaryData);
+    const results = allKeys.filter(key => 
         key.toLowerCase().includes(q) || 
         groupedDictionaryData[key].some(e => e.translation.toLowerCase().includes(q))
     );
     renderTable(results);
 }
 
-// Render Results Table
 function renderTable(keys) {
     const container = document.getElementById('bookTableContainer');
     const tbody = document.getElementById('bookTableBody');
-    if (!tbody || !container) return;
-
     tbody.innerHTML = ''; 
     lastFilterResults = keys;
 
@@ -120,52 +111,80 @@ function renderTable(keys) {
     });
 }
 
-// Show Detail View
+// --- DETAIL VIEW ---
 function showDetails(word) {
-    const tableContainer = document.getElementById('bookTableContainer');
-    const descArea = document.getElementById('descriptionArea');
-    const defText = document.getElementById('definitionText');
-    const titleText = document.getElementById('descriptionTitle');
-
-    if (tableContainer) tableContainer.style.display = 'none';
+    document.getElementById('bookTableContainer').style.display = 'none';
     const entries = groupedDictionaryData[word];
     let html = '';
-
     entries.forEach(e => {
-        let label = (currentLanguage === "MALAYALAM") ? "Grammar" : "Transliteration";
-        html += `<div class="detail-item">
-            <p class="meaning-text">
-                <strong>Meaning:</strong> ${e.translation} 
-                <button onclick="navigator.clipboard.writeText('${e.translation}')" class="copy-btn-mini">📋</button>
-            </p>`;
-        
-        if(e.extra) {
-            html += `<p class="extra-text"><em>${label}: ${e.extra}</em></p>`;
-        }
-        
-        if(e.explanation && currentLanguage === "BODO") {
-            html += `<p class="explanation-text"><strong>Explanation:</strong> ${e.explanation}</p>`;
-        }
-        html += `</div>`;
+        let tagLabel = (currentLanguage === "MALAYALAM") ? "Grammar" : "Transliteration";
+        html += `
+            <div class="detail-item">
+                <p style="font-size: 1.25rem; margin:0; font-weight: 600; color: var(--primary-color);">
+                    ${e.translation} 
+                    <button onclick="navigator.clipboard.writeText('${e.translation}')" class="copy-btn-mini">📋</button>
+                </p>
+                ${e.extra ? `<p style="font-size: 0.85rem; color: #777; margin: 4px 0;"><em>${tagLabel}: ${e.extra}</em></p>` : ''}
+                ${e.explanation ? `<p class="explanation-box"><strong>Explanation:</strong> ${e.explanation}</p>` : ''}
+            </div>
+        `;
     });
-
-    if (defText) defText.innerHTML = html;
-    if (titleText) titleText.textContent = word;
-    if (descArea) descArea.style.display = 'block';
+    document.getElementById('definitionText').innerHTML = html;
+    document.getElementById('descriptionTitle').textContent = word;
+    document.getElementById('descriptionArea').style.display = 'block';
 }
 
-// Global UI Listeners
-document.getElementById('languageSelect').onchange = (e) => { 
-    currentLanguage = e.target.value; 
-    init(); 
-};
+// --- ADMIN & LOGIN LOGIC ---
+async function performLogin() {
+    const user = document.getElementById('adminUser').value;
+    const pass = document.getElementById('adminPass').value;
+    try {
+        const resp = await fetch(CONFIG[currentLanguage].api, { 
+            method: "POST", 
+            body: JSON.stringify({ action: "login", user, pass }) 
+        });
+        const res = await resp.json();
+        if(res.success) {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('entryForm').style.display = 'block';
+        } else { alert("Login Failed"); }
+    } catch(e) { alert("Server Error"); }
+}
 
+async function saveNewWord() {
+    const from = document.getElementById('newEnglish').value;
+    const meaning = document.getElementById('newTranslation').value;
+    const extra = document.getElementById('newExtra').value; // Translit or Grammar
+    const expl = document.getElementById('newExpl').value; // Bodo Explanation
+    
+    try {
+        const resp = await fetch(CONFIG[currentLanguage].api, { 
+            method: "POST", 
+            body: JSON.stringify({ action: "add", from, meaning, extra, expl }) 
+        });
+        alert("Saved successfully!");
+        init(); // Refresh data
+    } catch(e) { alert("Save failed"); }
+}
+
+function logout() {
+    document.getElementById('adminPanel').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('entryForm').style.display = 'none';
+}
+
+// --- EVENT LISTENERS ---
+document.getElementById('languageSelect').onchange = (e) => { currentLanguage = e.target.value; init(); };
 document.getElementById('searchInput').oninput = (e) => filterData(e.target.value);
-
-document.getElementById('backButton').onclick = () => { 
-    document.getElementById('descriptionArea').style.display='none'; 
-    renderTable(lastFilterResults); 
+document.getElementById('backButton').onclick = () => { document.getElementById('descriptionArea').style.display='none'; renderTable(lastFilterResults); };
+document.getElementById('themeToggle').onclick = () => document.body.classList.toggle('dark-theme');
+document.getElementById('adminLoginBtn').onclick = () => { 
+    const p = document.getElementById('adminPanel');
+    p.style.display = p.style.display === 'none' ? 'block' : 'none';
+};
+document.getElementById('contactButton').onclick = () => {
+    const c = document.getElementById('contactArea');
+    c.style.display = c.style.display === 'none' ? 'block' : 'none';
 };
 
-// Start
 init();
