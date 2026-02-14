@@ -76,38 +76,66 @@ function parseCSV(csvText) {
     return data;
 }
 
-// --- SEARCH LOGIC ---
+// --- IMPROVED SEARCH LOGIC ---
 function filterData(query) {
     const q = query.toLowerCase().trim();
+    const container = document.getElementById('bookTableContainer');
     if (!q) { 
-        document.getElementById('bookTableContainer').style.display = 'none'; 
+        if (container) container.style.display = 'none'; 
         return; 
     }
-    const allKeys = Object.keys(groupedDictionaryData);
-    const results = allKeys.filter(key => 
-        key.toLowerCase().includes(q) || 
-        groupedDictionaryData[key].some(e => e.translation.toLowerCase().includes(q))
+
+    // 1. Filter all individual entries (not grouped)
+    let results = dictionaryData.filter(item => 
+        item.english.toLowerCase().includes(q) || 
+        item.translation.toLowerCase().includes(q)
     );
+
+    // 2. Sort results by relevance (Exact Match > Starts With > Includes)
+    results.sort((a, b) => {
+        const aEng = a.english.toLowerCase();
+        const bEng = b.english.toLowerCase();
+        
+        // Exact Match
+        if (aEng === q && bEng !== q) return -1;
+        if (bEng === q && aEng !== q) return 1;
+
+        // Starts With
+        if (aEng.startsWith(q) && !bEng.startsWith(q)) return -1;
+        if (bEng.startsWith(q) && !aEng.startsWith(q)) return 1;
+
+        // Alphabetical fallback
+        return aEng.localeCompare(bEng);
+    });
+
     renderTable(results);
 }
 
-function renderTable(keys) {
+// --- UPDATED TABLE RENDERING ---
+function renderTable(dataList) {
     const container = document.getElementById('bookTableContainer');
     const tbody = document.getElementById('bookTableBody');
-    tbody.innerHTML = ''; 
-    lastFilterResults = keys;
+    if (!tbody) return;
 
-    if (keys.length === 0) { 
+    tbody.innerHTML = ''; 
+    if (dataList.length === 0) { 
         container.style.display = 'none'; 
         return; 
     }
 
     container.style.display = 'block';
-    keys.forEach(key => {
+    
+    // Now rendering every individual entry found
+    dataList.forEach(item => {
         const row = tbody.insertRow();
-        row.onclick = () => showDetails(key);
-        row.insertCell().textContent = key;
-        row.insertCell().textContent = groupedDictionaryData[key][0].translation;
+        row.onclick = () => showDetails(item.english);
+        
+        const cellEng = row.insertCell();
+        cellEng.textContent = item.english;
+        cellEng.style.fontWeight = "bold";
+
+        const cellTr = row.insertCell();
+        cellTr.textContent = item.translation;
     });
 }
 
