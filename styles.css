@@ -6,10 +6,6 @@
     --text-color: #333;
     --border-color: #ddd;
     --input-border-color: #bbb;
-    --table-header-bg: #f0f0f0;
-    --hover-bg: #e3f2fd;
-    --description-bg: #f9f9f9;
-    --shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
 body.dark-theme {
@@ -18,16 +14,13 @@ body.dark-theme {
     --text-color: #e0e0e0;
     --border-color: #333;
     --input-border-color: #444;
-    --table-header-bg: #2d2d2d;
-    --hover-bg: #263238;
-    --description-bg: #252525;
-    --shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
 /* --- 2. Base Layout --- */
 body {
-    font-family: 'Segoe UI', sans-serif;
-    margin: 0; padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
     background-color: var(--background-color);
     color: var(--text-color);
     transition: 0.3s;
@@ -39,27 +32,27 @@ body {
     padding: 25px;
     background-color: var(--card-background);
     border-radius: 16px;
-    box-shadow: var(--shadow);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
-h1 { text-align: center; color: var(--primary-color); margin-bottom: 20px; }
+h1 { text-align: center; color: var(--primary-color); }
 
-/* --- 3. Unified Controls & Search --- */
+/* --- 3. Controls & Search --- */
 .controls-bar {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
     margin-bottom: 15px;
     justify-content: center;
 }
 
 .controls-bar button, .language-select {
-    padding: 10px 15px;
+    padding: 10px 12px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: white;
     background-color: var(--primary-color);
 }
@@ -67,89 +60,89 @@ h1 { text-align: center; color: var(--primary-color); margin-bottom: 20px; }
 .language-select { background-color: #4caf50; }
 .refresh-btn { background-color: #607d8b !important; }
 .admin-btn { background-color: #ff9800; }
-.contact-button { background-color: #673ab7; }
 
-#searchInput, .admin-form input {
+#searchInput {
     width: 100%;
-    padding: 20px !important;
-    font-size: 1.3rem !important;
-    border: 2px solid var(--input-border-color);
+    padding: 15px;
+    font-size: 1.2rem;
     border-radius: 12px;
+    border: 2px solid var(--input-border-color);
+    box-sizing: border-box;
+    margin-top: 5px;
     background: var(--card-background);
     color: var(--text-color);
-    box-sizing: border-box;
-    outline: none;
-    margin-bottom: 10px;
 }
 
-#searchInput:focus { border-color: var(--primary-color); }
-
-/* --- 4. Tight Results Table --- */
+/* --- 4. Tight Table Spacing --- */
 #bookTable {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 5px;
-}
-
-#bookTable th {
-    background-color: var(--table-header-bg);
-    padding: 10px;
-    font-size: 0.8rem;
-    text-align: left;
-    border-bottom: 2px solid var(--border-color);
+    margin-top: 10px;
 }
 
 #bookTable td {
-    padding: 6px 12px !important; /* Tight gaps */
+    padding: 4px 12px !important; 
     border-bottom: 1px solid var(--border-color);
-    font-size: 1.1rem;
-    height: 35px;
+    font-size: 1rem;
+    height: 32px;
     vertical-align: middle;
 }
 
-#bookTable tr:hover { background-color: var(--hover-bg); cursor: pointer; }
+#bookTable tr:hover {
+    background-color: rgba(30, 136, 229, 0.1);
+    cursor: pointer;
+}
 
-/* --- 5. Detail & Boxes --- */
+/* --- 5. Admin Panel & Forms --- */
 .description-box {
     margin: 20px 0;
     padding: 20px;
     border-left: 5px solid var(--primary-color);
-    background-color: var(--description-bg);
+    background-color: rgba(0,0,0,0.03);
     border-radius: 8px;
 }
 
-.english-title-word { font-weight: 800; font-size: 1.6rem; color: var(--primary-color); }
-
-.copy-button {
-    padding: 4px 10px;
-    margin-left: 10px;
-    font-size: 0.8rem;
-    cursor: pointer;
-    border: 1px solid var(--primary-color);
-    color: var(--primary-color);
-    background: none;
-    border-radius: 4px;
+#adminPanel input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    box-sizing: border-box;
 }
 
-/* --- 6. Contact & Mobile --- */
-.contact-links { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-.contact-link-button {
+.save-btn {
+    width: 100%;
     padding: 12px;
-    text-align: center;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.info { text-align: center; color: var(--primary-color); font-weight: bold; }
+
+.back-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background: #666;
+    color: white;
+}
+
+/* --- 6. Contact Buttons --- */
+.contact-link-button {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 5px;
     color: white;
     text-decoration: none;
-    border-radius: 8px;
+    border-radius: 5px;
     font-weight: bold;
 }
 .email-button { background-color: #d44638; }
 .github-button { background-color: #24292e; }
-.instagram-button { background-color: #e1306c; }
-
-.info { text-align: center; color: var(--primary-color); font-weight: bold; }
-.back-button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; background: #555; color: white; }
-
-@media (max-width: 600px) {
-    .container { padding: 15px; }
-    .controls-bar button { flex: 1 1 45%; font-size: 0.8rem; }
-    #searchInput { font-size: 1.1rem !important; padding: 15px !important; }
-}
