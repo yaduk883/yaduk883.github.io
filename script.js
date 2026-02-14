@@ -1,4 +1,3 @@
-// 1. Configuration
 const CONFIG = {
     MALAYALAM: {
         db: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1yXM-26NcSPpkrOMGFgvCRwYcFfzcaSSYGiD8mztHs_tJjUXLoFf7F-J2kwEWEw/pub?output=csv",
@@ -19,7 +18,7 @@ let dictionaryData = [];
 let groupedDictionaryData = {};
 let lastFilterResults = [];
 
-// 2. Data Fetching
+// Initialize and Fetch Data
 async function init() {
     const status = document.getElementById('statusMessage');
     status.textContent = `🔄 Syncing ${currentLanguage}...`;
@@ -40,52 +39,39 @@ async function init() {
     }
 }
 
-// 3. Specialized Parser
+// Corrected Parser for your 3-column Malayalam Sheet
 function parseCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const data = [];
-    for (let i = 1; i < lines.length; i++) {
-        let rowStr = lines[i].trim();
-        if (!rowStr) continue;
+    // This regex correctly handles commas inside quotes in CSV cells
+    const csvRegex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/; 
 
-        if (currentLanguage === "MALAYALAM") {
-            // Regex to split: English {Tag} Meaning
-            const match = rowStr.match(/^"?([^\{]+)\s*\{([^}]+)\}\s*([^"]+)"?$/);
-            if (match) {
-                data.push({ 
-                    english: match[1].trim(), 
-                    translation: match[3].trim(), 
-                    tag: match[2].trim() 
-                });
-            } else {
-                const parts = rowStr.split(',');
-                data.push({ 
-                    english: (parts[0] || '').replace(/"/g, '').trim(), 
-                    translation: (parts[1] || '').replace(/"/g, '').trim(), 
-                    tag: '' 
-                });
-            }
-        } else {
-            // Standard Comma Split for other languages
-            const parts = rowStr.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-            data.push({ 
-                english: (parts[0] || '').replace(/"/g, '').trim(), 
-                translation: (parts[1] || '').replace(/"/g, '').trim(), 
-                tag: '' 
+    for (let i = 1; i < lines.length; i++) {
+        let row = lines[i].split(csvRegex);
+        if (row.length < 2) continue;
+
+        let english = row[0].replace(/"/g, '').trim();
+        let tag = (row[1] || "").replace(/"/g, '').trim(); // {n}, {v}, etc.
+        let meaning = (row[2] || "").replace(/"/g, '').trim(); // Malayalam Text
+
+        if (english) {
+            data.push({
+                english: english,
+                translation: (currentLanguage === "MALAYALAM") ? meaning : (meaning || tag),
+                typeTag: (currentLanguage === "MALAYALAM") ? tag : ""
             });
         }
     }
     return data;
 }
 
-// 4. UI & Filtering
-function copyWord(t) { navigator.clipboard.writeText(t); }
-
+// Search Logic
 function filterData(query) {
     const q = query.toLowerCase().trim();
-    const container = document.getElementById('bookTableContainer');
-    if (!q) { container.style.display = 'none'; return; }
-    
+    if (!q) { 
+        document.getElementById('bookTableContainer').style.display = 'none'; 
+        return; 
+    }
     const allKeys = Object.keys(groupedDictionaryData);
     const results = allKeys.filter(key => 
         key.toLowerCase().includes(q) || 
@@ -94,37 +80,50 @@ function filterData(query) {
     renderTable(results);
 }
 
+// Render Results Table
 function renderTable(keys) {
     const container = document.getElementById('bookTableContainer');
     const tbody = document.getElementById('bookTableBody');
     tbody.innerHTML = ''; 
     lastFilterResults = keys;
 
-    if (keys.length === 0) { container.style.display = 'none'; return; }
+    if (keys.length === 0) { 
+        container.style.display = 'none'; 
+        return; 
+    }
 
     container.style.display = 'block';
     keys.forEach(key => {
         const row = tbody.insertRow();
         row.onclick = () => showDetails(key);
         row.insertCell().textContent = key;
+        // Show meaning ONLY (Clean look)
         row.insertCell().textContent = groupedDictionaryData[key][0].translation;
     });
 }
 
+// Show Full Details
 function showDetails(word) {
     document.getElementById('bookTableContainer').style.display = 'none';
     const entries = groupedDictionaryData[word];
     let html = '';
     entries.forEach(e => {
-        html += `<p><strong>Meaning:</strong> ${e.translation} <button onclick="copyWord('${e.translation}')" style="cursor:pointer; background:none; border:1px solid #ccc; padding:2px 5px; border-radius:3px;">📋</button></p>`;
-        if(e.tag) html += `<p><em>Grammar: {${e.tag}}</em></p>`;
+        html += `
+            <div style="margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">
+                <p style="font-size: 1.1rem; margin:0;">
+                    ${e.translation} 
+                    <button onclick="navigator.clipboard.writeText('${e.translation}')" class="copy-btn-mini">📋</button>
+                </p>
+                ${e.typeTag ? `<p style="font-size: 0.85rem; color: #888; margin: 2px 0 0 0;"><em>Grammar: ${e.typeTag}</em></p>` : ''}
+            </div>
+        `;
     });
     document.getElementById('definitionText').innerHTML = html;
     document.getElementById('descriptionTitle').textContent = word;
     document.getElementById('descriptionArea').style.display = 'block';
 }
 
-// 5. Admin & Auth Logic
+// In-page Admin Login
 async function performLogin() {
     const user = document.getElementById('adminUser').value;
     const pass = document.getElementById('adminPass').value;
@@ -138,28 +137,27 @@ async function performLogin() {
             document.getElementById('loginForm').style.display = 'none';
             document.getElementById('entryForm').style.display = 'block';
         } else {
-            alert("Login Failed: Incorrect Username or Password");
+            alert("Login Denied");
         }
-    } catch(e) { alert("Server error during login."); }
+    } catch(e) { alert("Error connecting to login server."); }
 }
 
+// Save New Word to Sheet
 async function saveNewWord() {
     const from = document.getElementById('newEnglish').value;
-    const to = document.getElementById('newTranslation').value;
     const tag = document.getElementById('newType').value;
-    
-    const payload = currentLanguage === "MALAYALAM" ? `${from} {${tag}} ${to}` : from;
-    
+    const to = document.getElementById('newTranslation').value;
     try {
         await fetch(CONFIG[currentLanguage].api, { 
             method: "POST", 
-            body: JSON.stringify({ action: "add", from: payload, to: to }) 
+            body: JSON.stringify({ action: "add", from, tag, to }) 
         });
-        alert("Success: Saved to Google Sheet!"); 
+        alert("Saved!"); 
         init(); 
-    } catch(e) { alert("Error: Could not save word."); }
+    } catch(e) { alert("Failed to save."); }
 }
 
+// Global UI Handlers
 function logout() {
     document.getElementById('adminPanel').style.display = 'none';
     document.getElementById('loginForm').style.display = 'block';
@@ -168,22 +166,29 @@ function logout() {
     document.getElementById('adminPass').value = '';
 }
 
-// 6. Listeners
-document.getElementById('languageSelect').onchange = (e) => { currentLanguage = e.target.value; init(); };
+document.getElementById('languageSelect').onchange = (e) => { 
+    currentLanguage = e.target.value; 
+    init(); 
+};
+
 document.getElementById('themeToggle').onclick = () => document.body.classList.toggle('dark-theme');
+
 document.getElementById('searchInput').oninput = (e) => filterData(e.target.value);
+
 document.getElementById('backButton').onclick = () => { 
     document.getElementById('descriptionArea').style.display='none'; 
     renderTable(lastFilterResults); 
 };
+
 document.getElementById('adminLoginBtn').onclick = () => { 
     const p = document.getElementById('adminPanel'); 
     p.style.display = p.style.display==='none' ? 'block' : 'none'; 
 };
+
 document.getElementById('contactButton').onclick = () => { 
     const c = document.getElementById('contactArea'); 
     c.style.display = c.style.display==='none' ? 'block' : 'none'; 
 };
 
-// Start
+// Start App
 init();
