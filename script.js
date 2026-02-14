@@ -76,7 +76,7 @@ function parseCSV(csvText) {
     return data;
 }
 
-// --- IMPROVED SEARCH LOGIC ---
+// --- UPDATED SEARCH WITH GROUPING & PRIORITY ---
 function filterData(query) {
     const q = query.toLowerCase().trim();
     const container = document.getElementById('bookTableContainer');
@@ -85,57 +85,62 @@ function filterData(query) {
         return; 
     }
 
-    // 1. Filter all individual entries (not grouped)
-    let results = dictionaryData.filter(item => 
-        item.english.toLowerCase().includes(q) || 
-        item.translation.toLowerCase().includes(q)
+    // 1. Get unique English words from our grouped data
+    const allEnglishWords = Object.keys(groupedDictionaryData);
+
+    // 2. Filter keys that match the search
+    let matches = allEnglishWords.filter(word => 
+        word.toLowerCase().includes(q) || 
+        groupedDictionaryData[word].some(item => item.translation.toLowerCase().includes(q))
     );
 
-    // 2. Sort results by relevance (Exact Match > Starts With > Includes)
-    results.sort((a, b) => {
-        const aEng = a.english.toLowerCase();
-        const bEng = b.english.toLowerCase();
-        
-        // Exact Match
-        if (aEng === q && bEng !== q) return -1;
-        if (bEng === q && aEng !== q) return 1;
-
-        // Starts With
-        if (aEng.startsWith(q) && !bEng.startsWith(q)) return -1;
-        if (bEng.startsWith(q) && !aEng.startsWith(q)) return 1;
-
-        // Alphabetical fallback
-        return aEng.localeCompare(bEng);
+    // 3. Sort matches: Exact Match first, then Starts With, then the rest
+    matches.sort((a, b) => {
+        const aLow = a.toLowerCase();
+        const bLow = b.toLowerCase();
+        if (aLow === q && bLow !== q) return -1;
+        if (bLow === q && aLow !== q) return 1;
+        if (aLow.startsWith(q) && !bLow.startsWith(q)) return -1;
+        if (bLow.startsWith(q) && !aLow.startsWith(q)) return 1;
+        return aLow.localeCompare(bLow);
     });
 
-    renderTable(results);
+    renderTable(matches);
 }
 
-// --- UPDATED TABLE RENDERING ---
-function renderTable(dataList) {
+// --- UPDATED TABLE RENDERING (COMMA SEPARATED) ---
+function renderTable(matchingKeys) {
     const container = document.getElementById('bookTableContainer');
     const tbody = document.getElementById('bookTableBody');
     if (!tbody) return;
 
     tbody.innerHTML = ''; 
-    if (dataList.length === 0) { 
+    lastFilterResults = matchingKeys;
+
+    if (matchingKeys.length === 0) { 
         container.style.display = 'none'; 
         return; 
     }
 
     container.style.display = 'block';
     
-    // Now rendering every individual entry found
-    dataList.forEach(item => {
+    matchingKeys.forEach(word => {
         const row = tbody.insertRow();
-        row.onclick = () => showDetails(item.english);
+        row.onclick = () => showDetails(word);
         
+        // Highlight exact matches
+        if(word.toLowerCase() === document.getElementById('searchInput').value.toLowerCase().trim()) {
+            row.className = "exact-match-row";
+        }
+
         const cellEng = row.insertCell();
-        cellEng.textContent = item.english;
+        cellEng.textContent = word;
         cellEng.style.fontWeight = "bold";
 
+        // Join all meanings with a comma
         const cellTr = row.insertCell();
-        cellTr.textContent = item.translation;
+        const allMeanings = groupedDictionaryData[word].map(item => item.translation);
+        cellTr.textContent = allMeanings.join(", ");
     });
 }
 
