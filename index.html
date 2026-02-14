@@ -26,28 +26,31 @@
             <input type="text" id="searchInput" placeholder="🔍 Search English or Native word...">
         </div>
 
-        <div id="adminPanel" class="description-box admin-box" style="display:none;">
-            <h3 id="adminPanelTitle">🛠 Admin Panel</h3>
-            <div class="admin-form">
+        <p id="statusMessage" class="info">Ready!</p>
+
+        <div id="adminPanel" class="description-box" style="display:none;">
+            <h3 id="adminPanelTitle">🛠 Admin Access</h3>
+            <div id="loginForm">
+                <input type="text" id="adminUser" placeholder="Username">
+                <input type="password" id="adminPass" placeholder="Password">
+                <button onclick="performLogin()" class="save-btn">Login</button>
+            </div>
+            <div id="entryForm" style="display:none;">
                 <input type="text" id="newEnglish" placeholder="English Word">
                 <input type="text" id="newTranslation" placeholder="Native Translation">
-                <input type="text" id="newType" placeholder="Transliteration / Details">
+                <input type="text" id="newType" placeholder="Grammar Tag (e.g. n, v)">
                 <button onclick="saveNewWord()" class="save-btn">Save to Sheet</button>
-                <button onclick="logout()" class="back-button" style="background-color: #666; margin-top: 10px;">Logout</button>
             </div>
+            <button onclick="logout()" class="back-button" style="background:#666; margin-top:10px; width:100%;">Close / Logout</button>
         </div>
 
-        <div id="contactArea" class="description-box contact-box" style="display:none;">
+        <div id="contactArea" class="description-box" style="display:none;">
             <h3>📬 Contact</h3>
             <div class="contact-links">
-                <a href="https://mail.google.com/mail/?view=cm&fs=1&to=yaduk883@gmail.com" target="_blank" class="contact-link-button email-button">📧 Email</a>
+                <a href="mailto:yaduk883@gmail.com" class="contact-link-button email-button">📧 Email</a>
                 <a href="https://github.com/yaduk883" target="_blank" class="contact-link-button github-button">🐙 GitHub</a>
-                <a href="https://instagram.com/ig.yadu/" target="_blank" class="contact-link-button instagram-button">📸 Instagram</a>
             </div>
-            <button onclick="contactMe()" class="back-button" style="margin-top: 15px; width: 100%;">Close</button>
         </div>
-
-        <p id="statusMessage" class="info">Ready!</p>
 
         <div id="descriptionArea" class="description-box" style="display:none;">
             <h3 id="descriptionTitle"></h3>
@@ -67,7 +70,6 @@
             </table>
         </div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
