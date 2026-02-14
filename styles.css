@@ -24,65 +24,34 @@ body.dark-theme {
 
 body { 
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-    margin: 0; 
-    padding: 10px; 
+    margin: 0; padding: 10px; 
     background-color: var(--background-color); 
     color: var(--text-color); 
-    transition: background-color 0.3s, color 0.3s; 
-    line-height: 1.5;
+    transition: 0.3s; 
 }
 
 /* =========================================
    2. MAIN LAYOUT
    ========================================= */
 .container { 
-    max-width: 850px; 
-    margin: 0 auto; 
-    padding: 15px; 
+    max-width: 850px; margin: 0 auto; padding: 15px; 
     background-color: var(--card-background); 
-    border-radius: 12px; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+    border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
 }
 
-h1 { 
-    text-align: center; 
-    color: var(--primary-color); 
-    margin: 0 0 10px 0; 
-    font-size: 1.5rem; 
-}
+h1 { text-align: center; color: var(--primary-color); margin: 0 0 10px 0; font-size: 1.4rem; }
 
-#statusMessage {
-    text-align: center;
-    font-size: 0.8rem;
-    font-weight: bold;
-    margin-bottom: 8px;
-    color: var(--primary-color);
-}
+#statusMessage { text-align: center; font-size: 0.75rem; font-weight: bold; margin-bottom: 8px; color: var(--primary-color); }
 
 /* =========================================
-   3. CONTROLS BAR (Buttons & Selects)
+   3. CONTROLS BAR
    ========================================= */
-.controls-bar { 
-    display: flex; 
-    flex-wrap: wrap; 
-    gap: 5px; 
-    margin-bottom: 12px; 
-    justify-content: center; 
-}
-
+.controls-bar { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; justify-content: center; }
 .controls-bar button, .language-select { 
-    padding: 8px 12px; 
-    border: none; 
-    border-radius: 6px; 
-    cursor: pointer; 
-    font-weight: 600; 
-    font-size: 0.8rem; 
-    color: white; 
-    background-color: var(--primary-color); 
-    transition: transform 0.1s, opacity 0.2s;
+    padding: 6px 10px; border: none; border-radius: 6px; 
+    cursor: pointer; font-weight: 600; font-size: 0.75rem; 
+    color: white; background-color: var(--primary-color); 
 }
-
-.controls-bar button:active { transform: scale(0.96); }
 .language-select { background-color: var(--success-color); outline: none; }
 .admin-btn { background-color: var(--admin-color); }
 .refresh-btn { background-color: #607d8b !important; }
@@ -91,196 +60,106 @@ h1 {
    4. SEARCH AREA
    ========================================= */
 #searchInput { 
-    width: 100%; 
-    padding: 12px; 
-    font-size: 1.1rem; 
-    border-radius: 8px; 
-    border: 2px solid var(--input-border-color); 
-    box-sizing: border-box; 
-    background: var(--card-background); 
-    color: var(--text-color); 
-    margin-bottom: 8px;
-    outline: none;
+    width: 100%; padding: 10px; font-size: 1rem; border-radius: 8px; 
+    border: 2px solid var(--input-border-color); box-sizing: border-box; 
+    background: var(--card-background); color: var(--text-color); margin-bottom: 8px; outline: none;
 }
-
-#searchInput:focus { border-color: var(--primary-color); }
 
 /* =========================================
-   5. ULTRA-TIGHT TABLE (High Density)
+   5. ULTRA-TIGHT TABLE
    ========================================= */
 #bookTableContainer {
-    display: none;
-    max-height: 60vh;
-    overflow-y: auto;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
+    display: none; max-height: 55vh; overflow-y: auto;
+    border: 1px solid var(--border-color); border-radius: 6px;
 }
 
-#bookTable { 
-    width: 100%; 
-    border-collapse: collapse; 
-}
-
+#bookTable { width: 100%; border-collapse: collapse; }
 #bookTable th {
-    text-align: left;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    color: #888;
-    padding: 8px;
-    border-bottom: 2px solid var(--border-color);
-    position: sticky;
-    top: 0;
-    background: var(--card-background);
-    z-index: 5;
+    text-align: left; font-size: 0.65rem; text-transform: uppercase;
+    color: #888; padding: 6px 8px; border-bottom: 2px solid var(--border-color);
+    position: sticky; top: 0; background: var(--card-background); z-index: 5;
 }
 
 #bookTable td { 
-    padding: 4px 8px !important; 
-    border-bottom: 1px solid var(--border-color); 
-    font-size: 0.9rem; 
-    vertical-align: middle;
+    padding: 3px 8px !important; border-bottom: 1px solid var(--border-color); 
+    font-size: 0.85rem; vertical-align: middle; line-height: 1.2;
+}
+#bookTable td:first-child { width: 30%; color: var(--primary-color); font-weight: bold; }
+#bookTable tr:hover { background-color: rgba(30, 136, 229, 0.05); cursor: pointer; }
+.exact-match-row { background-color: var(--exact-match-bg) !important; }
+
+/* =========================================
+   6. TIGHT DETAIL VIEW (THE SECTION YOU ASKED FOR)
+   ========================================= */
+.description-box { 
+    display: none; margin: 10px 0; padding: 12px; 
+    border-left: 4px solid var(--primary-color); 
+    background-color: rgba(0,0,0,0.02); border-radius: 6px; 
+}
+
+#descriptionTitle { 
+    margin: 0 0 8px 0; color: var(--primary-color); 
+    font-size: 1.2rem; /* Decreased font */
+}
+
+.detail-item {
+    margin-bottom: 6px; /* Reduced gap */
+    padding-bottom: 4px; /* Reduced gap */
+    border-bottom: 1px solid var(--border-color);
+}
+.detail-item:last-child { border-bottom: none; }
+
+.detail-item p { 
+    margin: 2px 0; /* Tightened paragraph gap */
+    font-size: 0.9rem; /* Decreased font */
     line-height: 1.2;
 }
 
-/* Fixed width for word column */
-#bookTable td:first-child { 
-    width: 30%; 
-    color: var(--primary-color);
-    font-weight: bold;
-}
-
-/* Grouped meaning column */
-#bookTable td:last-child {
-    word-break: break-word;
-    color: var(--text-color);
-}
-
-#bookTable tr:hover { 
-    background-color: rgba(30, 136, 229, 0.05); 
-    cursor: pointer; 
-}
-
-/* Highlight style for the Exact Match word */
-.exact-match-row {
-    background-color: var(--exact-match-bg) !important;
-}
-
-/* =========================================
-   6. DETAIL VIEW & EXPLANATION BOX
-   ========================================= */
-.description-box { 
-    display: none;
-    margin: 15px 0; 
-    padding: 15px; 
-    border-left: 5px solid var(--primary-color); 
-    background-color: rgba(0,0,0,0.02); 
-    border-radius: 8px; 
-}
-
-#descriptionTitle { margin: 0 0 10px 0; color: var(--primary-color); font-size: 1.4rem; }
-
-.detail-item {
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.detail-item:last-child { border-bottom: none; }
-
 .explanation-box { 
-    font-size: 0.95rem; 
-    color: #444; 
-    background: rgba(0,0,0,0.03); 
-    padding: 10px; 
-    border-radius: 6px; 
-    margin-top: 8px; 
+    font-size: 0.85rem; color: #555; background: rgba(0,0,0,0.03); 
+    padding: 6px 10px; border-radius: 4px; margin-top: 4px; 
     border: 1px solid var(--border-color);
 }
 
-.dark-theme .explanation-box { color: #ccc; background: rgba(255,255,255,0.05); }
-
 /* =========================================
-   7. ADMIN PANEL, LOGIN & FORMS
+   7. ADMIN PANEL
    ========================================= */
 #adminPanel {
-    display: none;
-    margin-top: 15px;
-    padding: 15px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background: rgba(0,0,0,0.01);
+    display: none; margin-top: 10px; padding: 12px; 
+    border: 1px solid var(--border-color); border-radius: 8px; 
 }
-
-#adminPanel h2 { font-size: 1.1rem; margin-top: 0; color: var(--admin-color); }
-
 #adminPanel input, #adminPanel select, #adminPanel textarea { 
-    width: 100%; 
-    padding: 10px; 
-    margin-bottom: 8px; 
-    border-radius: 5px; 
-    border: 1px solid var(--border-color); 
-    box-sizing: border-box; 
-    background: var(--card-background);
-    color: var(--text-color);
-    font-size: 0.9rem;
+    width: 100%; padding: 8px; margin-bottom: 6px; border-radius: 4px; 
+    border: 1px solid var(--border-color); box-sizing: border-box; 
+    background: var(--card-background); color: var(--text-color); font-size: 0.85rem;
 }
-
-.save-btn { 
-    width: 100%; 
-    padding: 12px; 
-    background-color: var(--success-color); 
-    color: white; 
-    border: none; 
-    border-radius: 6px; 
-    cursor: pointer; 
-    font-weight: bold; 
-    font-size: 1rem;
-}
-
-#loginForm, #entryForm { margin-bottom: 10px; }
 
 /* =========================================
    8. MISC UI ELEMENTS
    ========================================= */
 .back-button { 
-    padding: 8px 16px; 
-    border: none; 
-    border-radius: 6px; 
-    cursor: pointer; 
-    background: #666; 
-    color: white; 
-    margin-top: 10px; 
+    padding: 5px 12px; border: none; border-radius: 4px; 
+    cursor: pointer; background: #666; color: white; 
+    margin-top: 8px; font-size: 0.8rem; /* Shrunk back button */
 }
 
 .copy-btn-mini { 
-    background: none; 
-    border: 1px solid #ccc; 
-    border-radius: 4px; 
-    cursor: pointer; 
-    font-size: 0.7rem; 
-    padding: 2px 6px; 
-    margin-left: 10px; 
-    color: var(--text-color);
+    background: none; border: 1px solid #ccc; border-radius: 3px; 
+    cursor: pointer; font-size: 0.65rem; padding: 1px 4px; 
+    margin-left: 6px; color: var(--text-color);
 }
 
-.copy-btn-mini:hover { border-color: var(--primary-color); color: var(--primary-color); }
-
 #contactArea {
-    display: none;
-    text-align: center;
-    margin-top: 15px;
-    padding: 15px;
-    font-size: 0.85rem;
-    border-top: 1px solid var(--border-color);
-    color: #777;
+    display: none; text-align: center; margin-top: 12px; 
+    padding: 10px; font-size: 0.8rem; border-top: 1px solid var(--border-color);
 }
 
 /* =========================================
-   9. RESPONSIVE DESIGN
+   9. MOBILE TWEAKS
    ========================================= */
 @media (max-width: 480px) {
-    body { padding: 5px; }
-    .container { padding: 10px; border-radius: 0; }
-    .controls-bar button { flex: 1 1 45%; font-size: 0.75rem; padding: 6px; }
-    #bookTable td { font-size: 0.85rem; padding: 4px 5px !important; }
+    .container { padding: 10px; }
+    .controls-bar button { flex: 1 1 45%; }
+    #bookTable td { font-size: 0.8rem; }
+    .detail-item p { font-size: 0.85rem; }
 }
