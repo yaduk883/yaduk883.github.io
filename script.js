@@ -18,7 +18,7 @@ let dictionaryData = [];
 let groupedDictionaryData = {};
 let lastFilterResults = [];
 
-// --- INITIALIZATION ---
+
 async function init() {
     const status = document.getElementById('statusMessage');
     if (status) status.textContent = `🔄 Syncing ${currentLanguage}...`;
@@ -39,7 +39,7 @@ async function init() {
     }
 }
 
-// --- DATA PARSER (BODO LOGIC FIXED) ---
+
 function parseCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const data = [];
@@ -55,7 +55,7 @@ function parseCSV(csvText) {
         let explanation = "";
 
         if (currentLanguage === "BODO") {
-            // Index 1: Explanation, Index 2: Bodo Meaning, Index 3: Transliteration
+           
             explanation = (row[1] || "").replace(/"/g, '').trim();
             translation = (row[2] || "").replace(/"/g, '').trim();
             extra = (row[3] || "").replace(/"/g, '').trim();
@@ -76,7 +76,6 @@ function parseCSV(csvText) {
     return data;
 }
 
-// --- UPDATED SEARCH WITH GROUPING & PRIORITY ---
 function filterData(query) {
     const q = query.toLowerCase().trim();
     const container = document.getElementById('bookTableContainer');
@@ -85,16 +84,16 @@ function filterData(query) {
         return; 
     }
 
-    // 1. Get unique English words from our grouped data
+    
     const allEnglishWords = Object.keys(groupedDictionaryData);
 
-    // 2. Filter keys that match the search
+    
     let matches = allEnglishWords.filter(word => 
         word.toLowerCase().includes(q) || 
         groupedDictionaryData[word].some(item => item.translation.toLowerCase().includes(q))
     );
 
-    // 3. Sort matches: Exact Match first, then Starts With, then the rest
+    
     matches.sort((a, b) => {
         const aLow = a.toLowerCase();
         const bLow = b.toLowerCase();
@@ -108,7 +107,7 @@ function filterData(query) {
     renderTable(matches);
 }
 
-// --- UPDATED TABLE RENDERING (COMMA SEPARATED) ---
+
 function renderTable(matchingKeys) {
     const container = document.getElementById('bookTableContainer');
     const tbody = document.getElementById('bookTableBody');
@@ -128,7 +127,7 @@ function renderTable(matchingKeys) {
         const row = tbody.insertRow();
         row.onclick = () => showDetails(word);
         
-        // Highlight exact matches
+        
         if(word.toLowerCase() === document.getElementById('searchInput').value.toLowerCase().trim()) {
             row.className = "exact-match-row";
         }
@@ -137,14 +136,14 @@ function renderTable(matchingKeys) {
         cellEng.textContent = word;
         cellEng.style.fontWeight = "bold";
 
-        // Join all meanings with a comma
+        
         const cellTr = row.insertCell();
         const allMeanings = groupedDictionaryData[word].map(item => item.translation);
         cellTr.textContent = allMeanings.join(", ");
     });
 }
 
-// --- DETAIL VIEW ---
+
 function showDetails(word) {
     document.getElementById('bookTableContainer').style.display = 'none';
     const entries = groupedDictionaryData[word];
@@ -167,7 +166,7 @@ function showDetails(word) {
     document.getElementById('descriptionArea').style.display = 'block';
 }
 
-// --- ADMIN & LOGIN LOGIC ---
+
 async function performLogin() {
     const user = document.getElementById('adminUser').value;
     const pass = document.getElementById('adminPass').value;
@@ -196,7 +195,7 @@ async function saveNewWord() {
             body: JSON.stringify({ action: "add", from, meaning, extra, expl }) 
         });
         alert("Saved successfully!");
-        init(); // Refresh data
+        init(); // Refresh 
     } catch(e) { alert("Save failed"); }
 }
 
@@ -206,7 +205,7 @@ function logout() {
     document.getElementById('entryForm').style.display = 'none';
 }
 
-// --- EVENT LISTENERS ---
+//events
 document.getElementById('languageSelect').onchange = (e) => { currentLanguage = e.target.value; init(); };
 document.getElementById('searchInput').oninput = (e) => filterData(e.target.value);
 document.getElementById('backButton').onclick = () => { document.getElementById('descriptionArea').style.display='none'; renderTable(lastFilterResults); };
