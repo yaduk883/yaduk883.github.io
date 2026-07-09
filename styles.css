@@ -1,7 +1,7 @@
 
 :root {
     --primary-color: #1e88e5; 
-    --background-color: #f4f7f6;
+    --background-color: #07070f;
     --card-background: #ffffff;
     --text-color: #333;
     --border-color: #ddd;
@@ -12,7 +12,7 @@
 }
 
 body.dark-theme {
-    --background-color: #121212;
+    --background-color: #07070f;
     --card-background: #1e1e1e;
     --text-color: #e0e0e0;
     --border-color: #333;
@@ -26,6 +26,18 @@ body {
     background-color: var(--background-color); 
     color: var(--text-color); 
     transition: 0.3s; 
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+/* Full-page Prism background — sits behind everything, ignores clicks */
+#prism-bg {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
 }
 
 
