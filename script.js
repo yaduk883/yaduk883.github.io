@@ -1,123 +1,93 @@
-const CONFIG = {
-    MALAYALAM: {
-        db: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1yXM-26NcSPpkrOMGFgvCRwYcFfzcaSSYGiD8mztHs_tJjUXLoFf7F-J2kwEWEw/pub?output=csv",
-        api: "https://script.google.com/macros/s/AKfycby6ZYrMlmhDhjm5G2GFd-vrNuR1GHiZYcU3KTgvE1l8dVTIa3rQrn0LGUrzTRHwfxQv4Q/exec"
-    },
-    BODO: {
-        db: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQLtdSVACMT2lwL9zKyOMuhrFiIpzKrZSjR0leijaTbBV5akRBlQCNwa8zVRxqvqA/pub?output=csv",
-        api: "https://script.google.com/macros/s/AKfycbxPo_6gATFfSkQv6Juy8eme2AH9Q5SwKYWkeEzS20_7CnHAQen3_I6DsSvw0STRXju9vg/exec"
-    },
-    MAITHILI: {
-        db: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQqfZN9eJsap8DysSBopEJNkWqgtSpYR6i_fQHyjUBaEefbYmDHPxBY-AR0nlbv8w/pub?output=csv",
-        api: "https://script.google.com/macros/s/AKfycbwoppmiL23b37fFf8kntY-JHPUXW6D8IM26wFET0Dni8Z3wIvI_X67ZM0O_HDXP7OVA/exec"
-    }
-};
+// Supabase Configuration 
+const supabaseUrl = 'YOUR_SUPABASE_PROJECT_URL';
+const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 let currentLanguage = "MALAYALAM";
-let dictionaryData = [];
-let groupedDictionaryData = {};
-let lastFilterResults = [];
-
+let searchTimeout = null;
 
 async function init() {
     const status = document.getElementById('statusMessage');
-    if (status) status.textContent = `🔄 Syncing ${currentLanguage}...`;
+    if (status) status.textContent = `✅ Connected to ${currentLanguage}`;
+    document.getElementById('bookTableContainer').style.display = 'none';
+    document.getElementById('searchInput').value = '';
+    
+    // Check if admin is already logged in
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('entryForm').style.display = 'block';
+    }
+}
+
+// Live Search with Supabase
+async function filterData(query) {
+    const q = query.toLowerCase().trim();
+    const container = document.getElementById('bookTableContainer');
+    const status = document.getElementById('statusMessage');
+    
+    if (!q) { 
+        if (container) container.style.display = 'none'; 
+        status.textContent = "✅ Ready!";
+        return; 
+    }
+
+    status.textContent = "🔍 Searching...";
+
     try {
-        const response = await fetch(CONFIG[currentLanguage].db + '&t=' + new Date().getTime());
-        const csvText = await response.text();
-        dictionaryData = parseCSV(csvText);
-        
-        groupedDictionaryData = {};
-        dictionaryData.forEach(item => {
-            if (!groupedDictionaryData[item.english]) groupedDictionaryData[item.english] = [];
-            groupedDictionaryData[item.english].push(item);
+        // Query Supabase directly
+        const { data, error } = await supabase
+            .from('dictionary')
+            .select('*')
+            .eq('language', currentLanguage)
+            .ilike('english_word', `%${q}%`)
+            .limit(50); // Fetch top 50 matches for performance
+
+        if (error) throw error;
+
+        // Group results by English word
+        const groupedData = {};
+        data.forEach(item => {
+            if (!groupedData[item.english_word]) groupedData[item.english_word] = [];
+            groupedData[item.english_word].push(item);
         });
-        if (status) status.textContent = "✅ Ready!";
-    } catch (e) { 
-        if (status) status.textContent = "⚠️ Load Error."; 
+
+        // Sort exact matches to top
+        const matches = Object.keys(groupedData).sort((a, b) => {
+            const aLow = a.toLowerCase();
+            const bLow = b.toLowerCase();
+            if (aLow === q && bLow !== q) return -1;
+            if (bLow === q && aLow !== q) return 1;
+            if (aLow.startsWith(q) && !bLow.startsWith(q)) return -1;
+            if (bLow.startsWith(q) && !aLow.startsWith(q)) return 1;
+            return aLow.localeCompare(bLow);
+        });
+
+        renderTable(matches, groupedData, q);
+        status.textContent = "✅ Ready!";
+    } catch (e) {
+        status.textContent = "⚠️ Search Error.";
         console.error("Fetch error:", e);
     }
 }
 
-
-function parseCSV(csvText) {
-    const lines = csvText.trim().split('\n');
-    const data = [];
-    const csvRegex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/; 
-
-    for (let i = 1; i < lines.length; i++) {
-        let row = lines[i].split(csvRegex);
-        if (row.length < 2) continue;
-
-        let english = row[0].replace(/"/g, '').trim();
-        let translation = "";
-        let extra = ""; 
-        let explanation = "";
-
-        if (currentLanguage === "BODO") {
-           
-            explanation = (row[1] || "").replace(/"/g, '').trim();
-            translation = (row[2] || "").replace(/"/g, '').trim();
-            extra = (row[3] || "").replace(/"/g, '').trim();
-        } 
-        else if (currentLanguage === "MALAYALAM") {
-            extra = (row[1] || "").replace(/"/g, '').trim(); 
-            translation = (row[2] || "").replace(/"/g, '').trim();
-        } 
-        else if (currentLanguage === "MAITHILI") {
-            translation = (row[1] || "").replace(/"/g, '').trim();
-            extra = (row[2] || "").replace(/"/g, '').trim();
-        }
-
-        if (english) {
-            data.push({ english, translation, extra, explanation });
-        }
-    }
-    return data;
+// Debounce search to prevent making too many requests while typing
+function handleSearchInput(e) {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => filterData(e.target.value), 300);
 }
 
-function filterData(query) {
-    const q = query.toLowerCase().trim();
-    const container = document.getElementById('bookTableContainer');
-    if (!q) { 
-        if (container) container.style.display = 'none'; 
-        return; 
-    }
-
-    
-    const allEnglishWords = Object.keys(groupedDictionaryData);
-
-    
-    let matches = allEnglishWords.filter(word => 
-        word.toLowerCase().includes(q) || 
-        groupedDictionaryData[word].some(item => item.translation.toLowerCase().includes(q))
-    );
-
-    
-    matches.sort((a, b) => {
-        const aLow = a.toLowerCase();
-        const bLow = b.toLowerCase();
-        if (aLow === q && bLow !== q) return -1;
-        if (bLow === q && aLow !== q) return 1;
-        if (aLow.startsWith(q) && !bLow.startsWith(q)) return -1;
-        if (bLow.startsWith(q) && !aLow.startsWith(q)) return 1;
-        return aLow.localeCompare(bLow);
-    });
-
-    renderTable(matches);
-}
-
-
-function renderTable(matchingKeys) {
+function renderTable(matchingKeys, groupedData, query) {
     const container = document.getElementById('bookTableContainer');
     const tbody = document.getElementById('bookTableBody');
     if (!tbody) return;
 
     tbody.innerHTML = ''; 
-    lastFilterResults = matchingKeys;
 
     if (matchingKeys.length === 0) { 
         container.style.display = 'none'; 
+        const status = document.getElementById('statusMessage');
+        status.textContent = "No results found.";
         return; 
     }
 
@@ -125,28 +95,24 @@ function renderTable(matchingKeys) {
     
     matchingKeys.forEach(word => {
         const row = tbody.insertRow();
-        row.onclick = () => showDetails(word);
+        row.onclick = () => showDetails(word, groupedData[word]);
         
-        
-        if(word.toLowerCase() === document.getElementById('searchInput').value.toLowerCase().trim()) {
+        if(word.toLowerCase() === query) {
             row.className = "exact-match-row";
         }
 
         const cellEng = row.insertCell();
         cellEng.textContent = word;
         cellEng.style.fontWeight = "bold";
-
         
         const cellTr = row.insertCell();
-        const allMeanings = groupedDictionaryData[word].map(item => item.translation);
+        const allMeanings = groupedData[word].map(item => item.translation);
         cellTr.textContent = allMeanings.join(", ");
     });
 }
 
-
-function showDetails(word) {
+function showDetails(word, entries) {
     document.getElementById('bookTableContainer').style.display = 'none';
-    const entries = groupedDictionaryData[word];
     let html = '';
     entries.forEach(e => {
         let tagLabel = (currentLanguage === "MALAYALAM") ? "Grammar" : "Transliteration";
@@ -156,7 +122,7 @@ function showDetails(word) {
                     ${e.translation} 
                     <button onclick="navigator.clipboard.writeText('${e.translation}')" class="copy-btn-mini">📋</button>
                 </p>
-                ${e.extra ? `<p style="font-size: 0.85rem; color: #777; margin: 4px 0;"><em>${tagLabel}: ${e.extra}</em></p>` : ''}
+                ${e.extra_info ? `<p style="font-size: 0.85rem; color: #777; margin: 4px 0;"><em>${tagLabel}:${e.extra_info}</em></p>` : ''}
                 ${e.explanation ? `<p class="explanation-box"><strong>Explanation:</strong> ${e.explanation}</p>` : ''}
             </div>
         `;
@@ -166,49 +132,68 @@ function showDetails(word) {
     document.getElementById('descriptionArea').style.display = 'block';
 }
 
-
+// Supabase Admin Auth
 async function performLogin() {
-    const user = document.getElementById('adminUser').value;
+    const email = document.getElementById('adminUser').value;
     const pass = document.getElementById('adminPass').value;
     try {
-        const resp = await fetch(CONFIG[currentLanguage].api, { 
-            method: "POST", 
-            body: JSON.stringify({ action: "login", user, pass }) 
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: pass
         });
-        const res = await resp.json();
-        if(res.success) {
-            document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('entryForm').style.display = 'block';
-        } else { alert("Login Failed"); }
-    } catch(e) { alert("Server Error"); }
+        
+        if(error) throw error;
+        
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('entryForm').style.display = 'block';
+        alert("Login Successful");
+    } catch(e) { 
+        alert("Login Failed: " + e.message); 
+    }
 }
 
 async function saveNewWord() {
-    const from = document.getElementById('newEnglish').value;
-    const meaning = document.getElementById('newTranslation').value;
-    const extra = document.getElementById('newExtra').value; // Translit or Grammar
-    const expl = document.getElementById('newExpl').value; // Bodo Explanation
+    const english_word = document.getElementById('newEnglish').value;
+    const translation = document.getElementById('newTranslation').value;
+    const extra_info = document.getElementById('newType').value; 
     
     try {
-        const resp = await fetch(CONFIG[currentLanguage].api, { 
-            method: "POST", 
-            body: JSON.stringify({ action: "add", from, meaning, extra, expl }) 
-        });
+        const { data, error } = await supabase
+            .from('dictionary')
+            .insert([
+                { 
+                    language: currentLanguage, 
+                    english_word: english_word, 
+                    translation: translation, 
+                    extra_info: extra_info 
+                }
+            ]);
+            
+        if (error) throw error;
+        
         alert("Saved successfully!");
-        init(); // Refresh 
-    } catch(e) { alert("Save failed"); }
+        document.getElementById('newEnglish').value = '';
+        document.getElementById('newTranslation').value = '';
+        document.getElementById('newType').value = '';
+    } catch(e) { 
+        alert("Save failed: " + e.message); 
+    }
 }
 
-function logout() {
+async function logout() {
+    await supabase.auth.signOut();
     document.getElementById('adminPanel').style.display = 'none';
     document.getElementById('loginForm').style.display = 'block';
     document.getElementById('entryForm').style.display = 'none';
 }
 
-//events
+// Events
 document.getElementById('languageSelect').onchange = (e) => { currentLanguage = e.target.value; init(); };
-document.getElementById('searchInput').oninput = (e) => filterData(e.target.value);
-document.getElementById('backButton').onclick = () => { document.getElementById('descriptionArea').style.display='none'; renderTable(lastFilterResults); };
+document.getElementById('searchInput').oninput = handleSearchInput;
+document.getElementById('backButton').onclick = () => { 
+    document.getElementById('descriptionArea').style.display='none'; 
+    document.getElementById('bookTableContainer').style.display = 'block'; 
+};
 document.getElementById('themeToggle').onclick = () => document.body.classList.toggle('dark-theme');
 document.getElementById('adminLoginBtn').onclick = () => { 
     const p = document.getElementById('adminPanel');
