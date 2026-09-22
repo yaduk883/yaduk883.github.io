@@ -24,7 +24,7 @@
         </div>
         
         <div id="searchArea">
-            <input type="text" id="searchInput" placeholder="🔍 Search English or Native word...">
+            <input type="text" id="searchInput" placeholder="🔍 Search English word...">
         </div>
 
         <p id="statusMessage" class="info">Ready!</p>
@@ -32,7 +32,7 @@
         <div id="adminPanel" class="description-box" style="display:none;">
             <h3 id="adminPanelTitle">🛠 Admin Access</h3>
             <div id="loginForm">
-                <input type="text" id="adminUser" placeholder="Username">
+                <input type="email" id="adminUser" placeholder="Admin Email">
                 <input type="password" id="adminPass" placeholder="Password">
                 <button onclick="performLogin()" class="save-btn">Login</button>
             </div>
@@ -40,7 +40,7 @@
                 <input type="text" id="newEnglish" placeholder="English Word">
                 <input type="text" id="newTranslation" placeholder="Native Translation">
                 <input type="text" id="newType" placeholder="Grammar Tag (e.g. n, v)">
-                <button onclick="saveNewWord()" class="save-btn">Save to Sheet</button>
+                <button onclick="saveNewWord()" class="save-btn">Save to Database</button>
             </div>
             <button onclick="logout()" class="back-button" style="background:#666; margin-top:10px; width:100%;">Close / Logout</button>
         </div>
@@ -71,6 +71,9 @@
             </table>
         </div>
     </div>
+    
+    <!-- Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
     <script type="module" src="prism.js"></script>
 </body>
