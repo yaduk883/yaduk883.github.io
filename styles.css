@@ -1,36 +1,52 @@
-
+/* --- CSS VARIABLES & THEME --- */
 :root {
-    --primary-color: #1e88e5; 
-    --background-color: #07070f;
-    --card-background: #ffffff;
-    --text-color: #333;
-    --border-color: #ddd;
-    --input-border-color: #bbb;
-    --success-color: #4caf50;
-    --admin-color: #ff9800;
-    --exact-match-bg: rgba(30, 136, 229, 0.1);
+    --primary-color: #3b82f6; 
+    --primary-hover: #2563eb;
+    --background-color: #f8fafc;
+    --card-bg: rgba(255, 255, 255, 0.85); /* Glass effect */
+    --card-border: rgba(255, 255, 255, 0.4);
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --border-color: rgba(0, 0, 0, 0.08);
+    --input-border: #cbd5e1;
+    --input-focus: rgba(59, 130, 246, 0.4);
+    --success-color: #10b981;
+    --admin-color: #f59e0b;
+    --exact-match-bg: rgba(59, 130, 246, 0.08);
+    --hover-bg: rgba(0, 0, 0, 0.03);
+    --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 20px 40px -5px rgba(0, 0, 0, 0.1);
 }
 
 body.dark-theme {
-    --background-color: #07070f;
-    --card-background: #1e1e1e;
-    --text-color: #e0e0e0;
-    --border-color: #333;
-    --input-border-color: #444;
-    --exact-match-bg: rgba(30, 136, 229, 0.2);
+    --background-color: #0f172a;
+    --card-bg: rgba(30, 41, 59, 0.75); /* Dark Glass effect */
+    --card-border: rgba(255, 255, 255, 0.1);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-color: rgba(255, 255, 255, 0.08);
+    --input-border: #334155;
+    --input-focus: rgba(59, 130, 246, 0.5);
+    --exact-match-bg: rgba(59, 130, 246, 0.15);
+    --hover-bg: rgba(255, 255, 255, 0.05);
+    --shadow-lg: 0 20px 40px -5px rgba(0, 0, 0, 0.4);
 }
 
+/* --- BASE STYLES --- */
 body { 
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-    margin: 0; padding: 10px; 
+    font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+    margin: 0; 
+    padding: 20px 10px; 
     background-color: var(--background-color); 
-    color: var(--text-color); 
-    transition: 0.3s; 
+    color: var(--text-main); 
+    transition: background-color 0.4s ease, color 0.4s ease; 
     min-height: 100vh;
     box-sizing: border-box;
+    display: flex;
+    justify-content: center;
 }
 
-/* Full-page Prism background — sits behind everything, ignores clicks */
+/* --- PRISM BACKGROUND --- */
 #prism-bg {
     position: fixed;
     inset: 0;
@@ -40,120 +56,262 @@ body {
     pointer-events: none;
 }
 
-
+/* --- MAIN CONTAINER (Glassmorphism) --- */
 .container { 
-    max-width: 850px; margin: 0 auto; padding: 15px; 
-    background-color: var(--card-background); 
-    border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+    width: 100%;
+    max-width: 800px; 
+    margin: 0 auto; 
+    padding: 25px; 
+    background: var(--card-bg); 
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--card-border);
+    border-radius: 16px; 
+    box-shadow: var(--shadow-lg); 
+    transition: all 0.3s ease;
+    animation: slideUp 0.5s ease-out forwards;
 }
 
-h1 { text-align: center; color: var(--primary-color); margin: 0 0 10px 0; font-size: 1.4rem; }
-
-#statusMessage { text-align: center; font-size: 0.75rem; font-weight: bold; margin-bottom: 8px; color: var(--primary-color); }
-
-
-.controls-bar { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; justify-content: center; }
-.controls-bar button, .language-select { 
-    padding: 6px 10px; border: none; border-radius: 6px; 
-    cursor: pointer; font-weight: 600; font-size: 0.75rem; 
-    color: white; background-color: var(--primary-color); 
+h1 { 
+    text-align: center; 
+    color: var(--primary-color); 
+    margin: 0 0 15px 0; 
+    font-size: 1.7rem; 
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
+
+#statusMessage { 
+    text-align: center; 
+    font-size: 0.8rem; 
+    font-weight: 600; 
+    margin-bottom: 12px; 
+    color: var(--text-muted); 
+    transition: color 0.3s ease;
+}
+
+/* --- CONTROLS & BUTTONS --- */
+.controls-bar { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 8px; 
+    margin-bottom: 20px; 
+    justify-content: center; 
+}
+
+button, .language-select { 
+    padding: 8px 14px; 
+    border: none; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    font-weight: 600; 
+    font-size: 0.85rem; 
+    color: white; 
+    background-color: var(--primary-color); 
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+    box-shadow: var(--shadow-sm);
+}
+
+button:hover, .language-select:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.15);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
 .language-select { background-color: var(--success-color); outline: none; }
-.admin-btn { background-color: var(--admin-color); }
-.refresh-btn { background-color: #607d8b !important; }
+.admin-btn { background-color: var(--admin-color); color: #fff; }
+.refresh-btn { background-color: #475569 !important; }
 
+/* --- SEARCH INPUT --- */
+#searchArea {
+    position: relative;
+    margin-bottom: 15px;
+}
 
 #searchInput { 
-    width: 100%; padding: 10px; font-size: 1rem; border-radius: 8px; 
-    border: 2px solid var(--input-border-color); box-sizing: border-box; 
-    background: var(--card-background); color: var(--text-color); margin-bottom: 8px; outline: none;
+    width: 100%; 
+    padding: 14px 16px; 
+    font-size: 1.05rem; 
+    border-radius: 12px; 
+    border: 1px solid var(--input-border); 
+    box-sizing: border-box; 
+    background: transparent; 
+    color: var(--text-main); 
+    outline: none;
+    transition: all 0.3s ease;
+    font-family: inherit;
 }
 
+#searchInput:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px var(--input-focus);
+    background: var(--card-bg);
+}
 
+/* --- TABLE STYLES --- */
 #bookTableContainer {
-    display: none; max-height: 55vh; overflow-y: auto;
-    border: 1px solid var(--border-color); border-radius: 6px;
+    display: none; 
+    max-height: 55vh; 
+    overflow-y: auto;
+    border: 1px solid var(--border-color); 
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.3);
+    animation: fadeIn 0.4s ease forwards;
 }
+
+/* Custom Scrollbar for Table */
+#bookTableContainer::-webkit-scrollbar { width: 6px; }
+#bookTableContainer::-webkit-scrollbar-track { background: transparent; }
+#bookTableContainer::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 10px; }
 
 #bookTable { width: 100%; border-collapse: collapse; }
+
 #bookTable th {
-    text-align: left; font-size: 0.65rem; text-transform: uppercase;
-    color: #888; padding: 6px 8px; border-bottom: 2px solid var(--border-color);
-    position: sticky; top: 0; background: var(--card-background); z-index: 5;
+    text-align: left; 
+    font-size: 0.75rem; 
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted); 
+    padding: 12px; 
+    border-bottom: 1px solid var(--border-color);
+    position: sticky; 
+    top: 0; 
+    background: var(--card-bg);
+    backdrop-filter: blur(8px);
+    z-index: 5;
 }
 
 #bookTable td { 
-    padding: 3px 8px !important; border-bottom: 1px solid var(--border-color); 
-    font-size: 0.85rem; vertical-align: middle; line-height: 1.2;
+    padding: 12px; 
+    border-bottom: 1px solid var(--border-color); 
+    font-size: 0.95rem; 
+    vertical-align: middle; 
+    line-height: 1.4;
+    transition: background-color 0.2s ease;
 }
-#bookTable td:first-child { width: 30%; color: var(--primary-color); font-weight: bold; }
-#bookTable tr:hover { background-color: rgba(30, 136, 229, 0.05); cursor: pointer; }
+
+#bookTable td:first-child { 
+    width: 35%; 
+    color: var(--primary-color); 
+    font-weight: 600; 
+}
+
+#bookTable tr { transition: all 0.2s ease; }
+#bookTable tr:hover { background-color: var(--hover-bg); cursor: pointer; }
+#bookTable tr:last-child td { border-bottom: none; }
+
 .exact-match-row { background-color: var(--exact-match-bg) !important; }
 
-
+/* --- DESCRIPTION / DETAIL BOX --- */
 .description-box { 
-    display: none; margin: 10px 0; padding: 12px; 
+    display: none; 
+    margin: 15px 0; 
+    padding: 20px; 
     border-left: 4px solid var(--primary-color); 
-    background-color: rgba(0,0,0,0.02); border-radius: 6px; 
+    background-color: var(--hover-bg); 
+    border-radius: 0 12px 12px 0; 
+    animation: fadeIn 0.3s ease forwards;
 }
 
 #descriptionTitle { 
-    margin: 0 0 8px 0; color: var(--primary-color); 
-    font-size: 1.2rem; /* Decreased font */
+    margin: 0 0 12px 0; 
+    color: var(--primary-color); 
+    font-size: 1.4rem; 
+    font-weight: 700;
 }
 
 .detail-item {
-    margin-bottom: 6px; /* Reduced gap */
-    padding-bottom: 4px; /* Reduced gap */
+    margin-bottom: 12px; 
+    padding-bottom: 12px; 
     border-bottom: 1px solid var(--border-color);
 }
-.detail-item:last-child { border-bottom: none; }
+.detail-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
 
-.detail-item p { 
-    margin: 2px 0; /* Tightened paragraph gap */
-    font-size: 0.9rem; /* Decreased font */
-    line-height: 1.2;
-}
+.detail-item p { margin: 4px 0; line-height: 1.5; }
 
 .explanation-box { 
-    font-size: 0.85rem; color: #555; background: rgba(0,0,0,0.03); 
-    padding: 6px 10px; border-radius: 4px; margin-top: 4px; 
+    font-size: 0.9rem; 
+    color: var(--text-muted); 
+    background: var(--hover-bg); 
+    padding: 10px 14px; 
+    border-radius: 8px; 
+    margin-top: 8px; 
     border: 1px solid var(--border-color);
 }
 
-
-#adminPanel {
-    display: none; margin-top: 10px; padding: 12px; 
-    border: 1px solid var(--border-color); border-radius: 8px; 
-}
-#adminPanel input, #adminPanel select, #adminPanel textarea { 
-    width: 100%; padding: 8px; margin-bottom: 6px; border-radius: 4px; 
-    border: 1px solid var(--border-color); box-sizing: border-box; 
-    background: var(--card-background); color: var(--text-color); font-size: 0.85rem;
+/* --- ADMIN & CONTACT PANELS --- */
+#adminPanel, #contactArea {
+    border-radius: 12px; 
+    border: 1px solid var(--border-color); 
 }
 
+#adminPanel input, #adminPanel select { 
+    width: 100%; 
+    padding: 12px; 
+    margin-bottom: 10px; 
+    border-radius: 8px; 
+    border: 1px solid var(--input-border); 
+    box-sizing: border-box; 
+    background: transparent; 
+    color: var(--text-main); 
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+#adminPanel input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--input-focus);
+}
+
+.save-btn { width: 100%; padding: 12px; font-size: 1rem; }
 
 .back-button { 
-    padding: 5px 12px; border: none; border-radius: 4px; 
-    cursor: pointer; background: #666; color: white; 
-    margin-top: 8px; font-size: 0.8rem; /* Shrunk back button */
+    background: var(--text-muted); 
+    color: white; 
+    padding: 8px 16px;
+    margin-top: 15px;
 }
 
 .copy-btn-mini { 
-    background: none; border: 1px solid #ccc; border-radius: 3px; 
-    cursor: pointer; font-size: 0.65rem; padding: 1px 4px; 
-    margin-left: 6px; color: var(--text-color);
+    background: transparent; 
+    border: 1px solid var(--border-color); 
+    border-radius: 6px; 
+    cursor: pointer; 
+    font-size: 0.8rem; 
+    padding: 4px 8px; 
+    margin-left: 8px; 
+    color: var(--text-main);
+    box-shadow: none;
+}
+.copy-btn-mini:hover { background: var(--hover-bg); transform: none; }
+
+.contact-links { display: flex; gap: 10px; justify-content: center; }
+.contact-links a { text-decoration: none; }
+.email-button { background-color: #ea4335; }
+.github-button { background-color: #333; }
+
+/* --- KEYFRAME ANIMATIONS --- */
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-#contactArea {
-    display: none; text-align: center; margin-top: 12px; 
-    padding: 10px; font-size: 0.8rem; border-top: 1px solid var(--border-color);
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
-
-@media (max-width: 480px) {
-    .container { padding: 10px; }
-    .controls-bar button { flex: 1 1 45%; }
-    #bookTable td { font-size: 0.8rem; }
-    .detail-item p { font-size: 0.85rem; }
+/* --- RESPONSIVE DESIGN --- */
+@media (max-width: 600px) {
+    .container { padding: 15px; border-radius: 12px; }
+    .controls-bar button, .language-select { flex: 1 1 45%; padding: 10px; }
+    h1 { font-size: 1.4rem; }
+    #searchInput { font-size: 1rem; padding: 12px; }
+    #bookTable td { font-size: 0.85rem; padding: 10px 8px; }
 }
