@@ -3,190 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lexicon — Multi-Language Dictionary</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>📖 English-Malayalam Dictionary</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="prism-bg"></div>
-
-    <!-- Icon sprite: one inline line-icon set, no mixed emoji rendering across platforms -->
-    <svg style="display:none" aria-hidden="true">
-        <symbol id="icon-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 5.5C4 4.67 4.67 4 5.5 4H12v16H5.5A1.5 1.5 0 0 1 4 18.5v-13Z"/>
-            <path d="M20 5.5c0-.83-.67-1.5-1.5-1.5H12v16h6.5a1.5 1.5 0 0 0 1.5-1.5v-13Z"/>
-        </symbol>
-        <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="10.5" cy="10.5" r="6.5"/>
-            <path d="m20 20-4.3-4.3"/>
-        </symbol>
-        <symbol id="icon-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 11A8 8 0 0 0 6.3 6.3L4 8.6"/>
-            <path d="M4 4v4.6h4.6"/>
-            <path d="M4 13a8 8 0 0 0 13.7 4.7L20 15.4"/>
-            <path d="M20 20v-4.6h-4.6"/>
-        </symbol>
-        <symbol id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="4.2"/>
-            <path d="M12 2.5v2.4M12 19.1v2.4M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/>
-        </symbol>
-        <symbol id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20.2 14.6A8.5 8.5 0 1 1 9.4 3.8a7 7 0 0 0 10.8 10.8Z"/>
-        </symbol>
-        <symbol id="icon-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="8" cy="15" r="4"/>
-            <path d="M11 12 19.5 3.5M16 6l2.5 2.5M13.2 8.8l2.3 2.3"/>
-        </symbol>
-        <symbol id="icon-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="5.5" width="18" height="13" rx="2"/>
-            <path d="m3.5 6.5 8.5 6.5 8.5-6.5"/>
-        </symbol>
-        <symbol id="icon-github" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.46-1.15-1.11-1.46-1.11-1.46-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.56-1.11-4.56-4.93 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.83-2.34 4.68-4.57 4.92.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/>
-        </symbol>
-        <symbol id="icon-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 12H5M11 6l-6 6 6 6"/>
-        </symbol>
-        <symbol id="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="9" y="9" width="11" height="11" rx="2"/>
-            <path d="M5 15V5a2 2 0 0 1 2-2h10"/>
-        </symbol>
-        <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m4 12 5.5 5.5L20 7"/>
-        </symbol>
-    </svg>
-
-    <main class="container">
-        <header class="page-head">
-            <div class="brand">
-                <span class="brand-mark" aria-hidden="true"><svg width="22" height="22"><use href="#icon-book"/></svg></span>
-                <div>
-                    <h1>Lexicon</h1>
-                    <p class="tagline">A reference for English, Malayalam, Bodo and Maithili</p>
-                </div>
-            </div>
-            <div class="toolbar" role="toolbar" aria-label="Dictionary actions">
-                <button id="refreshBtn" class="btn-icon" type="button" title="Refresh" aria-label="Refresh">
-                    <svg width="18" height="18"><use href="#icon-refresh"/></svg>
-                </button>
-                <button id="themeToggle" class="btn-icon theme-toggle" type="button" title="Toggle theme" aria-label="Toggle dark and light theme">
-                    <svg class="icon-sun" width="18" height="18"><use href="#icon-sun"/></svg>
-                    <svg class="icon-moon" width="18" height="18"><use href="#icon-moon"/></svg>
-                </button>
-                <button id="adminLoginBtn" class="btn-icon" type="button" title="Admin" aria-label="Admin access" aria-expanded="false">
-                    <svg width="18" height="18"><use href="#icon-key"/></svg>
-                </button>
-                <button id="contactButton" class="btn-icon" type="button" title="Contact" aria-label="Contact" aria-expanded="false">
-                    <svg width="18" height="18"><use href="#icon-mail"/></svg>
-                </button>
-            </div>
-        </header>
-
-        <div class="field-row">
-            <label class="select-field">
-                <span class="select-label">Language</span>
-                <select id="languageSelect" aria-label="Select dictionary language">
-                    <option value="MALAYALAM">English → Malayalam</option>
-                    <option value="BODO">English → Bodo</option>
-                    <option value="MAITHILI">English → Maithili</option>
-                </select>
-            </label>
+    <div class="container">
+        <h1>📖 English-Malayalam Dictionary</h1>
+        
+        <div class="controls-bar">
+            <!-- Dropdown മാറ്റി സ്റ്റാറ്റിക് ബാഡ്ജ് ആക്കി -->
+            <button class="language-select" style="pointer-events: none; cursor: default;">Eng ⇄ Mal</button>
+            <button onclick="init()" class="theme-button refresh-btn">🔄 Refresh</button>
+            <button id="adminLoginBtn" class="theme-button admin-btn">🔑 Admin</button>
+            <button id="themeToggle" class="theme-button">☀️ Theme</button>
+            <button id="contactButton" class="contact-button">📞 Contact</button>
+        </div>
+        
+        <div id="searchArea">
+            <!-- Placeholder മാറ്റി -->
+            <input type="text" id="searchInput" placeholder="🔍 Search English or Malayalam word...">
         </div>
 
-        <div class="search-field">
-            <svg class="search-icon" width="18" height="18" aria-hidden="true"><use href="#icon-search"/></svg>
-            <input type="text" id="searchInput" placeholder="Search an English word…" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search English word">
-            <span class="search-underline" aria-hidden="true"></span>
+        <p id="statusMessage" class="info">Ready!</p>
+
+        <div id="adminPanel" class="description-box" style="display:none;">
+            <h3 id="adminPanelTitle">🛠 Admin Access</h3>
+            <div id="loginForm">
+                <input type="email" id="adminUser" placeholder="Admin Email">
+                <input type="password" id="adminPass" placeholder="Password">
+                <button onclick="performLogin()" class="save-btn">Login</button>
+            </div>
+            <div id="entryForm" style="display:none;">
+                <input type="text" id="newEnglish" placeholder="English Word">
+                <input type="text" id="newTranslation" placeholder="Malayalam Translation">
+                <input type="text" id="newType" placeholder="Grammar Tag (e.g. n, v)">
+                <button onclick="saveNewWord()" class="save-btn">Save to Database</button>
+            </div>
+            <button onclick="logout()" class="back-button" style="background:#666; margin-top:10px; width:100%;">Close / Logout</button>
         </div>
 
-        <p id="statusMessage" class="status-line" role="status" aria-live="polite">Ready</p>
-
-        <!-- Admin panel -->
-        <section id="adminPanel" class="collapsible">
-            <div class="collapsible-inner">
-                <div class="panel-surface">
-                    <h3 class="panel-title">Admin access</h3>
-                    <div id="loginForm">
-                        <label class="text-field">
-                            <span>Email</span>
-                            <input type="email" id="adminUser" placeholder="you@example.com" autocomplete="username">
-                        </label>
-                        <label class="text-field">
-                            <span>Password</span>
-                            <input type="password" id="adminPass" placeholder="••••••••" autocomplete="current-password">
-                        </label>
-                        <button onclick="performLogin()" class="btn-primary btn-block" type="button">Log in</button>
-                    </div>
-                    <div id="entryForm" style="display:none;">
-                        <label class="text-field">
-                            <span>English word</span>
-                            <input type="text" id="newEnglish" placeholder="e.g. threshold">
-                        </label>
-                        <label class="text-field">
-                            <span>Native translation</span>
-                            <input type="text" id="newTranslation" placeholder="Translation">
-                        </label>
-                        <label class="text-field">
-                            <span>Grammar tag</span>
-                            <input type="text" id="newType" placeholder="n, v, adj…">
-                        </label>
-                        <button onclick="saveNewWord()" class="btn-primary btn-block" type="button">Save entry</button>
-                    </div>
-                    <button onclick="logout()" class="btn-ghost btn-block panel-close-btn" type="button">Close &amp; log out</button>
-                </div>
+        <div id="contactArea" class="description-box" style="display:none;">
+            <h3>📬 Contact</h3>
+            <div class="contact-links">
+                <a href="mailto:yaduk883@gmail.com" class="contact-link-button email-button">📧 Email</a>
+                <a href="https://github.com/yaduk883" target="_blank" class="contact-link-button github-button">🐙 GitHub</a>
             </div>
-        </section>
+        </div>
 
-        <!-- Contact panel -->
-        <section id="contactArea" class="collapsible">
-            <div class="collapsible-inner">
-                <div class="panel-surface">
-                    <h3 class="panel-title">Get in touch</h3>
-                    <div class="contact-links">
-                        <a href="mailto:yaduk883@gmail.com" class="btn-ghost contact-link">
-                            <svg width="16" height="16"><use href="#icon-mail"/></svg> Email
-                        </a>
-                        <a href="https://github.com/yaduk883" target="_blank" rel="noopener noreferrer" class="btn-ghost contact-link">
-                            <svg width="16" height="16"><use href="#icon-github"/></svg> GitHub
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </section>
+        <div id="descriptionArea" class="description-box" style="display:none;">
+            <h3 id="descriptionTitle"></h3>
+            <div id="definitionText"></div>
+            <button id="backButton" class="back-button">← Back to Results</button>
+        </div>
 
-        <!-- Word detail -->
-        <section id="descriptionArea" class="collapsible">
-            <div class="collapsible-inner">
-                <div class="panel-surface">
-                    <h2 id="descriptionTitle" class="headword"></h2>
-                    <div id="definitionText"></div>
-                    <button id="backButton" class="btn-ghost" type="button">
-                        <svg width="16" height="16"><use href="#icon-arrow-left"/></svg> Back to results
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Results -->
-        <section id="bookTableContainer" class="collapsible">
-            <div class="collapsible-inner">
-                <div class="table-surface">
-                    <table id="bookTable">
-                        <thead>
-                            <tr>
-                                <th scope="col">Word</th>
-                                <th scope="col">Translation</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bookTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- Supabase Library -->
+        <div id="bookTableContainer" style="display:none;">
+            <table id="bookTable">
+                <thead>
+                    <tr>
+                        <th>English Word</th>
+                        <th>Malayalam Translation</th>
+                    </tr>
+                </thead>
+                <tbody id="bookTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
     <script type="module" src="prism.js"></script>
