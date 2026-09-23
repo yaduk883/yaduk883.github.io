@@ -19,7 +19,6 @@
     --gold: #a3794a;
     --gold-strong: #8a6238;
     --gold-tint: rgba(163, 121, 74, 0.14);
-    --gold-ink: #ffffff;
 
     --jade: #3f6f5e;
     --jade-tint: rgba(63, 111, 94, 0.14);
@@ -116,7 +115,7 @@ body {
     justify-content: space-between;
     gap: 16px;
     flex-wrap: wrap;
-    margin-bottom: 28px;
+    margin-bottom: 26px;
 }
 
 .brand { display: flex; align-items: flex-start; gap: 12px; }
@@ -147,6 +146,7 @@ h1 {
     margin: 2px 0 0;
     font-size: 0.85rem;
     color: var(--ink-soft);
+    font-weight: 500;
 }
 
 .toolbar { display: flex; gap: 6px; }
@@ -236,37 +236,8 @@ button.is-loading::after {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ===========================================================
-   FIELDS — language select + search
+   SEARCH FIELD
 =========================================================== */
-.field-row { margin-bottom: 16px; }
-
-.select-field {
-    display: inline-flex;
-    flex-direction: column;
-    gap: 4px;
-}
-.select-label { font-size: 0.72rem; color: var(--ink-soft); font-weight: 500; }
-
-#languageSelect {
-    appearance: none;
-    -webkit-appearance: none;
-    background: transparent;
-    border: none;
-    border-bottom: 1.5px solid var(--hairline-strong);
-    color: var(--ink);
-    font-family: var(--font-serif);
-    font-size: 1.05rem;
-    font-weight: 500;
-    padding: 4px 24px 6px 2px;
-    cursor: pointer;
-    background-image: linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%), linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%);
-    background-position: right 8px top 55%, right 2px top 55%;
-    background-size: 5px 5px, 5px 5px;
-    background-repeat: no-repeat;
-    transition: border-color 0.2s ease;
-}
-#languageSelect:hover, #languageSelect:focus { border-color: var(--gold); }
-
 .search-field {
     position: relative;
     display: flex;
@@ -469,18 +440,6 @@ button.is-loading::after {
 
 .detail-tag { margin: 6px 0 0; font-size: 0.83rem; color: var(--ink-soft); }
 .detail-tag em { font-style: normal; }
-
-.explanation-box {
-    margin: 10px 0 0;
-    padding: 11px 14px;
-    border-radius: 8px;
-    border: 1px solid var(--hairline);
-    background: var(--paper-raised);
-    font-size: 0.88rem;
-    color: var(--ink-soft);
-    line-height: 1.55;
-}
-.explanation-box strong { color: var(--ink); }
 
 .copy-btn-mini {
     display: inline-flex;
