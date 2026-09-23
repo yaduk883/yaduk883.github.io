@@ -13,28 +13,28 @@
         <h1>📖 Multi-Language Dictionary</h1>
         
         <div class="controls-bar">
-            <select id="languageSelect" class="language-select">
+            <select id="languageSelect" class="language-select" aria-label="Select dictionary language">
                 <option value="MALAYALAM">English - Malayalam</option>
                 <option value="BODO">English - Bodo</option>
                 <option value="MAITHILI">English - Maithili</option>
             </select>
-            <button onclick="init()" class="theme-button refresh-btn">🔄 Refresh</button>
-            <button id="adminLoginBtn" class="theme-button admin-btn">🔑 Admin</button>
-            <button id="themeToggle" class="theme-button">☀️ Theme</button>
-            <button id="contactButton" class="contact-button">📞 Contact</button>
+            <button onclick="init()" class="theme-button refresh-btn" aria-label="Refresh">🔄 Refresh</button>
+            <button id="adminLoginBtn" class="theme-button admin-btn" aria-label="Admin login" aria-expanded="false">🔑 Admin</button>
+            <button id="themeToggle" class="theme-button" aria-label="Toggle dark/light theme">☀️ Theme</button>
+            <button id="contactButton" class="contact-button" aria-label="Contact" aria-expanded="false">📞 Contact</button>
         </div>
         
         <div id="searchArea">
-            <input type="text" id="searchInput" placeholder="🔍 Search English word...">
+            <input type="text" id="searchInput" placeholder="🔍 Search English word..." autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search English word">
         </div>
 
-        <p id="statusMessage" class="info">Ready!</p>
+        <p id="statusMessage" class="info" role="status" aria-live="polite">Ready!</p>
 
         <div id="adminPanel" class="description-box" style="display:none;">
             <h3 id="adminPanelTitle">🛠 Admin Access</h3>
             <div id="loginForm">
-                <input type="email" id="adminUser" placeholder="Admin Email">
-                <input type="password" id="adminPass" placeholder="Password">
+                <input type="email" id="adminUser" placeholder="Admin Email" autocomplete="username">
+                <input type="password" id="adminPass" placeholder="Password" autocomplete="current-password">
                 <button onclick="performLogin()" class="save-btn">Login</button>
             </div>
             <div id="entryForm" style="display:none;">
@@ -50,7 +50,7 @@
             <h3>📬 Contact</h3>
             <div class="contact-links">
                 <a href="mailto:yaduk883@gmail.com" class="contact-link-button email-button">📧 Email</a>
-                <a href="https://github.com/yaduk883" target="_blank" class="contact-link-button github-button">🐙 GitHub</a>
+                <a href="https://github.com/yaduk883" target="_blank" rel="noopener noreferrer" class="contact-link-button github-button">🐙 GitHub</a>
             </div>
         </div>
 
@@ -64,8 +64,8 @@
             <table id="bookTable">
                 <thead>
                     <tr>
-                        <th>English Word</th>
-                        <th>Translation</th>
+                        <th scope="col">English Word</th>
+                        <th scope="col">Translation</th>
                     </tr>
                 </thead>
                 <tbody id="bookTableBody"></tbody>
