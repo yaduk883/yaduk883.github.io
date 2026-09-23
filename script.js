@@ -1,16 +1,17 @@
 // --- Supabase Configuration ---
 const supabaseUrl = 'https://plwtfwylrlintbnvhfha.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsd3Rmd3lscmxpbnRibnZoZmhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNjIxODQsImV4cCI6MjEwNTYzODE4NH0.Y65Dhadml3pFMyytXro0drSprdYY-IOr4jQJ3tfL3F8';
-// IMPORTANT: renamed from `supabase` to `supabaseClient` — the previous name shadowed the
-// global `supabase` object from the CDN script (const supabase = supabase.createClient(...)
-// throws a ReferenceError due to the temporal dead zone). This was breaking the entire app.
+// IMPORTANT: named `supabaseClient` (not `supabase`) — declaring `const supabase =
+// supabase.createClient(...)` would shadow the global `supabase` object from the CDN
+// script and throw a ReferenceError before the app can run.
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 let currentLanguage = localStorage.getItem('dict_language') || "MALAYALAM";
 let searchTimeout = null;
 let searchSeq = 0; // guards against slow/out-of-order network responses overwriting newer results
 
-// --- Security: escape any DB-sourced text before ever touching innerHTML ---
+// --- Security: escape helper kept for any future raw-HTML needs. Rendering below
+// always prefers textContent/createElement over innerHTML for DB-sourced content. ---
 function escapeHtml(str) {
     if (str === null || str === undefined) return '';
     return String(str)
@@ -19,6 +20,19 @@ function escapeHtml(str) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+
+// --- Collapsible panel helpers (smooth grid-rows expand/collapse) ---
+function openPanel(id, toggleBtnId) {
+    document.getElementById(id).classList.add('is-open');
+    if (toggleBtnId) document.getElementById(toggleBtnId).setAttribute('aria-expanded', 'true');
+}
+function closePanel(id, toggleBtnId) {
+    document.getElementById(id).classList.remove('is-open');
+    if (toggleBtnId) document.getElementById(toggleBtnId).setAttribute('aria-expanded', 'false');
+}
+function isPanelOpen(id) {
+    return document.getElementById(id).classList.contains('is-open');
 }
 
 // --- Lightweight non-blocking toast (replaces alert()) ---
@@ -44,12 +58,9 @@ function showToast(message, type = 'info') {
 function setButtonLoading(btn, loading, loadingText = 'Please wait…') {
     if (!btn) return;
     if (loading) {
-        btn.dataset.originalText = btn.dataset.originalText || btn.textContent;
-        btn.textContent = loadingText;
         btn.disabled = true;
         btn.classList.add('is-loading');
     } else {
-        btn.textContent = btn.dataset.originalText || btn.textContent;
         btn.disabled = false;
         btn.classList.remove('is-loading');
     }
@@ -57,9 +68,9 @@ function setButtonLoading(btn, loading, loadingText = 'Please wait…') {
 
 async function init() {
     const status = document.getElementById('statusMessage');
-    if (status) status.textContent = `✅ Connected to ${currentLanguage}`;
-    document.getElementById('bookTableContainer').style.display = 'none';
-    document.getElementById('descriptionArea').style.display = 'none';
+    if (status) status.textContent = `Connected · ${currentLanguage.charAt(0) + currentLanguage.slice(1).toLowerCase()}`;
+    closePanel('bookTableContainer');
+    closePanel('descriptionArea');
     document.getElementById('searchInput').value = '';
     document.getElementById('languageSelect').value = currentLanguage;
 
@@ -76,17 +87,16 @@ async function init() {
 // --- Live search (debounced + race-safe) ---
 async function filterData(query) {
     const q = query.toLowerCase().trim();
-    const container = document.getElementById('bookTableContainer');
     const status = document.getElementById('statusMessage');
     const mySeq = ++searchSeq; // any older in-flight request will be discarded on arrival
 
     if (!q) {
-        if (container) container.style.display = 'none';
-        status.textContent = "✅ Ready!";
+        closePanel('bookTableContainer');
+        status.textContent = "Ready";
         return;
     }
 
-    status.innerHTML = '<span class="spinner" aria-hidden="true"></span> Searching...';
+    status.innerHTML = '<span class="spinner" aria-hidden="true"></span> Searching…';
 
     try {
         const { data, error } = await supabaseClient
@@ -116,10 +126,10 @@ async function filterData(query) {
         });
 
         renderTable(matches, groupedData, q);
-        status.textContent = "✅ Ready!";
+        status.textContent = "Ready";
     } catch (e) {
         if (mySeq !== searchSeq) return;
-        status.textContent = "⚠️ Search Error.";
+        status.textContent = "Search error — try again";
         console.error("Fetch error:", e);
     }
 }
@@ -131,25 +141,24 @@ function handleSearchInput(e) {
 }
 
 function renderTable(matchingKeys, groupedData, query) {
-    const container = document.getElementById('bookTableContainer');
     const tbody = document.getElementById('bookTableBody');
     if (!tbody) return;
 
     tbody.innerHTML = '';
 
     if (matchingKeys.length === 0) {
-        container.style.display = 'none';
-        document.getElementById('statusMessage').textContent = "No results found.";
+        closePanel('bookTableContainer');
+        document.getElementById('statusMessage').textContent = "No results found";
         return;
     }
 
-    container.style.display = 'block';
+    openPanel('bookTableContainer');
 
     // textContent only — never innerHTML — for anything sourced from the database
     matchingKeys.forEach((word, i) => {
         const row = tbody.insertRow();
         row.classList.add('row-in');
-        row.style.animationDelay = `${Math.min(i, 15) * 20}ms`;
+        row.style.animationDelay = `${Math.min(i, 15) * 18}ms`;
         row.tabIndex = 0;
         row.setAttribute('role', 'button');
         row.onclick = () => showDetails(word, groupedData[word]);
@@ -164,7 +173,6 @@ function renderTable(matchingKeys, groupedData, query) {
 
         const cellEng = row.insertCell();
         cellEng.textContent = word;
-        cellEng.style.fontWeight = "bold";
 
         const cellTr = row.insertCell();
         cellTr.textContent = groupedData[word].map(item => item.translation).join(", ");
@@ -172,7 +180,7 @@ function renderTable(matchingKeys, groupedData, query) {
 }
 
 function showDetails(word, entries) {
-    document.getElementById('bookTableContainer').style.display = 'none';
+    closePanel('bookTableContainer');
     const container = document.getElementById('definitionText');
     container.innerHTML = '';
 
@@ -189,15 +197,18 @@ function showDetails(word, entries) {
         const copyBtn = document.createElement('button');
         copyBtn.type = 'button';
         copyBtn.className = 'copy-btn-mini';
-        copyBtn.textContent = '📋';
+        copyBtn.innerHTML = '<svg width="13" height="13"><use href="#icon-copy"/></svg>';
         copyBtn.setAttribute('aria-label', 'Copy translation to clipboard');
         copyBtn.onclick = async (ev) => {
             ev.stopPropagation();
             try {
                 await navigator.clipboard.writeText(e.translation || '');
-                copyBtn.textContent = '✅';
+                copyBtn.innerHTML = '<svg width="13" height="13"><use href="#icon-check"/></svg>';
                 copyBtn.classList.add('copied');
-                setTimeout(() => { copyBtn.textContent = '📋'; copyBtn.classList.remove('copied'); }, 1200);
+                setTimeout(() => {
+                    copyBtn.innerHTML = '<svg width="13" height="13"><use href="#icon-copy"/></svg>';
+                    copyBtn.classList.remove('copied');
+                }, 1200);
             } catch (err) {
                 showToast('Could not copy to clipboard', 'error');
             }
@@ -228,14 +239,13 @@ function showDetails(word, entries) {
     });
 
     document.getElementById('descriptionTitle').textContent = word;
-    const descArea = document.getElementById('descriptionArea');
-    descArea.style.display = 'block';
-    descArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    openPanel('descriptionArea');
+    document.getElementById('descriptionArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // --- Supabase Admin Auth ---
 async function performLogin() {
-    const btn = document.querySelector('#loginForm .save-btn');
+    const btn = document.querySelector('#loginForm .btn-primary');
     const email = document.getElementById('adminUser').value.trim();
     const pass = document.getElementById('adminPass').value;
 
@@ -244,7 +254,7 @@ async function performLogin() {
         return;
     }
 
-    setButtonLoading(btn, true, 'Signing in…');
+    setButtonLoading(btn, true);
     try {
         const { error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
         if (error) throw error;
@@ -261,7 +271,7 @@ async function performLogin() {
 }
 
 async function saveNewWord() {
-    const btn = document.querySelector('#entryForm .save-btn');
+    const btn = document.querySelector('#entryForm .btn-primary');
     const english_word = document.getElementById('newEnglish').value.trim();
     const translation = document.getElementById('newTranslation').value.trim();
     const extra_info = document.getElementById('newType').value.trim();
@@ -271,7 +281,7 @@ async function saveNewWord() {
         return;
     }
 
-    setButtonLoading(btn, true, 'Saving…');
+    setButtonLoading(btn, true);
     try {
         const { error } = await supabaseClient
             .from('dictionary')
@@ -279,7 +289,7 @@ async function saveNewWord() {
 
         if (error) throw error;
 
-        showToast('Saved successfully!', 'success');
+        showToast('Saved successfully', 'success');
         document.getElementById('newEnglish').value = '';
         document.getElementById('newTranslation').value = '';
         document.getElementById('newType').value = '';
@@ -297,18 +307,16 @@ async function logout() {
     } catch (e) {
         console.error('Logout error:', e);
     }
-    document.getElementById('adminPanel').style.display = 'none';
+    closePanel('adminPanel', 'adminLoginBtn');
     document.getElementById('loginForm').style.display = 'block';
     document.getElementById('entryForm').style.display = 'none';
     document.getElementById('adminPass').value = '';
 }
 
 // --- Restore saved theme before first interaction ---
-(function restoreTheme() {
-    if (localStorage.getItem('dict_theme') === 'dark') {
-        document.body.classList.add('dark-theme');
-    }
-})();
+if (localStorage.getItem('dict_theme') === 'dark') {
+    document.body.classList.add('dark-theme');
+}
 
 // --- Event wiring ---
 document.getElementById('languageSelect').onchange = (e) => {
@@ -331,34 +339,33 @@ document.getElementById('searchInput').onkeydown = (e) => {
 };
 
 document.getElementById('backButton').onclick = () => {
-    document.getElementById('descriptionArea').style.display = 'none';
-    document.getElementById('bookTableContainer').style.display = 'block';
+    closePanel('descriptionArea');
+    openPanel('bookTableContainer');
 };
+
+document.getElementById('refreshBtn').onclick = () => init();
 
 document.getElementById('themeToggle').onclick = () => {
     const isDark = document.body.classList.toggle('dark-theme');
     localStorage.setItem('dict_theme', isDark ? 'dark' : 'light');
-    document.getElementById('themeToggle').textContent = isDark ? '🌙 Theme' : '☀️ Theme';
 };
-if (localStorage.getItem('dict_theme') === 'dark') {
-    document.getElementById('themeToggle').textContent = '🌙 Theme';
-}
 
 document.getElementById('adminLoginBtn').onclick = () => {
-    const p = document.getElementById('adminPanel');
-    const willShow = p.style.display === 'none';
-    p.style.display = willShow ? 'block' : 'none';
-    if (willShow) {
-        document.getElementById('contactArea').style.display = 'none';
-        p.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (isPanelOpen('adminPanel')) {
+        closePanel('adminPanel', 'adminLoginBtn');
+    } else {
+        closePanel('contactArea', 'contactButton');
+        openPanel('adminPanel', 'adminLoginBtn');
     }
 };
 
 document.getElementById('contactButton').onclick = () => {
-    const c = document.getElementById('contactArea');
-    const willShow = c.style.display === 'none';
-    c.style.display = willShow ? 'block' : 'none';
-    if (willShow) document.getElementById('adminPanel').style.display = 'none';
+    if (isPanelOpen('contactArea')) {
+        closePanel('contactArea', 'contactButton');
+    } else {
+        closePanel('adminPanel', 'adminLoginBtn');
+        openPanel('contactArea', 'contactButton');
+    }
 };
 
 document.getElementById('adminPass').addEventListener('keydown', (e) => {
