@@ -1,268 +1,349 @@
-// Supabase Configuration 
+// --- Supabase Configuration ---
+// Replace these with your project's values.
 const supabaseUrl = 'YOUR_SUPABASE_PROJECT_URL';
 const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+// IMPORTANT: named `supabaseClient` (not `supabase`) — declaring `const supabase =
+// supabase.createClient(...)` would shadow the global `supabase` object from the CDN
+// script and throw a ReferenceError before the app can run.
+const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+const LANGUAGE = 'MALAYALAM'; // single-language build
 let searchTimeout = null;
+let searchSeq = 0; // guards against slow/out-of-order network responses overwriting newer results
+
+// --- Collapsible panel helpers (smooth grid-rows expand/collapse) ---
+function openPanel(id, toggleBtnId) {
+    document.getElementById(id).classList.add('is-open');
+    if (toggleBtnId) document.getElementById(toggleBtnId).setAttribute('aria-expanded', 'true');
+}
+function closePanel(id, toggleBtnId) {
+    document.getElementById(id).classList.remove('is-open');
+    if (toggleBtnId) document.getElementById(toggleBtnId).setAttribute('aria-expanded', 'false');
+}
+function isPanelOpen(id) {
+    return document.getElementById(id).classList.contains('is-open');
+}
+
+// --- Lightweight non-blocking toast (replaces alert()) ---
+function showToast(message, type = 'info') {
+    let holder = document.getElementById('toastHolder');
+    if (!holder) {
+        holder = document.createElement('div');
+        holder.id = 'toastHolder';
+        holder.setAttribute('aria-live', 'polite');
+        document.body.appendChild(holder);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    holder.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 250);
+    }, 3000);
+}
+
+function setButtonLoading(btn, loading) {
+    if (!btn) return;
+    btn.disabled = loading;
+    btn.classList.toggle('is-loading', loading);
+}
 
 async function init() {
     const status = document.getElementById('statusMessage');
-    if (status) status.textContent = `✅ Connected to Database`;
-    document.getElementById('bookTableContainer').style.display = 'none';
-    document.getElementById('descriptionArea').style.display = 'none';
+    if (status) status.textContent = "Connected";
+    closePanel('bookTableContainer');
+    closePanel('descriptionArea');
     document.getElementById('searchInput').value = '';
-    
-    // Check if admin is logged in
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-        document.getElementById('loginForm').style.display = 'none';
-        document.getElementById('entryForm').style.display = 'block';
+
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const loggedIn = !!session;
+        document.getElementById('loginForm').style.display = loggedIn ? 'none' : 'block';
+        document.getElementById('entryForm').style.display = loggedIn ? 'block' : 'none';
+    } catch (e) {
+        console.error('Session check failed:', e);
     }
 }
 
-// Bidirectional Live Search (English <-> Malayalam)
+// --- Bidirectional live search (English <-> Malayalam), debounced + race-safe ---
 async function filterData(query) {
     const q = query.toLowerCase().trim();
-    const container = document.getElementById('bookTableContainer');
-    const description = document.getElementById('descriptionArea');
     const status = document.getElementById('statusMessage');
-    
-    if (!q) { 
-        if (container) container.style.display = 'none'; 
-        if (description) description.style.display = 'none'; 
-        status.textContent = "✅ Ready!";
-        return; 
+    const mySeq = ++searchSeq; // any older in-flight request will be discarded on arrival
+
+    if (!q) {
+        closePanel('bookTableContainer');
+        closePanel('descriptionArea');
+        status.textContent = "Ready";
+        return;
     }
 
-    status.textContent = "🔍 Searching...";
-    description.style.display = 'none'; 
+    status.innerHTML = '<span class="spinner" aria-hidden="true"></span> Searching…';
+    closePanel('descriptionArea');
 
     try {
-        // Search in both English AND Malayalam columns simultaneously
-        const { data, error } = await supabase
+        // Search both English and Malayalam columns simultaneously
+        const { data, error } = await supabaseClient
             .from('dictionary')
             .select('*')
-            .eq('language', 'MALAYALAM')
+            .eq('language', LANGUAGE)
             .or(`english_word.ilike.%${q}%,translation.ilike.%${q}%`)
-            .limit(50); // Fetch top 50 matches
+            .limit(50);
 
+        if (mySeq !== searchSeq) return; // a newer keystroke already superseded this request
         if (error) throw error;
 
-        // Group results by English word
         const groupedData = {};
         data.forEach(item => {
             if (!groupedData[item.english_word]) groupedData[item.english_word] = [];
             groupedData[item.english_word].push(item);
         });
 
-        // Sort exact matches to the top
         const matches = Object.keys(groupedData).sort((a, b) => {
             const aLow = a.toLowerCase();
             const bLow = b.toLowerCase();
-            
-            // Check for exact English match
-            const aExactEng = aLow === q;
-            const bExactEng = bLow === q;
-            
-            // Check for exact Malayalam match
-            const aExactMal = groupedData[a].some(i => i.translation === query);
-            const bExactMal = groupedData[b].some(i => i.translation === query);
 
-            if ((aExactEng || aExactMal) && !(bExactEng || bExactMal)) return -1;
-            if (!(aExactEng || aExactMal) && (bExactEng || bExactMal)) return 1;
+            const aExact = aLow === q || groupedData[a].some(i => i.translation === query);
+            const bExact = bLow === q || groupedData[b].some(i => i.translation === query);
 
+            if (aExact && !bExact) return -1;
+            if (bExact && !aExact) return 1;
             if (aLow.startsWith(q) && !bLow.startsWith(q)) return -1;
             if (bLow.startsWith(q) && !aLow.startsWith(q)) return 1;
             return aLow.localeCompare(bLow);
         });
 
-        renderTable(matches, groupedData, q);
-        status.textContent = "✅ Ready!";
+        renderTable(matches, groupedData, q, query);
+        status.textContent = "Ready";
     } catch (e) {
-        status.textContent = "⚠️ Search Error.";
+        if (mySeq !== searchSeq) return;
+        status.textContent = "Search error — try again";
         console.error("Fetch error:", e);
     }
 }
 
-// Debounce search
 function handleSearchInput(e) {
     clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => filterData(e.target.value), 300);
+    const value = e.target.value;
+    searchTimeout = setTimeout(() => filterData(value), 300);
 }
 
-function renderTable(matchingKeys, groupedData, query) {
-    const container = document.getElementById('bookTableContainer');
+function renderTable(matchingKeys, groupedData, q, originalQuery) {
     const tbody = document.getElementById('bookTableBody');
     if (!tbody) return;
 
-    tbody.innerHTML = ''; 
+    tbody.innerHTML = '';
 
-    if (matchingKeys.length === 0) { 
-        container.style.display = 'none'; 
-        const status = document.getElementById('statusMessage');
-        status.textContent = "No results found.";
-        return; 
+    if (matchingKeys.length === 0) {
+        closePanel('bookTableContainer');
+        document.getElementById('statusMessage').textContent = "No results found";
+        return;
     }
 
-    container.style.display = 'block';
-    
-    // Smooth animation
-    container.style.animation = 'none';
-    container.offsetHeight; 
-    container.style.animation = 'fadeIn 0.4s ease forwards';
-    
-    matchingKeys.forEach(word => {
+    openPanel('bookTableContainer');
+
+    // textContent only — never innerHTML — for anything sourced from the database
+    matchingKeys.forEach((word, i) => {
         const row = tbody.insertRow();
+        row.classList.add('row-in');
+        row.style.animationDelay = `${Math.min(i, 15) * 18}ms`;
+        row.tabIndex = 0;
+        row.setAttribute('role', 'button');
         row.onclick = () => showDetails(word, groupedData[word]);
-        
-        // Highlight row if English OR Malayalam is an exact match
-        const hasExactMalayalam = groupedData[word].some(item => item.translation === query);
-        if(word.toLowerCase() === query || hasExactMalayalam) {
-            row.className = "exact-match-row";
-        }
+        row.onkeydown = (ev) => {
+            if (ev.key === 'Enter' || ev.key === ' ') {
+                ev.preventDefault();
+                showDetails(word, groupedData[word]);
+            }
+        };
+
+        const hasExactMalayalam = groupedData[word].some(item => item.translation === originalQuery);
+        if (word.toLowerCase() === q || hasExactMalayalam) row.classList.add("exact-match-row");
 
         const cellEng = row.insertCell();
         cellEng.textContent = word;
-        cellEng.style.fontWeight = "600";
-        
+
         const cellTr = row.insertCell();
-        const allMeanings = groupedData[word].map(item => item.translation);
-        cellTr.textContent = allMeanings.join(", ");
+        cellTr.textContent = groupedData[word].map(item => item.translation).join(", ");
     });
 }
 
 function showDetails(word, entries) {
-    const tableContainer = document.getElementById('bookTableContainer');
-    const descriptionArea = document.getElementById('descriptionArea');
-    
-    tableContainer.style.display = 'none';
-    
-    let html = '';
+    closePanel('bookTableContainer');
+    const container = document.getElementById('definitionText');
+    container.innerHTML = '';
+
     entries.forEach(e => {
-        html += `
-            <div class="detail-item">
-                <p style="font-size: 1.25rem; margin:0; font-weight: 600; color: var(--primary-color);">
-                    ${e.translation} 
-                    <button onclick="navigator.clipboard.writeText('${e.translation}')" class="copy-btn-mini" title="Copy to clipboard">📋</button>
-                </p>
-                ${e.extra_info ? `<p style="font-size: 0.85rem; color: var(--text-muted); margin: 4px 0;"><em>Grammar Tag: ${e.extra_info}</em></p>` : ''}
-            </div>
-        `;
+        const item = document.createElement('div');
+        item.className = 'detail-item';
+
+        const p = document.createElement('p');
+        p.className = 'detail-translation';
+        p.appendChild(document.createTextNode(e.translation || ''));
+
+        const copyBtn = document.createElement('button');
+        copyBtn.type = 'button';
+        copyBtn.className = 'copy-btn-mini';
+        copyBtn.innerHTML = '<svg width="13" height="13"><use href="#icon-copy"/></svg>';
+        copyBtn.setAttribute('aria-label', 'Copy translation to clipboard');
+        copyBtn.onclick = async (ev) => {
+            ev.stopPropagation();
+            try {
+                await navigator.clipboard.writeText(e.translation || '');
+                copyBtn.innerHTML = '<svg width="13" height="13"><use href="#icon-check"/></svg>';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.innerHTML = '<svg width="13" height="13"><use href="#icon-copy"/></svg>';
+                    copyBtn.classList.remove('copied');
+                }, 1200);
+            } catch (err) {
+                showToast('Could not copy to clipboard', 'error');
+            }
+        };
+        p.appendChild(copyBtn);
+        item.appendChild(p);
+
+        if (e.extra_info) {
+            const tagP = document.createElement('p');
+            tagP.className = 'detail-tag';
+            const em = document.createElement('em');
+            em.textContent = `Grammar tag: ${e.extra_info}`;
+            tagP.appendChild(em);
+            item.appendChild(tagP);
+        }
+
+        container.appendChild(item);
     });
-    
-    document.getElementById('definitionText').innerHTML = html;
+
     document.getElementById('descriptionTitle').textContent = word;
-    
-    descriptionArea.style.display = 'block';
-    
-    // Smooth animation
-    descriptionArea.style.animation = 'none';
-    descriptionArea.offsetHeight; 
-    descriptionArea.style.animation = 'fadeIn 0.3s ease forwards';
+    openPanel('descriptionArea');
+    document.getElementById('descriptionArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// Supabase Admin Auth
+// --- Supabase Admin Auth ---
 async function performLogin() {
-    const email = document.getElementById('adminUser').value;
+    const btn = document.querySelector('#loginForm .btn-primary');
+    const email = document.getElementById('adminUser').value.trim();
     const pass = document.getElementById('adminPass').value;
-    
-    if(!email || !pass) {
-        alert("Please enter both email and password.");
+
+    if (!email || !pass) {
+        showToast('Enter email and password', 'error');
         return;
     }
 
+    setButtonLoading(btn, true);
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: pass
-        });
-        
-        if(error) throw error;
-        
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+        if (error) throw error;
+
         document.getElementById('loginForm').style.display = 'none';
         document.getElementById('entryForm').style.display = 'block';
-        
         document.getElementById('adminUser').value = '';
         document.getElementById('adminPass').value = '';
-        
-        alert("Login Successful");
-    } catch(e) { 
-        alert("Login Failed: " + e.message); 
+        showToast('Login successful', 'success');
+    } catch (e) {
+        showToast('Login failed: ' + e.message, 'error');
+    } finally {
+        setButtonLoading(btn, false);
     }
 }
 
 async function saveNewWord() {
+    const btn = document.querySelector('#entryForm .btn-primary');
     const english_word = document.getElementById('newEnglish').value.trim();
     const translation = document.getElementById('newTranslation').value.trim();
-    const extra_info = document.getElementById('newType').value.trim(); 
-    
-    if(!english_word || !translation) {
-        alert("English Word and Malayalam Translation are required.");
+    const extra_info = document.getElementById('newType').value.trim();
+
+    if (!english_word || !translation) {
+        showToast('English word and Malayalam translation are required', 'error');
         return;
     }
 
+    setButtonLoading(btn, true);
     try {
-        const { data, error } = await supabase
+        const { error } = await supabaseClient
             .from('dictionary')
-            .insert([
-                { 
-                    language: 'MALAYALAM', // Hardcoded since only Malayalam is used
-                    english_word: english_word, 
-                    translation: translation, 
-                    extra_info: extra_info 
-                }
-            ]);
-            
+            .insert([{ language: LANGUAGE, english_word, translation, extra_info }]);
+
         if (error) throw error;
-        
-        alert("Saved successfully to database!");
-        
+
+        showToast('Saved successfully', 'success');
         document.getElementById('newEnglish').value = '';
         document.getElementById('newTranslation').value = '';
         document.getElementById('newType').value = '';
-    } catch(e) { 
-        alert("Save failed: " + e.message); 
+        document.getElementById('newEnglish').focus();
+    } catch (e) {
+        showToast('Save failed: ' + e.message, 'error');
+    } finally {
+        setButtonLoading(btn, false);
     }
 }
 
 async function logout() {
-    await supabase.auth.signOut();
-    document.getElementById('adminPanel').style.display = 'none';
+    try {
+        await supabaseClient.auth.signOut();
+    } catch (e) {
+        console.error('Logout error:', e);
+    }
+    closePanel('adminPanel', 'adminLoginBtn');
     document.getElementById('loginForm').style.display = 'block';
     document.getElementById('entryForm').style.display = 'none';
+    document.getElementById('adminPass').value = '';
 }
 
-// Event Listeners
-document.getElementById('searchInput').addEventListener('input', handleSearchInput);
+// --- Restore saved theme before first interaction ---
+if (localStorage.getItem('dict_theme') === 'dark') {
+    document.body.classList.add('dark-theme');
+}
 
-document.getElementById('backButton').addEventListener('click', () => { 
-    document.getElementById('descriptionArea').style.display = 'none'; 
-    document.getElementById('bookTableContainer').style.display = 'block'; 
+// --- Event wiring ---
+document.getElementById('searchInput').addEventListener('input', handleSearchInput);
+document.getElementById('searchInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        clearTimeout(searchTimeout);
+        filterData(e.target.value);
+    } else if (e.key === 'Escape') {
+        e.target.value = '';
+        clearTimeout(searchTimeout);
+        filterData('');
+        e.target.blur();
+    }
 });
+
+document.getElementById('backButton').addEventListener('click', () => {
+    closePanel('descriptionArea');
+    openPanel('bookTableContainer');
+});
+
+document.getElementById('refreshBtn').addEventListener('click', () => init());
 
 document.getElementById('themeToggle').addEventListener('click', () => {
-    document.body.classList.toggle('dark-theme');
+    const isDark = document.body.classList.toggle('dark-theme');
+    localStorage.setItem('dict_theme', isDark ? 'dark' : 'light');
 });
 
-document.getElementById('adminLoginBtn').addEventListener('click', () => { 
-    const panel = document.getElementById('adminPanel');
-    if (panel.style.display === 'none') {
-        panel.style.display = 'block';
-        panel.style.animation = 'fadeIn 0.3s ease forwards';
+document.getElementById('adminLoginBtn').addEventListener('click', () => {
+    if (isPanelOpen('adminPanel')) {
+        closePanel('adminPanel', 'adminLoginBtn');
     } else {
-        panel.style.display = 'none';
+        closePanel('contactArea', 'contactButton');
+        openPanel('adminPanel', 'adminLoginBtn');
     }
 });
 
 document.getElementById('contactButton').addEventListener('click', () => {
-    const contact = document.getElementById('contactArea');
-    if (contact.style.display === 'none') {
-        contact.style.display = 'block';
-        contact.style.animation = 'fadeIn 0.3s ease forwards';
+    if (isPanelOpen('contactArea')) {
+        closePanel('contactArea', 'contactButton');
     } else {
-        contact.style.display = 'none';
+        closePanel('adminPanel', 'adminLoginBtn');
+        openPanel('contactArea', 'contactButton');
     }
 });
 
-// Initialize
+document.getElementById('adminPass').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') performLogin();
+});
+
 init();
