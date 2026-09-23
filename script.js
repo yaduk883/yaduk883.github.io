@@ -1,58 +1,110 @@
-// Supabase Configuration 
+// --- Supabase Configuration ---
 const supabaseUrl = 'https://plwtfwylrlintbnvhfha.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsd3Rmd3lscmxpbnRibnZoZmhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNjIxODQsImV4cCI6MjEwNTYzODE4NH0.Y65Dhadml3pFMyytXro0drSprdYY-IOr4jQJ3tfL3F8';
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+// IMPORTANT: renamed from `supabase` to `supabaseClient` — the previous name shadowed the
+// global `supabase` object from the CDN script (const supabase = supabase.createClient(...)
+// throws a ReferenceError due to the temporal dead zone). This was breaking the entire app.
+const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-let currentLanguage = "MALAYALAM";
+let currentLanguage = localStorage.getItem('dict_language') || "MALAYALAM";
 let searchTimeout = null;
+let searchSeq = 0; // guards against slow/out-of-order network responses overwriting newer results
+
+// --- Security: escape any DB-sourced text before ever touching innerHTML ---
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// --- Lightweight non-blocking toast (replaces alert()) ---
+function showToast(message, type = 'info') {
+    let holder = document.getElementById('toastHolder');
+    if (!holder) {
+        holder = document.createElement('div');
+        holder.id = 'toastHolder';
+        holder.setAttribute('aria-live', 'polite');
+        document.body.appendChild(holder);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    holder.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 250);
+    }, 3000);
+}
+
+function setButtonLoading(btn, loading, loadingText = 'Please wait…') {
+    if (!btn) return;
+    if (loading) {
+        btn.dataset.originalText = btn.dataset.originalText || btn.textContent;
+        btn.textContent = loadingText;
+        btn.disabled = true;
+        btn.classList.add('is-loading');
+    } else {
+        btn.textContent = btn.dataset.originalText || btn.textContent;
+        btn.disabled = false;
+        btn.classList.remove('is-loading');
+    }
+}
 
 async function init() {
     const status = document.getElementById('statusMessage');
     if (status) status.textContent = `✅ Connected to ${currentLanguage}`;
     document.getElementById('bookTableContainer').style.display = 'none';
+    document.getElementById('descriptionArea').style.display = 'none';
     document.getElementById('searchInput').value = '';
-    
-    // Check if admin is already logged in
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-        document.getElementById('loginForm').style.display = 'none';
-        document.getElementById('entryForm').style.display = 'block';
+    document.getElementById('languageSelect').value = currentLanguage;
+
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const loggedIn = !!session;
+        document.getElementById('loginForm').style.display = loggedIn ? 'none' : 'block';
+        document.getElementById('entryForm').style.display = loggedIn ? 'block' : 'none';
+    } catch (e) {
+        console.error('Session check failed:', e);
     }
 }
 
-// Live Search with Supabase
+// --- Live search (debounced + race-safe) ---
 async function filterData(query) {
     const q = query.toLowerCase().trim();
     const container = document.getElementById('bookTableContainer');
     const status = document.getElementById('statusMessage');
-    
-    if (!q) { 
-        if (container) container.style.display = 'none'; 
+    const mySeq = ++searchSeq; // any older in-flight request will be discarded on arrival
+
+    if (!q) {
+        if (container) container.style.display = 'none';
         status.textContent = "✅ Ready!";
-        return; 
+        return;
     }
 
-    status.textContent = "🔍 Searching...";
+    status.innerHTML = '<span class="spinner" aria-hidden="true"></span> Searching...';
 
     try {
-        // Query Supabase directly
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('dictionary')
             .select('*')
             .eq('language', currentLanguage)
             .ilike('english_word', `%${q}%`)
-            .limit(50); // Fetch top 50 matches for performance
+            .limit(50);
 
+        if (mySeq !== searchSeq) return; // a newer keystroke already superseded this request
         if (error) throw error;
 
-        // Group results by English word
         const groupedData = {};
         data.forEach(item => {
             if (!groupedData[item.english_word]) groupedData[item.english_word] = [];
             groupedData[item.english_word].push(item);
         });
 
-        // Sort exact matches to top
         const matches = Object.keys(groupedData).sort((a, b) => {
             const aLow = a.toLowerCase();
             const bLow = b.toLowerCase();
@@ -66,15 +118,16 @@ async function filterData(query) {
         renderTable(matches, groupedData, q);
         status.textContent = "✅ Ready!";
     } catch (e) {
+        if (mySeq !== searchSeq) return;
         status.textContent = "⚠️ Search Error.";
         console.error("Fetch error:", e);
     }
 }
 
-// Debounce search to prevent making too many requests while typing
 function handleSearchInput(e) {
     clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => filterData(e.target.value), 300);
+    const value = e.target.value;
+    searchTimeout = setTimeout(() => filterData(value), 300);
 }
 
 function renderTable(matchingKeys, groupedData, query) {
@@ -82,126 +135,234 @@ function renderTable(matchingKeys, groupedData, query) {
     const tbody = document.getElementById('bookTableBody');
     if (!tbody) return;
 
-    tbody.innerHTML = ''; 
+    tbody.innerHTML = '';
 
-    if (matchingKeys.length === 0) { 
-        container.style.display = 'none'; 
-        const status = document.getElementById('statusMessage');
-        status.textContent = "No results found.";
-        return; 
+    if (matchingKeys.length === 0) {
+        container.style.display = 'none';
+        document.getElementById('statusMessage').textContent = "No results found.";
+        return;
     }
 
     container.style.display = 'block';
-    
-    matchingKeys.forEach(word => {
+
+    // textContent only — never innerHTML — for anything sourced from the database
+    matchingKeys.forEach((word, i) => {
         const row = tbody.insertRow();
+        row.classList.add('row-in');
+        row.style.animationDelay = `${Math.min(i, 15) * 20}ms`;
+        row.tabIndex = 0;
+        row.setAttribute('role', 'button');
         row.onclick = () => showDetails(word, groupedData[word]);
-        
-        if(word.toLowerCase() === query) {
-            row.className = "exact-match-row";
-        }
+        row.onkeydown = (ev) => {
+            if (ev.key === 'Enter' || ev.key === ' ') {
+                ev.preventDefault();
+                showDetails(word, groupedData[word]);
+            }
+        };
+
+        if (word.toLowerCase() === query) row.classList.add("exact-match-row");
 
         const cellEng = row.insertCell();
         cellEng.textContent = word;
         cellEng.style.fontWeight = "bold";
-        
+
         const cellTr = row.insertCell();
-        const allMeanings = groupedData[word].map(item => item.translation);
-        cellTr.textContent = allMeanings.join(", ");
+        cellTr.textContent = groupedData[word].map(item => item.translation).join(", ");
     });
 }
 
 function showDetails(word, entries) {
     document.getElementById('bookTableContainer').style.display = 'none';
-    let html = '';
+    const container = document.getElementById('definitionText');
+    container.innerHTML = '';
+
     entries.forEach(e => {
-        let tagLabel = (currentLanguage === "MALAYALAM") ? "Grammar" : "Transliteration";
-        html += `
-            <div class="detail-item">
-                <p style="font-size: 1.25rem; margin:0; font-weight: 600; color: var(--primary-color);">
-                    ${e.translation} 
-                    <button onclick="navigator.clipboard.writeText('${e.translation}')" class="copy-btn-mini">📋</button>
-                </p>
-                ${e.extra_info ? `<p style="font-size: 0.85rem; color: #777; margin: 4px 0;"><em>${tagLabel}:${e.extra_info}</em></p>` : ''}
-                ${e.explanation ? `<p class="explanation-box"><strong>Explanation:</strong> ${e.explanation}</p>` : ''}
-            </div>
-        `;
+        const tagLabel = (currentLanguage === "MALAYALAM") ? "Grammar" : "Transliteration";
+
+        const item = document.createElement('div');
+        item.className = 'detail-item';
+
+        const p = document.createElement('p');
+        p.className = 'detail-translation';
+        p.appendChild(document.createTextNode(e.translation || ''));
+
+        const copyBtn = document.createElement('button');
+        copyBtn.type = 'button';
+        copyBtn.className = 'copy-btn-mini';
+        copyBtn.textContent = '📋';
+        copyBtn.setAttribute('aria-label', 'Copy translation to clipboard');
+        copyBtn.onclick = async (ev) => {
+            ev.stopPropagation();
+            try {
+                await navigator.clipboard.writeText(e.translation || '');
+                copyBtn.textContent = '✅';
+                copyBtn.classList.add('copied');
+                setTimeout(() => { copyBtn.textContent = '📋'; copyBtn.classList.remove('copied'); }, 1200);
+            } catch (err) {
+                showToast('Could not copy to clipboard', 'error');
+            }
+        };
+        p.appendChild(copyBtn);
+        item.appendChild(p);
+
+        if (e.extra_info) {
+            const tagP = document.createElement('p');
+            tagP.className = 'detail-tag';
+            const em = document.createElement('em');
+            em.textContent = `${tagLabel}: ${e.extra_info}`;
+            tagP.appendChild(em);
+            item.appendChild(tagP);
+        }
+
+        if (e.explanation) {
+            const explP = document.createElement('p');
+            explP.className = 'explanation-box';
+            const strong = document.createElement('strong');
+            strong.textContent = 'Explanation: ';
+            explP.appendChild(strong);
+            explP.appendChild(document.createTextNode(e.explanation));
+            item.appendChild(explP);
+        }
+
+        container.appendChild(item);
     });
-    document.getElementById('definitionText').innerHTML = html;
+
     document.getElementById('descriptionTitle').textContent = word;
-    document.getElementById('descriptionArea').style.display = 'block';
+    const descArea = document.getElementById('descriptionArea');
+    descArea.style.display = 'block';
+    descArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// Supabase Admin Auth
+// --- Supabase Admin Auth ---
 async function performLogin() {
-    const email = document.getElementById('adminUser').value;
+    const btn = document.querySelector('#loginForm .save-btn');
+    const email = document.getElementById('adminUser').value.trim();
     const pass = document.getElementById('adminPass').value;
+
+    if (!email || !pass) {
+        showToast('Enter email and password', 'error');
+        return;
+    }
+
+    setButtonLoading(btn, true, 'Signing in…');
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: pass
-        });
-        
-        if(error) throw error;
-        
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+        if (error) throw error;
+
         document.getElementById('loginForm').style.display = 'none';
         document.getElementById('entryForm').style.display = 'block';
-        alert("Login Successful");
-    } catch(e) { 
-        alert("Login Failed: " + e.message); 
+        document.getElementById('adminPass').value = '';
+        showToast('Login successful', 'success');
+    } catch (e) {
+        showToast('Login failed: ' + e.message, 'error');
+    } finally {
+        setButtonLoading(btn, false);
     }
 }
 
 async function saveNewWord() {
-    const english_word = document.getElementById('newEnglish').value;
-    const translation = document.getElementById('newTranslation').value;
-    const extra_info = document.getElementById('newType').value; 
-    
+    const btn = document.querySelector('#entryForm .save-btn');
+    const english_word = document.getElementById('newEnglish').value.trim();
+    const translation = document.getElementById('newTranslation').value.trim();
+    const extra_info = document.getElementById('newType').value.trim();
+
+    if (!english_word || !translation) {
+        showToast('English word and translation are required', 'error');
+        return;
+    }
+
+    setButtonLoading(btn, true, 'Saving…');
     try {
-        const { data, error } = await supabase
+        const { error } = await supabaseClient
             .from('dictionary')
-            .insert([
-                { 
-                    language: currentLanguage, 
-                    english_word: english_word, 
-                    translation: translation, 
-                    extra_info: extra_info 
-                }
-            ]);
-            
+            .insert([{ language: currentLanguage, english_word, translation, extra_info }]);
+
         if (error) throw error;
-        
-        alert("Saved successfully!");
+
+        showToast('Saved successfully!', 'success');
         document.getElementById('newEnglish').value = '';
         document.getElementById('newTranslation').value = '';
         document.getElementById('newType').value = '';
-    } catch(e) { 
-        alert("Save failed: " + e.message); 
+        document.getElementById('newEnglish').focus();
+    } catch (e) {
+        showToast('Save failed: ' + e.message, 'error');
+    } finally {
+        setButtonLoading(btn, false);
     }
 }
 
 async function logout() {
-    await supabase.auth.signOut();
+    try {
+        await supabaseClient.auth.signOut();
+    } catch (e) {
+        console.error('Logout error:', e);
+    }
     document.getElementById('adminPanel').style.display = 'none';
     document.getElementById('loginForm').style.display = 'block';
     document.getElementById('entryForm').style.display = 'none';
+    document.getElementById('adminPass').value = '';
 }
 
-// Events
-document.getElementById('languageSelect').onchange = (e) => { currentLanguage = e.target.value; init(); };
+// --- Restore saved theme before first interaction ---
+(function restoreTheme() {
+    if (localStorage.getItem('dict_theme') === 'dark') {
+        document.body.classList.add('dark-theme');
+    }
+})();
+
+// --- Event wiring ---
+document.getElementById('languageSelect').onchange = (e) => {
+    currentLanguage = e.target.value;
+    localStorage.setItem('dict_language', currentLanguage);
+    init();
+};
+
 document.getElementById('searchInput').oninput = handleSearchInput;
-document.getElementById('backButton').onclick = () => { 
-    document.getElementById('descriptionArea').style.display='none'; 
-    document.getElementById('bookTableContainer').style.display = 'block'; 
+document.getElementById('searchInput').onkeydown = (e) => {
+    if (e.key === 'Enter') {
+        clearTimeout(searchTimeout);
+        filterData(e.target.value);
+    } else if (e.key === 'Escape') {
+        e.target.value = '';
+        clearTimeout(searchTimeout);
+        filterData('');
+        e.target.blur();
+    }
 };
-document.getElementById('themeToggle').onclick = () => document.body.classList.toggle('dark-theme');
-document.getElementById('adminLoginBtn').onclick = () => { 
+
+document.getElementById('backButton').onclick = () => {
+    document.getElementById('descriptionArea').style.display = 'none';
+    document.getElementById('bookTableContainer').style.display = 'block';
+};
+
+document.getElementById('themeToggle').onclick = () => {
+    const isDark = document.body.classList.toggle('dark-theme');
+    localStorage.setItem('dict_theme', isDark ? 'dark' : 'light');
+    document.getElementById('themeToggle').textContent = isDark ? '🌙 Theme' : '☀️ Theme';
+};
+if (localStorage.getItem('dict_theme') === 'dark') {
+    document.getElementById('themeToggle').textContent = '🌙 Theme';
+}
+
+document.getElementById('adminLoginBtn').onclick = () => {
     const p = document.getElementById('adminPanel');
-    p.style.display = p.style.display === 'none' ? 'block' : 'none';
+    const willShow = p.style.display === 'none';
+    p.style.display = willShow ? 'block' : 'none';
+    if (willShow) {
+        document.getElementById('contactArea').style.display = 'none';
+        p.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
 };
+
 document.getElementById('contactButton').onclick = () => {
     const c = document.getElementById('contactArea');
-    c.style.display = c.style.display === 'none' ? 'block' : 'none';
+    const willShow = c.style.display === 'none';
+    c.style.display = willShow ? 'block' : 'none';
+    if (willShow) document.getElementById('adminPanel').style.display = 'none';
 };
+
+document.getElementById('adminPass').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') performLogin();
+});
 
 init();
