@@ -100,21 +100,19 @@ async function filterData(query) {
             groupedData[item.english_word].push(item);
         });
 
-        const matches = Object.keys(groupedData).sort((a, b) => {
-            const aLow = a.toLowerCase();
-            const bLow = b.toLowerCase();
+        // Single source of truth for relevance, used identically for sorting AND
+        // highlighting below, so the two can never disagree with each other.
+        //   0 = exact match (English word or a Malayalam translation equals the query)
+        //   1 = prefix match (English word or a Malayalam translation starts with the query)
+        //   2 = anything else that matched the database ILIKE search
+        const matches = Object.keys(groupedData)
+            .map(word => ({ word, rank: relevanceRank(word, groupedData[word], q) }))
+            .sort((x, y) => {
+                if (x.rank !== y.rank) return x.rank - y.rank;
+                return x.word.trim().toLowerCase().localeCompare(y.word.trim().toLowerCase());
+            });
 
-            const aExact = aLow === q || groupedData[a].some(i => i.translation === query);
-            const bExact = bLow === q || groupedData[b].some(i => i.translation === query);
-
-            if (aExact && !bExact) return -1;
-            if (bExact && !aExact) return 1;
-            if (aLow.startsWith(q) && !bLow.startsWith(q)) return -1;
-            if (bLow.startsWith(q) && !aLow.startsWith(q)) return 1;
-            return aLow.localeCompare(bLow);
-        });
-
-        renderTable(matches, groupedData, q, query);
+        renderTable(matches, groupedData);
         status.textContent = "Ready";
     } catch (e) {
         if (mySeq !== searchSeq) return;
@@ -123,19 +121,33 @@ async function filterData(query) {
     }
 }
 
+// Ranks a dictionary headword against the (already trimmed + lowercased) search term `q`.
+// Trims and lowercases every value it compares so stray whitespace or mixed case in the
+// database can never cause an exact match to be missed.
+function relevanceRank(word, entries, q) {
+    const wordNorm = (word || '').trim().toLowerCase();
+    if (wordNorm === q) return 0;
+    if (entries.some(e => (e.translation || '').trim().toLowerCase() === q)) return 0;
+
+    if (wordNorm.startsWith(q)) return 1;
+    if (entries.some(e => (e.translation || '').trim().toLowerCase().startsWith(q))) return 1;
+
+    return 2;
+}
+
 function handleSearchInput(e) {
     clearTimeout(searchTimeout);
     const value = e.target.value;
     searchTimeout = setTimeout(() => filterData(value), 300);
 }
 
-function renderTable(matchingKeys, groupedData, q, originalQuery) {
+function renderTable(matches, groupedData) {
     const tbody = document.getElementById('bookTableBody');
     if (!tbody) return;
 
     tbody.innerHTML = '';
 
-    if (matchingKeys.length === 0) {
+    if (matches.length === 0) {
         closePanel('bookTableContainer');
         document.getElementById('statusMessage').textContent = "No results found";
         return;
@@ -144,7 +156,7 @@ function renderTable(matchingKeys, groupedData, q, originalQuery) {
     openPanel('bookTableContainer');
 
     // textContent only — never innerHTML — for anything sourced from the database
-    matchingKeys.forEach((word, i) => {
+    matches.forEach(({ word, rank }, i) => {
         const row = tbody.insertRow();
         row.classList.add('row-in');
         row.style.animationDelay = `${Math.min(i, 15) * 18}ms`;
@@ -158,8 +170,7 @@ function renderTable(matchingKeys, groupedData, q, originalQuery) {
             }
         };
 
-        const hasExactMalayalam = groupedData[word].some(item => item.translation === originalQuery);
-        if (word.toLowerCase() === q || hasExactMalayalam) row.classList.add("exact-match-row");
+        if (rank === 0) row.classList.add("exact-match-row");
 
         const cellEng = row.insertCell();
         cellEng.textContent = word;
