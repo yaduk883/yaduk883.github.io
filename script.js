@@ -216,7 +216,13 @@ function showDetails(word, entries) {
         container.appendChild(item);
     });
 
-    document.getElementById('descriptionTitle').textContent = word;
+    const titleEl = document.getElementById('descriptionTitle');
+    titleEl.textContent = word;
+    // retrigger the headword's entrance animation on every lookup, not just the first
+    titleEl.classList.remove('headword');
+    void titleEl.offsetWidth;
+    titleEl.classList.add('headword');
+
     openPanel('descriptionArea');
     document.getElementById('descriptionArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -316,7 +322,12 @@ document.getElementById('backButton').addEventListener('click', () => {
     openPanel('bookTableContainer');
 });
 
-document.getElementById('refreshBtn').addEventListener('click', () => init());
+document.getElementById('refreshBtn').addEventListener('click', () => {
+    const btn = document.getElementById('refreshBtn');
+    btn.classList.add('spin-once');
+    setTimeout(() => btn.classList.remove('spin-once'), 650);
+    init();
+});
 
 document.getElementById('themeToggle').addEventListener('click', () => {
     const isDark = document.body.classList.toggle('dark-theme');
