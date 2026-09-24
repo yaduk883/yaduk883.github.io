@@ -125,9 +125,10 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
+    width: 52px;
+    height: 52px;
     flex-shrink: 0;
+    margin-top: 4px;
     border-radius: 50%;
     color: var(--gold);
     background: var(--gold-tint);
@@ -160,8 +161,9 @@ h1, .brand-title {
     margin: 0;
     font-family: var(--font-serif);
     font-weight: 600;
-    font-size: 1.9rem;
+    font-size: clamp(2.3rem, 4.6vw, 3.75rem);
     letter-spacing: -0.01em;
+    line-height: 1.05;
     color: var(--ink);
 }
 
@@ -169,17 +171,54 @@ h1, .brand-title {
     display: inline-flex;
 }
 
+.title-shine {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+    padding: 0.1em 0.05em;
+}
+
+.title-shine::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -60%;
+    width: 35%;
+    height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+    transform: skewX(-20deg);
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    animation: shineSweep 4.5s ease-in-out infinite;
+    animation-delay: 1.4s;
+}
+
+@keyframes shineSweep {
+    0%   { left: -60%; }
+    35%  { left: 130%; }
+    100% { left: 130%; }
+}
+
 .brand-title .letter {
     display: inline-block;
     opacity: 0;
     color: var(--gold-strong);
-    animation: letterIn 0.55s var(--ease-spring) both;
-    animation-delay: calc(var(--i) * 45ms + 120ms);
+    animation-name: letterIn, letterFloat;
+    animation-duration: 0.55s, 3.6s;
+    animation-timing-function: var(--ease-spring), ease-in-out;
+    animation-iteration-count: 1, infinite;
+    animation-fill-mode: both, none;
+    animation-delay: calc(var(--i) * 45ms + 120ms), calc(var(--i) * 90ms + 900ms);
 }
 
 @keyframes letterIn {
-    from { opacity: 0; transform: translateY(12px) rotate(-6deg); }
+    from { opacity: 0; transform: translateY(16px) rotate(-6deg); }
     to   { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+
+@keyframes letterFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-5px); }
 }
 
 .tagline-meaning {
@@ -605,7 +644,7 @@ button.is-loading::after {
 @media (max-width: 600px) {
     body { padding: 24px 10px 40px; }
     .container { padding: 22px; border-radius: 16px; }
-    h1 { font-size: 1.55rem; }
+    h1 { font-size: 2.15rem; }
     .headword { font-size: 1.6rem; }
     .toolbar { gap: 4px; }
     #bookTable td, #bookTable th { padding: 11px 12px; }
