@@ -121,6 +121,7 @@ body {
 .brand { display: flex; align-items: flex-start; gap: 12px; }
 
 .brand-mark {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -131,9 +132,31 @@ body {
     color: var(--gold);
     background: var(--gold-tint);
     border: 1px solid var(--hairline);
+    animation: markIn 0.5s var(--ease-spring) 0.1s both;
 }
 
-h1 {
+.brand-mark::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: 50%;
+    border: 1px solid var(--gold);
+    opacity: 0;
+    animation: markPulse 3.2s var(--ease-smooth) 0.9s infinite;
+}
+
+@keyframes markIn {
+    from { opacity: 0; transform: scale(0.5) rotate(-25deg); }
+    to   { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+@keyframes markPulse {
+    0%   { transform: scale(1); opacity: 0.5; }
+    75%  { transform: scale(1.55); opacity: 0; }
+    100% { transform: scale(1.55); opacity: 0; }
+}
+
+h1, .brand-title {
     margin: 0;
     font-family: var(--font-serif);
     font-weight: 600;
@@ -142,11 +165,45 @@ h1 {
     color: var(--ink);
 }
 
+.brand-title {
+    display: inline-flex;
+}
+
+.brand-title .letter {
+    display: inline-block;
+    opacity: 0;
+    color: var(--gold-strong);
+    animation: letterIn 0.55s var(--ease-spring) both;
+    animation-delay: calc(var(--i) * 45ms + 120ms);
+}
+
+@keyframes letterIn {
+    from { opacity: 0; transform: translateY(12px) rotate(-6deg); }
+    to   { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+
+.tagline-meaning {
+    margin: 5px 0 0;
+    font-size: 0.78rem;
+    font-style: italic;
+    color: var(--ink-soft);
+    opacity: 0;
+    animation: fadeUp 0.5s var(--ease-smooth) 0.75s both;
+}
+.tagline-meaning em { font-style: normal; color: var(--gold); }
+
 .tagline {
-    margin: 2px 0 0;
+    margin: 3px 0 0;
     font-size: 0.85rem;
     color: var(--ink-soft);
     font-weight: 500;
+    opacity: 0;
+    animation: fadeUp 0.5s var(--ease-smooth) 0.9s both;
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 .toolbar { display: flex; gap: 6px; }
@@ -170,9 +227,19 @@ h1 {
 .btn-icon:hover { color: var(--gold); border-color: var(--gold); background: var(--gold-tint); }
 .btn-icon:active { transform: scale(0.92); }
 
-.theme-toggle .icon-moon { display: none; }
-body.dark-theme .theme-toggle .icon-sun { display: none; }
-body.dark-theme .theme-toggle .icon-moon { display: block; }
+.theme-toggle { position: relative; overflow: hidden; }
+.theme-toggle svg {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+    opacity: 1;
+    transition: transform 0.45s var(--ease-spring), opacity 0.3s ease;
+}
+.theme-toggle .icon-moon { opacity: 0; transform: translate(-50%, -50%) rotate(-90deg) scale(0.4); }
+body.dark-theme .theme-toggle .icon-sun { opacity: 0; transform: translate(-50%, -50%) rotate(90deg) scale(0.4); }
+body.dark-theme .theme-toggle .icon-moon { opacity: 1; transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+
+.btn-icon.spin-once svg { animation: spin 0.6s var(--ease-smooth); }
 
 .btn-primary {
     padding: 12px 18px;
@@ -411,11 +478,35 @@ button.is-loading::after {
    WORD DETAIL
 =========================================================== */
 .headword {
-    margin: 0 0 16px;
+    position: relative;
+    display: inline-block;
+    margin: 0 0 20px;
     font-family: var(--font-serif);
     font-weight: 600;
     font-size: 2rem;
     color: var(--ink);
+    animation: headwordIn 0.5s var(--ease-spring) both;
+}
+
+.headword::after {
+    content: "";
+    position: absolute;
+    left: 1px; right: 1px; bottom: -8px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gold), var(--jade));
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: underlineDraw 0.5s var(--ease-smooth) 0.22s both;
+}
+
+@keyframes headwordIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.94); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes underlineDraw {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
 }
 
 .detail-item {
