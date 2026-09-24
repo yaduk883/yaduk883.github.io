@@ -1,370 +1,651 @@
-// --- Supabase Configuration ---
-const supabaseUrl = 'https://plwtfwylrlintbnvhfha.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsd3Rmd3lscmxpbnRibnZoZmhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNjIxODQsImV4cCI6MjEwNTYzODE4NH0.Y65Dhadml3pFMyytXro0drSprdYY-IOr4jQJ3tfL3F8';
-// IMPORTANT: named `supabaseClient` (not `supabase`) — declaring `const supabase =
-// supabase.createClient(...)` would shadow the global `supabase` object from the CDN
-// script and throw a ReferenceError before the app can run.
-const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+/* ===========================================================
+   LEXICON — design tokens
+   Palette: warm paper / deep ink, brass gold as the single accent,
+   jade for success, muted brick for error. Serif (Fraunces) carries
+   the dictionary-headword personality; Inter runs the UI chrome.
+=========================================================== */
+:root {
+    --font-serif: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 
-const LANGUAGE = 'MALAYALAM'; // single-language build
-let searchTimeout = null;
-let searchSeq = 0; // guards against slow/out-of-order network responses overwriting newer results
+    --paper: #f3f1ec;
+    --paper-raised: rgba(255, 255, 255, 0.58);
+    --panel-tint: rgba(255, 255, 255, 0.4);
+    --ink: #1c2027;
+    --ink-soft: #5c6472;
+    --hairline: rgba(28, 32, 39, 0.12);
+    --hairline-strong: rgba(28, 32, 39, 0.22);
 
-// --- Collapsible panel helpers (smooth grid-rows expand/collapse) ---
-function openPanel(id, toggleBtnId) {
-    document.getElementById(id).classList.add('is-open');
-    if (toggleBtnId) document.getElementById(toggleBtnId).setAttribute('aria-expanded', 'true');
-}
-function closePanel(id, toggleBtnId) {
-    document.getElementById(id).classList.remove('is-open');
-    if (toggleBtnId) document.getElementById(toggleBtnId).setAttribute('aria-expanded', 'false');
-}
-function isPanelOpen(id) {
-    return document.getElementById(id).classList.contains('is-open');
+    --gold: #a3794a;
+    --gold-strong: #8a6238;
+    --gold-tint: rgba(163, 121, 74, 0.14);
+
+    --jade: #3f6f5e;
+    --jade-tint: rgba(63, 111, 94, 0.14);
+    --rose: #a6483f;
+    --rose-tint: rgba(166, 72, 63, 0.14);
+
+    --shadow-lg: 0 30px 70px -30px rgba(28, 32, 39, 0.35), 0 8px 24px -12px rgba(28, 32, 39, 0.18);
+    --shadow-sm: 0 2px 10px -4px rgba(28, 32, 39, 0.18);
+    --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
-// --- Lightweight non-blocking toast (replaces alert()) ---
-function showToast(message, type = 'info') {
-    let holder = document.getElementById('toastHolder');
-    if (!holder) {
-        holder = document.createElement('div');
-        holder.id = 'toastHolder';
-        holder.setAttribute('aria-live', 'polite');
-        document.body.appendChild(holder);
+body.dark-theme {
+    --paper: #0d1014;
+    --paper-raised: rgba(26, 30, 38, 0.6);
+    --panel-tint: rgba(255, 255, 255, 0.04);
+    --ink: #eef0f3;
+    --ink-soft: #99a1ad;
+    --hairline: rgba(255, 255, 255, 0.10);
+    --hairline-strong: rgba(255, 255, 255, 0.18);
+
+    --gold: #d3ab72;
+    --gold-strong: #e6c088;
+    --gold-tint: rgba(211, 171, 114, 0.16);
+
+    --jade: #74b39c;
+    --jade-tint: rgba(116, 179, 156, 0.16);
+    --rose: #d68d84;
+    --rose-tint: rgba(214, 141, 132, 0.16);
+
+    --shadow-lg: 0 30px 70px -25px rgba(0, 0, 0, 0.6), 0 8px 24px -12px rgba(0, 0, 0, 0.4);
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+/* ===========================================================
+   AMBIENT BACKGROUND — the one deliberate, continuous motion
+=========================================================== */
+body {
+    margin: 0;
+    padding: 48px 16px 64px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    font-family: var(--font-sans);
+    color: var(--ink);
+    background-color: var(--paper);
+    background-image:
+        radial-gradient(circle at 18% 20%, var(--gold-tint) 0%, transparent 42%),
+        radial-gradient(circle at 82% 78%, var(--jade-tint) 0%, transparent 45%),
+        radial-gradient(circle at 50% 100%, var(--gold-tint) 0%, transparent 50%);
+    background-size: 160% 160%;
+    background-position: 0% 0%;
+    animation: driftBg 50s var(--ease-smooth) infinite alternate;
+    transition: background-color 0.5s ease, color 0.4s ease;
+}
+
+@keyframes driftBg {
+    0%   { background-position: 0% 10%, 100% 90%, 50% 100%; }
+    100% { background-position: 15% 0%, 85% 100%, 55% 90%; }
+}
+
+#prism-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+
+/* ===========================================================
+   LAYOUT SHELL
+=========================================================== */
+.container {
+    width: 100%;
+    max-width: 760px;
+    padding: 34px;
+    background: var(--paper-raised);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--hairline);
+    border-radius: 20px;
+    box-shadow: var(--shadow-lg);
+    animation: riseIn 0.6s var(--ease-smooth) both;
+}
+
+@keyframes riseIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===========================================================
+   HEADER
+=========================================================== */
+.page-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 26px;
+}
+
+.brand { display: flex; align-items: flex-start; gap: 12px; }
+
+.brand-mark {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    margin-top: 4px;
+    border-radius: 50%;
+    color: var(--gold);
+    background: var(--gold-tint);
+    border: 1px solid var(--hairline);
+    animation: markIn 0.5s var(--ease-spring) 0.1s both;
+}
+
+.brand-mark::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: 50%;
+    border: 1px solid var(--gold);
+    opacity: 0;
+    animation: markPulse 3.2s var(--ease-smooth) 0.9s infinite;
+}
+
+@keyframes markIn {
+    from { opacity: 0; transform: scale(0.5) rotate(-25deg); }
+    to   { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+@keyframes markPulse {
+    0%   { transform: scale(1); opacity: 0.5; }
+    75%  { transform: scale(1.55); opacity: 0; }
+    100% { transform: scale(1.55); opacity: 0; }
+}
+
+h1, .brand-title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: clamp(2.3rem, 4.6vw, 3.75rem);
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    color: var(--ink);
+}
+
+.brand-title {
+    display: inline-flex;
+}
+
+.title-shine {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+    padding: 0.1em 0.05em;
+}
+
+.title-shine::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -60%;
+    width: 35%;
+    height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+    transform: skewX(-20deg);
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    animation: shineSweep 4.5s ease-in-out infinite;
+    animation-delay: 1.4s;
+}
+
+@keyframes shineSweep {
+    0%   { left: -60%; }
+    35%  { left: 130%; }
+    100% { left: 130%; }
+}
+
+.brand-title .letter {
+    display: inline-block;
+    opacity: 0;
+    color: var(--gold-strong);
+    animation-name: letterIn, letterFloat;
+    animation-duration: 0.55s, 3.6s;
+    animation-timing-function: var(--ease-spring), ease-in-out;
+    animation-iteration-count: 1, infinite;
+    animation-fill-mode: both, none;
+    animation-delay: calc(var(--i) * 45ms + 120ms), calc(var(--i) * 90ms + 900ms);
+}
+
+@keyframes letterIn {
+    from { opacity: 0; transform: translateY(16px) rotate(-6deg); }
+    to   { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+
+@keyframes letterFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-5px); }
+}
+
+.tagline-meaning {
+    margin: 5px 0 0;
+    font-size: 0.78rem;
+    font-style: italic;
+    color: var(--ink-soft);
+    opacity: 0;
+    animation: fadeUp 0.5s var(--ease-smooth) 0.75s both;
+}
+.tagline-meaning em { font-style: normal; color: var(--gold); }
+
+.tagline {
+    margin: 3px 0 0;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    font-weight: 500;
+    opacity: 0;
+    animation: fadeUp 0.5s var(--ease-smooth) 0.9s both;
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.toolbar { display: flex; gap: 6px; }
+
+/* ===========================================================
+   BUTTONS
+=========================================================== */
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--hairline);
+    background: var(--panel-tint);
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, transform 0.15s var(--ease-spring);
+}
+.btn-icon:hover { color: var(--gold); border-color: var(--gold); background: var(--gold-tint); }
+.btn-icon:active { transform: scale(0.92); }
+
+.theme-toggle { position: relative; overflow: hidden; }
+.theme-toggle svg {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+    opacity: 1;
+    transition: transform 0.45s var(--ease-spring), opacity 0.3s ease;
+}
+.theme-toggle .icon-moon { opacity: 0; transform: translate(-50%, -50%) rotate(-90deg) scale(0.4); }
+body.dark-theme .theme-toggle .icon-sun { opacity: 0; transform: translate(-50%, -50%) rotate(90deg) scale(0.4); }
+body.dark-theme .theme-toggle .icon-moon { opacity: 1; transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+
+.btn-icon.spin-once svg { animation: spin 0.6s var(--ease-smooth); }
+
+.btn-primary {
+    padding: 12px 18px;
+    border: none;
+    border-radius: 10px;
+    background: var(--gold);
+    color: #fff;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: background-color 0.2s ease, transform 0.15s var(--ease-spring), opacity 0.2s ease;
+}
+.btn-primary:hover { background: var(--gold-strong); }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--hairline);
+    background: transparent;
+    color: var(--ink-soft);
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.88rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+.btn-ghost:hover { color: var(--ink); border-color: var(--hairline-strong); background: var(--panel-tint); }
+
+.btn-block { width: 100%; }
+.panel-close-btn { margin-top: 6px; }
+
+button.is-loading {
+    position: relative;
+    color: transparent !important;
+}
+button.is-loading::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+.btn-ghost.is-loading::after { border-color: var(--hairline-strong); border-top-color: var(--ink-soft); }
+
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===========================================================
+   SEARCH FIELD
+=========================================================== */
+.search-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+}
+.search-icon { position: absolute; left: 2px; color: var(--ink-soft); pointer-events: none; transition: color 0.2s ease; }
+
+#searchInput {
+    width: 100%;
+    padding: 14px 8px 14px 32px;
+    font-size: 1.05rem;
+    font-family: var(--font-sans);
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--hairline-strong);
+    outline: none;
+}
+#searchInput::placeholder { color: var(--ink-soft); }
+
+.search-underline {
+    position: absolute;
+    left: 0; right: 0; bottom: -1.5px;
+    height: 2px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transition: transform 0.35s var(--ease-smooth);
+}
+#searchInput:focus ~ .search-underline { transform: scaleX(1); }
+#searchInput:focus ~ .search-icon,
+.search-field:focus-within .search-icon { color: var(--gold); }
+
+.status-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 1.2em;
+    margin: 10px 0 22px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    transition: color 0.2s ease;
+}
+
+.spinner {
+    width: 11px; height: 11px;
+    border: 2px solid var(--hairline);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+/* ===========================================================
+   COLLAPSIBLE PANELS — smooth expand/collapse via grid-rows
+=========================================================== */
+.collapsible {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.45s var(--ease-smooth);
+}
+.collapsible.is-open { grid-template-rows: 1fr; margin-bottom: 18px; }
+.collapsible-inner { overflow: hidden; min-height: 0; }
+
+.panel-surface {
+    padding: 22px;
+    border-radius: 14px;
+    border: 1px solid var(--hairline);
+    border-left: 3px solid var(--gold);
+    background: var(--panel-tint);
+}
+
+.panel-title {
+    margin: 0 0 16px;
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: 1.15rem;
+    color: var(--ink);
+}
+
+.text-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 14px;
+}
+.text-field span { font-size: 0.78rem; color: var(--ink-soft); font-weight: 500; }
+.text-field input {
+    padding: 11px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--hairline-strong);
+    background: var(--paper-raised);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.text-field input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-tint); }
+
+.contact-links { display: flex; gap: 10px; flex-wrap: wrap; }
+.contact-link svg { color: var(--gold); }
+
+/* ===========================================================
+   RESULTS TABLE — quiet, list-like, hairline dividers
+=========================================================== */
+.table-surface {
+    max-height: 54vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 14px;
+    border: 1px solid var(--hairline);
+    background: var(--panel-tint);
+}
+.table-surface::-webkit-scrollbar { width: 6px; }
+.table-surface::-webkit-scrollbar-track { background: transparent; }
+.table-surface::-webkit-scrollbar-thumb { background: var(--hairline-strong); border-radius: 10px; }
+
+#bookTable { width: 100%; border-collapse: collapse; }
+
+#bookTable th {
+    text-align: left;
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--ink-soft);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--hairline);
+    position: sticky;
+    top: 0;
+    background: var(--paper-raised);
+    backdrop-filter: blur(10px);
+    z-index: 1;
+}
+
+#bookTable td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--hairline);
+    font-size: 0.96rem;
+    vertical-align: middle;
+    line-height: 1.4;
+}
+
+#bookTable td:first-child {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    color: var(--ink);
+    width: 38%;
+    transition: color 0.15s ease;
+}
+#bookTable td:last-child { color: var(--ink-soft); }
+
+#bookTable tr { cursor: pointer; transition: background-color 0.15s ease, box-shadow 0.15s ease; }
+#bookTable tr:hover { background-color: var(--gold-tint); }
+#bookTable tr:hover td:first-child { color: var(--gold-strong); }
+#bookTable tr:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--gold); }
+#bookTable tr:last-child td { border-bottom: none; }
+
+.exact-match-row { box-shadow: inset 3px 0 0 var(--gold); }
+
+.row-in { animation: rowIn 0.3s var(--ease-smooth) both; }
+@keyframes rowIn {
+    from { opacity: 0; transform: translateY(3px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===========================================================
+   WORD DETAIL
+=========================================================== */
+.headword {
+    position: relative;
+    display: inline-block;
+    margin: 0 0 20px;
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: 2rem;
+    color: var(--ink);
+    animation: headwordIn 0.5s var(--ease-spring) both;
+}
+
+.headword::after {
+    content: "";
+    position: absolute;
+    left: 1px; right: 1px; bottom: -8px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gold), var(--jade));
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: underlineDraw 0.5s var(--ease-smooth) 0.22s both;
+}
+
+@keyframes headwordIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.94); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes underlineDraw {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+}
+
+.detail-item {
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--hairline);
+}
+.detail-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+.detail-translation {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 0;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 1.3rem;
+    color: var(--gold-strong);
+}
+
+.detail-tag { margin: 6px 0 0; font-size: 0.83rem; color: var(--ink-soft); }
+.detail-tag em { font-style: normal; }
+
+.copy-btn-mini {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    border: 1px solid var(--hairline);
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+.copy-btn-mini:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-tint); }
+.copy-btn-mini.copied { border-color: var(--jade); color: var(--jade); background: var(--jade-tint); }
+
+/* ===========================================================
+   TOASTS
+=========================================================== */
+#toastHolder {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 420px;
+    padding: 0 16px;
+    pointer-events: none;
+}
+
+.toast {
+    pointer-events: auto;
+    width: 100%;
+    padding: 13px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--hairline);
+    border-left: 4px solid var(--gold);
+    background: var(--paper-raised);
+    backdrop-filter: blur(16px);
+    color: var(--ink);
+    font-size: 0.88rem;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.28s var(--ease-smooth), transform 0.28s var(--ease-smooth);
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast-success { border-left-color: var(--jade); }
+.toast-error { border-left-color: var(--rose); }
+
+/* ===========================================================
+   ACCESSIBILITY / MOTION
+=========================================================== */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
     }
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    holder.appendChild(toast);
-    requestAnimationFrame(() => toast.classList.add('show'));
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 250);
-    }, 3000);
 }
 
-function setButtonLoading(btn, loading) {
-    if (!btn) return;
-    btn.disabled = loading;
-    btn.classList.toggle('is-loading', loading);
+/* ===========================================================
+   RESPONSIVE
+=========================================================== */
+@media (max-width: 600px) {
+    body { padding: 24px 10px 40px; }
+    .container { padding: 22px; border-radius: 16px; }
+    h1 { font-size: 2.15rem; }
+    .headword { font-size: 1.6rem; }
+    .toolbar { gap: 4px; }
+    #bookTable td, #bookTable th { padding: 11px 12px; }
 }
-
-async function init() {
-    const status = document.getElementById('statusMessage');
-    if (status) status.textContent = "Connected";
-    closePanel('bookTableContainer');
-    closePanel('descriptionArea');
-    document.getElementById('searchInput').value = '';
-
-    try {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        const loggedIn = !!session;
-        document.getElementById('loginForm').style.display = loggedIn ? 'none' : 'block';
-        document.getElementById('entryForm').style.display = loggedIn ? 'block' : 'none';
-    } catch (e) {
-        console.error('Session check failed:', e);
-    }
-}
-
-// --- Bidirectional live search (English <-> Malayalam), debounced + race-safe ---
-async function filterData(query) {
-    const q = query.toLowerCase().trim();
-    const status = document.getElementById('statusMessage');
-    const mySeq = ++searchSeq; // any older in-flight request will be discarded on arrival
-
-    if (!q) {
-        closePanel('bookTableContainer');
-        closePanel('descriptionArea');
-        status.textContent = "Ready";
-        return;
-    }
-
-    status.innerHTML = '<span class="spinner" aria-hidden="true"></span> Searching…';
-    closePanel('descriptionArea');
-
-    try {
-        // Search both English and Malayalam columns simultaneously
-        const { data, error } = await supabaseClient
-            .from('dictionary')
-            .select('*')
-            .eq('language', LANGUAGE)
-            .or(`english_word.ilike.%${q}%,translation.ilike.%${q}%`)
-            .limit(50);
-
-        if (mySeq !== searchSeq) return; // a newer keystroke already superseded this request
-        if (error) throw error;
-
-        const groupedData = {};
-        data.forEach(item => {
-            if (!groupedData[item.english_word]) groupedData[item.english_word] = [];
-            groupedData[item.english_word].push(item);
-        });
-
-        // Single source of truth for relevance, used identically for sorting AND
-        // highlighting below, so the two can never disagree with each other.
-        //   0 = exact match (English word or a Malayalam translation equals the query)
-        //   1 = prefix match (English word or a Malayalam translation starts with the query)
-        //   2 = anything else that matched the database ILIKE search
-        const matches = Object.keys(groupedData)
-            .map(word => ({ word, rank: relevanceRank(word, groupedData[word], q) }))
-            .sort((x, y) => {
-                if (x.rank !== y.rank) return x.rank - y.rank;
-                return x.word.trim().toLowerCase().localeCompare(y.word.trim().toLowerCase());
-            });
-
-        renderTable(matches, groupedData);
-        status.textContent = "Ready";
-    } catch (e) {
-        if (mySeq !== searchSeq) return;
-        status.textContent = "Search error — try again";
-        console.error("Fetch error:", e);
-    }
-}
-
-// Ranks a dictionary headword against the (already trimmed + lowercased) search term `q`.
-// Trims and lowercases every value it compares so stray whitespace or mixed case in the
-// database can never cause an exact match to be missed.
-function relevanceRank(word, entries, q) {
-    const wordNorm = (word || '').trim().toLowerCase();
-    if (wordNorm === q) return 0;
-    if (entries.some(e => (e.translation || '').trim().toLowerCase() === q)) return 0;
-
-    if (wordNorm.startsWith(q)) return 1;
-    if (entries.some(e => (e.translation || '').trim().toLowerCase().startsWith(q))) return 1;
-
-    return 2;
-}
-
-function handleSearchInput(e) {
-    clearTimeout(searchTimeout);
-    const value = e.target.value;
-    searchTimeout = setTimeout(() => filterData(value), 300);
-}
-
-function renderTable(matches, groupedData) {
-    const tbody = document.getElementById('bookTableBody');
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
-
-    if (matches.length === 0) {
-        closePanel('bookTableContainer');
-        document.getElementById('statusMessage').textContent = "No results found";
-        return;
-    }
-
-    openPanel('bookTableContainer');
-
-    // textContent only — never innerHTML — for anything sourced from the database
-    matches.forEach(({ word, rank }, i) => {
-        const row = tbody.insertRow();
-        row.classList.add('row-in');
-        row.style.animationDelay = `${Math.min(i, 15) * 18}ms`;
-        row.tabIndex = 0;
-        row.setAttribute('role', 'button');
-        row.onclick = () => showDetails(word, groupedData[word]);
-        row.onkeydown = (ev) => {
-            if (ev.key === 'Enter' || ev.key === ' ') {
-                ev.preventDefault();
-                showDetails(word, groupedData[word]);
-            }
-        };
-
-        if (rank === 0) row.classList.add("exact-match-row");
-
-        const cellEng = row.insertCell();
-        cellEng.textContent = word;
-
-        const cellTr = row.insertCell();
-        cellTr.textContent = groupedData[word].map(item => item.translation).join(", ");
-    });
-}
-
-function showDetails(word, entries) {
-    closePanel('bookTableContainer');
-    const container = document.getElementById('definitionText');
-    container.innerHTML = '';
-
-    entries.forEach(e => {
-        const item = document.createElement('div');
-        item.className = 'detail-item';
-
-        const p = document.createElement('p');
-        p.className = 'detail-translation';
-        p.appendChild(document.createTextNode(e.translation || ''));
-
-        const copyBtn = document.createElement('button');
-        copyBtn.type = 'button';
-        copyBtn.className = 'copy-btn-mini';
-        copyBtn.innerHTML = '<svg width="13" height="13"><use href="#icon-copy"/></svg>';
-        copyBtn.setAttribute('aria-label', 'Copy translation to clipboard');
-        copyBtn.onclick = async (ev) => {
-            ev.stopPropagation();
-            try {
-                await navigator.clipboard.writeText(e.translation || '');
-                copyBtn.innerHTML = '<svg width="13" height="13"><use href="#icon-check"/></svg>';
-                copyBtn.classList.add('copied');
-                setTimeout(() => {
-                    copyBtn.innerHTML = '<svg width="13" height="13"><use href="#icon-copy"/></svg>';
-                    copyBtn.classList.remove('copied');
-                }, 1200);
-            } catch (err) {
-                showToast('Could not copy to clipboard', 'error');
-            }
-        };
-        p.appendChild(copyBtn);
-        item.appendChild(p);
-
-        if (e.extra_info) {
-            const tagP = document.createElement('p');
-            tagP.className = 'detail-tag';
-            const em = document.createElement('em');
-            em.textContent = `Grammar tag: ${e.extra_info}`;
-            tagP.appendChild(em);
-            item.appendChild(tagP);
-        }
-
-        container.appendChild(item);
-    });
-
-    const titleEl = document.getElementById('descriptionTitle');
-    titleEl.textContent = word;
-    // retrigger the headword's entrance animation on every lookup, not just the first
-    titleEl.classList.remove('headword');
-    void titleEl.offsetWidth;
-    titleEl.classList.add('headword');
-
-    openPanel('descriptionArea');
-    document.getElementById('descriptionArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-// --- Supabase Admin Auth ---
-async function performLogin() {
-    const btn = document.querySelector('#loginForm .btn-primary');
-    const email = document.getElementById('adminUser').value.trim();
-    const pass = document.getElementById('adminPass').value;
-
-    if (!email || !pass) {
-        showToast('Enter email and password', 'error');
-        return;
-    }
-
-    setButtonLoading(btn, true);
-    try {
-        const { error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
-        if (error) throw error;
-
-        document.getElementById('loginForm').style.display = 'none';
-        document.getElementById('entryForm').style.display = 'block';
-        document.getElementById('adminUser').value = '';
-        document.getElementById('adminPass').value = '';
-        showToast('Login successful', 'success');
-    } catch (e) {
-        showToast('Login failed: ' + e.message, 'error');
-    } finally {
-        setButtonLoading(btn, false);
-    }
-}
-
-async function saveNewWord() {
-    const btn = document.querySelector('#entryForm .btn-primary');
-    const english_word = document.getElementById('newEnglish').value.trim();
-    const translation = document.getElementById('newTranslation').value.trim();
-    const extra_info = document.getElementById('newType').value.trim();
-
-    if (!english_word || !translation) {
-        showToast('English word and Malayalam translation are required', 'error');
-        return;
-    }
-
-    setButtonLoading(btn, true);
-    try {
-        const { error } = await supabaseClient
-            .from('dictionary')
-            .insert([{ language: LANGUAGE, english_word, translation, extra_info }]);
-
-        if (error) throw error;
-
-        showToast('Saved successfully', 'success');
-        document.getElementById('newEnglish').value = '';
-        document.getElementById('newTranslation').value = '';
-        document.getElementById('newType').value = '';
-        document.getElementById('newEnglish').focus();
-    } catch (e) {
-        showToast('Save failed: ' + e.message, 'error');
-    } finally {
-        setButtonLoading(btn, false);
-    }
-}
-
-async function logout() {
-    try {
-        await supabaseClient.auth.signOut();
-    } catch (e) {
-        console.error('Logout error:', e);
-    }
-    closePanel('adminPanel', 'adminLoginBtn');
-    document.getElementById('loginForm').style.display = 'block';
-    document.getElementById('entryForm').style.display = 'none';
-    document.getElementById('adminPass').value = '';
-}
-
-// --- Restore saved theme before first interaction ---
-if (localStorage.getItem('dict_theme') === 'dark') {
-    document.body.classList.add('dark-theme');
-}
-
-// --- Event wiring ---
-document.getElementById('searchInput').addEventListener('input', handleSearchInput);
-document.getElementById('searchInput').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        clearTimeout(searchTimeout);
-        filterData(e.target.value);
-    } else if (e.key === 'Escape') {
-        e.target.value = '';
-        clearTimeout(searchTimeout);
-        filterData('');
-        e.target.blur();
-    }
-});
-
-document.getElementById('backButton').addEventListener('click', () => {
-    closePanel('descriptionArea');
-    openPanel('bookTableContainer');
-});
-
-document.getElementById('refreshBtn').addEventListener('click', () => {
-    const btn = document.getElementById('refreshBtn');
-    btn.classList.add('spin-once');
-    setTimeout(() => btn.classList.remove('spin-once'), 650);
-    init();
-});
-
-document.getElementById('themeToggle').addEventListener('click', () => {
-    const isDark = document.body.classList.toggle('dark-theme');
-    localStorage.setItem('dict_theme', isDark ? 'dark' : 'light');
-});
-
-document.getElementById('adminLoginBtn').addEventListener('click', () => {
-    if (isPanelOpen('adminPanel')) {
-        closePanel('adminPanel', 'adminLoginBtn');
-    } else {
-        closePanel('contactArea', 'contactButton');
-        openPanel('adminPanel', 'adminLoginBtn');
-    }
-});
-
-document.getElementById('contactButton').addEventListener('click', () => {
-    if (isPanelOpen('contactArea')) {
-        closePanel('contactArea', 'contactButton');
-    } else {
-        closePanel('adminPanel', 'adminLoginBtn');
-        openPanel('contactArea', 'contactButton');
-    }
-});
-
-document.getElementById('adminPass').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') performLogin();
-});
-
-init();
