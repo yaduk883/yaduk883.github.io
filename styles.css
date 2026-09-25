@@ -518,13 +518,20 @@ button.is-loading::after {
 =========================================================== */
 .headword {
     position: relative;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
     margin: 0 0 20px;
     font-family: var(--font-serif);
     font-weight: 600;
     font-size: 2rem;
     color: var(--ink);
     animation: headwordIn 0.5s var(--ease-spring) both;
+}
+
+.headword-speak-btn {
+    width: 30px; height: 30px;
+    flex-shrink: 0;
 }
 
 .headword::after {
@@ -585,6 +592,38 @@ button.is-loading::after {
 }
 .copy-btn-mini:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-tint); }
 .copy-btn-mini.copied { border-color: var(--jade); color: var(--jade); background: var(--jade-tint); }
+
+.speak-btn-mini {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    border: 1px solid var(--hairline);
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, transform 0.15s var(--ease-spring);
+}
+.speak-btn-mini:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-tint); }
+.speak-btn-mini:active { transform: scale(0.9); }
+.speak-btn-mini.speaking { border-color: var(--gold); color: var(--gold); background: var(--gold-tint); animation: speakPulse 1s ease-in-out infinite; }
+
+@keyframes speakPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.word-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.row-speak-btn {
+    width: 22px; height: 22px;
+}
 
 /* ===========================================================
    TOASTS
