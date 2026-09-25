@@ -23,7 +23,62 @@ function isPanelOpen(id) {
     return document.getElementById(id).classList.contains('is-open');
 }
 
-// --- Lightweight non-blocking toast (replaces alert()) ---
+// --- Text-to-speech (Web Speech API) ---
+// Free and needs no backend, but voice availability — especially Malayalam — depends
+// entirely on the visitor's device/OS. We detect and warn rather than fail silently.
+let availableVoices = [];
+if ('speechSynthesis' in window) {
+    const loadVoices = () => { availableVoices = window.speechSynthesis.getVoices(); };
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function findVoiceFor(langCode) {
+    const base = langCode.split('-')[0].toLowerCase();
+    return availableVoices.find(v => v.lang && v.lang.toLowerCase().startsWith(base));
+}
+
+function speak(text, langCode, btn) {
+    if (!text) return;
+
+    if (!('speechSynthesis' in window)) {
+        showToast('Speech is not supported in this browser', 'error');
+        return;
+    }
+
+    const voice = findVoiceFor(langCode);
+    if (!voice && langCode.startsWith('ml')) {
+        showToast('This device has no Malayalam voice installed — pronunciation may be off or silent', 'info');
+    }
+
+    window.speechSynthesis.cancel(); // stop anything currently playing
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = langCode;
+    if (voice) utterance.voice = voice;
+
+    if (btn) {
+        btn.classList.add('speaking');
+        utterance.onend = () => btn.classList.remove('speaking');
+        utterance.onerror = () => btn.classList.remove('speaking');
+    }
+
+    window.speechSynthesis.speak(utterance);
+}
+
+function makeSpeakButton(text, langCode, extraClass, ariaLabel) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = extraClass ? `speak-btn-mini ${extraClass}` : 'speak-btn-mini';
+    btn.innerHTML = '<svg width="12" height="12"><use href="#icon-volume"/></svg>';
+    btn.setAttribute('aria-label', ariaLabel);
+    btn.onclick = (ev) => {
+        ev.stopPropagation();
+        speak(text, langCode, btn);
+    };
+    return btn;
+}
+
+
 function showToast(message, type = 'info') {
     let holder = document.getElementById('toastHolder');
     if (!holder) {
@@ -207,7 +262,11 @@ function renderTable(matches, groupedData) {
         if (rank === 0) row.classList.add("exact-match-row");
 
         const cellEng = row.insertCell();
-        cellEng.textContent = word;
+        cellEng.classList.add('word-cell');
+        const wordSpan = document.createElement('span');
+        wordSpan.textContent = word;
+        cellEng.appendChild(wordSpan);
+        cellEng.appendChild(makeSpeakButton(word, 'en-US', 'row-speak-btn', `Pronounce ${word}`));
 
         const cellTr = row.insertCell();
         cellTr.textContent = groupedData[word].map(item => item.translation).join(", ");
@@ -247,6 +306,7 @@ function showDetails(word, entries) {
             }
         };
         p.appendChild(copyBtn);
+        p.appendChild(makeSpeakButton(e.translation || '', 'ml-IN', null, `Pronounce ${e.translation || ''} in Malayalam`));
         item.appendChild(p);
 
         if (e.extra_info) {
@@ -262,7 +322,11 @@ function showDetails(word, entries) {
     });
 
     const titleEl = document.getElementById('descriptionTitle');
-    titleEl.textContent = word;
+    titleEl.innerHTML = '';
+    const titleText = document.createElement('span');
+    titleText.textContent = word;
+    titleEl.appendChild(titleText);
+    titleEl.appendChild(makeSpeakButton(word, 'en-US', 'headword-speak-btn', `Pronounce ${word}`));
     // retrigger the headword's entrance animation on every lookup, not just the first
     titleEl.classList.remove('headword');
     void titleEl.offsetWidth;
