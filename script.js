@@ -90,18 +90,43 @@ async function filterData(query) {
     closePanel('descriptionArea');
 
     const safeQ = escapeForSupabaseFilter(q);
+    const RESULT_LIMIT = 50;
 
     try {
-        // Search both English and Malayalam columns simultaneously
-        const { data, error } = await supabaseClient
+        // Stage 1: words/translations that START WITH the query. This must be fetched
+        // first and on its own — these are the results that always have to make it
+        // into the list, no matter how many unrelated "contains" matches also exist.
+        const { data: primary, error: err1 } = await supabaseClient
             .from('dictionary')
             .select('*')
             .eq('language', LANGUAGE)
-            .or(`english_word.ilike.%${safeQ}%,translation.ilike.%${safeQ}%`)
-            .limit(50);
+            .or(`english_word.ilike.${safeQ}%,translation.ilike.${safeQ}%`)
+            .limit(RESULT_LIMIT);
 
-        if (mySeq !== searchSeq) return; // a newer keystroke already superseded this request
-        if (error) throw error;
+        if (mySeq !== searchSeq) return;
+        if (err1) throw err1;
+
+        // Stage 2: only if there's room left in the result budget, fill the rest with
+        // words that merely CONTAIN the query elsewhere (and explicitly are not
+        // already covered by stage 1, so the two sets never overlap or duplicate).
+        let secondary = [];
+        const remaining = RESULT_LIMIT - primary.length;
+        if (remaining > 0) {
+            const { data: sec, error: err2 } = await supabaseClient
+                .from('dictionary')
+                .select('*')
+                .eq('language', LANGUAGE)
+                .or(`english_word.ilike.%${safeQ}%,translation.ilike.%${safeQ}%`)
+                .not('english_word', 'ilike', `${safeQ}%`)
+                .not('translation', 'ilike', `${safeQ}%`)
+                .limit(remaining);
+
+            if (mySeq !== searchSeq) return;
+            if (err2) throw err2;
+            secondary = sec;
+        }
+
+        const data = [...primary, ...secondary];
 
         const groupedData = {};
         data.forEach(item => {
