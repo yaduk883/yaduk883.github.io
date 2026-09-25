@@ -66,6 +66,13 @@ async function init() {
     }
 }
 
+// Escapes characters that have special meaning to the database before they're
+// dropped into a raw filter string, so typing %, _, or , doesn't act as a wildcard
+// or accidentally break the OR-condition syntax.
+function escapeForSupabaseFilter(str) {
+    return str.replace(/[%_,()\\]/g, '\\$&');
+}
+
 // --- Bidirectional live search (English <-> Malayalam), debounced + race-safe ---
 async function filterData(query) {
     const q = query.toLowerCase().trim();
@@ -82,13 +89,15 @@ async function filterData(query) {
     status.innerHTML = '<span class="spinner" aria-hidden="true"></span> Searching…';
     closePanel('descriptionArea');
 
+    const safeQ = escapeForSupabaseFilter(q);
+
     try {
         // Search both English and Malayalam columns simultaneously
         const { data, error } = await supabaseClient
             .from('dictionary')
             .select('*')
             .eq('language', LANGUAGE)
-            .or(`english_word.ilike.%${q}%,translation.ilike.%${q}%`)
+            .or(`english_word.ilike.%${safeQ}%,translation.ilike.%${safeQ}%`)
             .limit(50);
 
         if (mySeq !== searchSeq) return; // a newer keystroke already superseded this request
