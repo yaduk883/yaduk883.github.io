@@ -518,7 +518,9 @@ button.is-loading::after {
     margin-bottom: 14px;
 }
 .text-field span { font-size: 0.78rem; color: var(--ink-soft); font-weight: 500; }
-.text-field input {
+.text-field input,
+.text-field select,
+.text-field textarea {
     padding: 11px 12px;
     border-radius: 8px;
     border: 1px solid var(--hairline-strong);
@@ -527,9 +529,43 @@ button.is-loading::after {
     font-family: inherit;
     font-size: 0.95rem;
     outline: none;
+    resize: vertical;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.text-field input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-tint); }
+.text-field input:focus,
+.text-field select:focus,
+.text-field textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-tint); }
+
+.gr-admin-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+.gr-admin-tab {
+    flex: 1;
+    padding: 9px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--hairline);
+    background: transparent;
+    color: var(--ink-soft);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+.gr-admin-tab.active { color: var(--gold-strong); border-color: var(--gold); background: var(--gold-tint); }
+
+.gr-error {
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--rose);
+    background: var(--rose-tint);
+    color: var(--rose);
+    font-size: 0.88rem;
+}
+
+.gr-loading { text-align: center; color: var(--ink-soft); font-size: 0.9rem; padding: 20px; }
 
 .panel-subtitle {
     margin: 22px 0 14px;
