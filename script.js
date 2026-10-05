@@ -336,6 +336,102 @@ function showDetails(word, entries) {
     document.getElementById('descriptionArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+// --- Word of the Day ---
+// Deterministic by UTC calendar date (same word for every visitor all day, everywhere),
+// cycling through the dictionary in alphabetical order so nothing repeats until the
+// whole table has had a turn. Cached in localStorage so it's one Supabase round-trip
+// per day, not per page load.
+function utcDayNumber(date = new Date()) {
+    return Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / 86400000);
+}
+
+async function loadWordOfDay() {
+    const section = document.getElementById('wordOfDay');
+    const todayKey = utcDayNumber();
+
+    try {
+        const cached = localStorage.getItem('wotd_cache');
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed.day === todayKey && parsed.word && Array.isArray(parsed.entries)) {
+                renderWordOfDay(parsed.word, parsed.entries);
+                return;
+            }
+        }
+    } catch (e) {
+        // corrupt cache — fall through and refetch
+    }
+
+    try {
+        const { count, error: countErr } = await supabaseClient
+            .from('dictionary')
+            .select('*', { count: 'exact', head: true })
+            .eq('language', LANGUAGE);
+        if (countErr) throw countErr;
+        if (!count) { section.style.display = 'none'; return; }
+
+        const index = todayKey % count;
+
+        const { data: picked, error: pickErr } = await supabaseClient
+            .from('dictionary')
+            .select('english_word')
+            .eq('language', LANGUAGE)
+            .order('english_word', { ascending: true })
+            .range(index, index);
+        if (pickErr) throw pickErr;
+        if (!picked || !picked.length) { section.style.display = 'none'; return; }
+
+        const word = picked[0].english_word;
+
+        const { data: entries, error: entriesErr } = await supabaseClient
+            .from('dictionary')
+            .select('*')
+            .eq('language', LANGUAGE)
+            .eq('english_word', word);
+        if (entriesErr) throw entriesErr;
+        if (!entries || !entries.length) { section.style.display = 'none'; return; }
+
+        localStorage.setItem('wotd_cache', JSON.stringify({ day: todayKey, word, entries }));
+        renderWordOfDay(word, entries);
+    } catch (e) {
+        console.error('Word of the Day failed to load:', e);
+        section.style.display = 'none';
+    }
+}
+
+function renderWordOfDay(word, entries) {
+    const section = document.getElementById('wordOfDay');
+    const wordEl = document.getElementById('wotdWord');
+    const transEl = document.getElementById('wotdTranslations');
+
+    wordEl.innerHTML = '';
+    const wordText = document.createElement('span');
+    wordText.textContent = word;
+    wordEl.appendChild(wordText);
+    wordEl.appendChild(makeSpeakButton(word, 'en-US', 'wotd-speak-btn', `Pronounce ${word}`));
+
+    transEl.innerHTML = '';
+    entries.forEach((e, i) => {
+        const entrySpan = document.createElement('span');
+        entrySpan.className = 'wotd-entry';
+        const text = document.createElement('span');
+        text.textContent = (e.translation || '') + (i < entries.length - 1 ? ',' : '');
+        entrySpan.appendChild(text);
+        entrySpan.appendChild(makeSpeakButton(e.translation || '', 'ml-IN', 'wotd-speak-btn', `Pronounce ${e.translation || ''} in Malayalam`));
+        transEl.appendChild(entrySpan);
+    });
+
+    const body = section.querySelector('.wotd-body');
+    body.onclick = () => showDetails(word, entries);
+    body.tabIndex = 0;
+    body.setAttribute('role', 'button');
+    body.onkeydown = (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); showDetails(word, entries); }
+    };
+
+    section.style.display = 'block';
+}
+
 // --- Supabase Admin Auth ---
 async function performLogin() {
     const btn = document.querySelector('#loginForm .btn-primary');
@@ -466,3 +562,4 @@ document.getElementById('adminPass').addEventListener('keydown', (e) => {
 });
 
 init();
+loadWordOfDay();
