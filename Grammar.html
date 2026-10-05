@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Grammar Guide — Lethologica</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="prism-bg"></div>
+
+    <svg style="display:none" aria-hidden="true">
+        <symbol id="icon-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 5.5C4 4.67 4.67 4 5.5 4H12v16H5.5A1.5 1.5 0 0 1 4 18.5v-13Z"/>
+            <path d="M20 5.5c0-.83-.67-1.5-1.5-1.5H12v16h6.5a1.5 1.5 0 0 0 1.5-1.5v-13Z"/>
+        </symbol>
+        <symbol id="icon-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M11 6l-6 6 6 6"/>
+        </symbol>
+        <symbol id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4.2"/>
+            <path d="M12 2.5v2.4M12 19.1v2.4M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/>
+        </symbol>
+        <symbol id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.2 14.6A8.5 8.5 0 1 1 9.4 3.8a7 7 0 0 0 10.8 10.8Z"/>
+        </symbol>
+    </svg>
+
+    <main class="container" style="max-width: 860px;">
+        <div class="gr-header">
+            <div class="brand">
+                <span class="brand-mark" aria-hidden="true"><svg width="26" height="26"><use href="#icon-book"/></svg></span>
+                <div>
+                    <h1 class="gr-title">Grammar Guide</h1>
+                    <p class="gr-subtitle">Parts of speech, articles, and all 12 English tenses — with examples</p>
+                </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <button id="themeToggle" class="btn-icon theme-toggle" type="button" title="Toggle theme" aria-label="Toggle dark and light theme">
+                    <svg class="icon-sun" width="18" height="18"><use href="#icon-sun"/></svg>
+                    <svg class="icon-moon" width="18" height="18"><use href="#icon-moon"/></svg>
+                </button>
+                <a href="index.html" class="gr-back">
+                    <svg width="16" height="16"><use href="#icon-arrow-left"/></svg> Back to dictionary
+                </a>
+            </div>
+        </div>
+
+        <nav class="gr-toc" aria-label="Guide sections">
+            <a href="#parts-of-speech">Parts of speech</a>
+            <a href="#articles">Articles (a / an / the)</a>
+            <a href="#present-tenses">Present tenses</a>
+            <a href="#past-tenses">Past tenses</a>
+            <a href="#future-tenses">Future tenses</a>
+        </nav>
+
+        <!-- ===================== PARTS OF SPEECH ===================== -->
+        <section id="parts-of-speech" class="gr-section">
+            <h2 class="gr-section-title">Parts of speech</h2>
+            <p class="gr-section-intro">Every English word plays one of these eight roles in a sentence. Knowing them makes every other grammar rule — including the tenses below — much easier to follow.</p>
+
+            <div class="gr-pos-grid">
+                <div class="gr-pos-card">
+                    <h3 class="gr-pos-name">Noun</h3>
+                    <p class="gr-pos-def">Names a person, place, thing, or idea.</p>
+                    <p class="gr-pos-example">The <strong>teacher</strong> placed the <strong>book</strong> on the <strong>table</strong>.</p>
+                </div>
+                <div class="gr-pos-card">
+                    <h3 class="gr-pos-name">Pronoun</h3>
+                    <p class="gr-pos-def">Stands in for a noun so it doesn't have to be repeated.</p>
+                    <p class="gr-pos-example"><strong>She</strong> gave <strong>it</strong> to <strong>him</strong>.</p>
+                </div>
+                <div class="gr-pos-card">
+                    <h3 class="gr-pos-name">Verb</h3>
+                    <p class="gr-pos-def">Expresses an action or a state of being.</p>
+                    <p class="gr-pos-example">They <strong>run</strong> every morning.</p>
+                </div>
+                <div class="gr-pos-card">
+                    <h3 class="gr-pos-name">Adjective</h3>
+                    <p class="gr-pos-def">Describes or modifies a noun.</p>
+                    <p class="gr-pos-example">It was a <strong>beautiful</strong> sunset.</p>
+                </div>
+                <div class="gr-pos-card">
+                    <h3 class="gr-pos-name">Adverb</h3>
+                    <p class="gr-pos-def">Modifies a verb, an adjective, or another adverb — often answering "how," "when," or "where."</p>
+                    <p class="gr-pos-example">He spoke <strong>softly</strong>.</p>
+                </div>
+                <div class="gr-pos-card">
+                    <h3 class="gr-pos-name">Preposition</h3>
+                    <p class="gr-pos-def">Shows the relationship between a noun/pronoun and another word.</p>
+                    <p class="gr-pos-example">The cat is <strong>under</strong> the table.</p>
+                </div>
+                <div class="gr-pos-card">
+                    <h3 class="gr-pos-name">Conjunction</h3>
+                    <p class="gr-pos-def">Joins words, phrases, or clauses together.</p>
+                    <p class="gr-pos-example">I wanted to go, <strong>but</strong> it rained.</p>
+                </div>
+                <div class="gr-pos-card">
+                    <h3 class="gr-pos-name">Interjection</h3>
+                    <p class="gr-pos-def">Expresses a sudden feeling or reaction.</p>
+                    <p class="gr-pos-example"><strong>Wow!</strong> That's amazing.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================== ARTICLES ===================== -->
+        <section id="articles" class="gr-section">
+            <h2 class="gr-section-title">Articles</h2>
+            <p class="gr-section-intro">English has three articles, and they decide whether a noun is being introduced for the first time or already known to the listener.</p>
+
+            <div class="gr-article-card">
+                <h3 class="gr-article-name"><em>A</em> / <em>An</em> — indefinite articles</h3>
+                <p class="gr-article-rule">Used before a singular, countable noun when it isn't a specific one the listener already knows about. Use <em>a</em> before a consonant <strong>sound</strong>, and <em>an</em> before a vowel <strong>sound</strong> (not just a vowel letter — it's the sound that matters, e.g. "an hour," "a university").</p>
+                <ul class="gr-example-list">
+                    <li>I saw <strong>a</strong> dog in the park.</li>
+                    <li>She ate <strong>an</strong> apple.</li>
+                    <li>He waited for <strong>an</strong> hour.</li>
+                </ul>
+            </div>
+
+            <div class="gr-article-card">
+                <h3 class="gr-article-name"><em>The</em> — definite article</h3>
+                <p class="gr-article-rule">Used when the noun is specific — already mentioned, already known, or unique (there's only one of it).</p>
+                <ul class="gr-example-list">
+                    <li>I saw a dog in the park. <strong>The</strong> dog was barking.</li>
+                    <li>Please close <strong>the</strong> door.</li>
+                    <li><strong>The</strong> sun rises in the east.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- ===================== TENSES ===================== -->
+        <!-- Same example action ("writing a letter") carried through all 12 tenses
+             on purpose, so the only thing that changes is the grammar itself. -->
+
+        <section id="present-tenses" class="gr-section">
+            <h2 class="gr-section-title">Present tenses</h2>
+            <p class="gr-section-intro">Four ways to talk about now, habits, or things that connect the past to the present.</p>
+
+            <div class="gr-tense-card">
+                <h3 class="gr-tense-name">Present Simple</h3>
+                <span class="gr-tense-structure">Subject + base verb (+s/es)</span>
+                <ul class="gr-tense-examples">
+                    <li><span class="gr-tag">Affirm.</span> She writes a letter every day.</li>
+                    <li><span class="gr-tag">Neg.</span> She does not write a letter every day.</li>
+                    <li><span class="gr-tag">Question</span> Does she write a letter every day?</li>
+                </ul>
+            </div>
+
+            <div class="gr-tense-card">
+                <h3 class="gr-tense-name">Present Continuous</h3>
+                <span class="gr-tense-structure">Subject + am/is/are + verb-ing</span>
+                <ul class="gr-tense-examples">
+                    <li><span class="gr-tag">Affirm.</span> She is writing a letter right now.</li>
+                    <li><span class="gr-tag">Neg.</span> She is not writing a letter right now.</li>
+                    <li><span class="gr-tag">Question</span> Is she writing a letter right now?</li>
+                </ul>
+            </div>
+
+            <div class="gr-tense-card">
+                <h3 class="gr-tense-name">Present Perfect</h3>
+                <span class="gr-tense-structure">Subject + has/have + past participle</span>
+                <ul class="gr-tense-examples">
+                    <li><span class="gr-tag">Affirm.</span> She has written the letter.</li>
+                    <li><span class="gr-tag">Neg.</span> She has not written the letter.</li>
+                    <li><span class="gr-tag">Question</span> Has she written the letter?</li>
+                </ul>
+            </div>
+
+            <div class="gr-tense-card">
+                <h3 class="gr-tense-name">Present Perfect Continuous</h3>
+                <span class="gr-tense-structure">Subject + has/have been + verb-ing</span>
+                <ul class="gr-tense-examples">
+                    <li><span class="gr-tag">Affirm.</span> She has been writing the letter for an hour.</li>
+                    <li><span class="gr-tag">Neg.</span> She has not been writing the letter for an hour.</li>
+                    <li><span class="gr-tag">Question</span> Has she been writing the letter for an hour?</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="past-tenses" class="gr-section">
+            <h2 class="gr-section-title">Past tenses</h2>
+            <p class="gr-section-intro">Four ways to talk about something that already happened.</p>
+
+            <div class="gr-tense-card">
+                <h3 class="gr-tense-name">Past Simple</h3>
+                <span class="gr-tense-structure">Subject + past form of verb</span>
+                <ul class="gr-tense-examples">
+                    <li><span class="gr-tag">Affirm.</span> She wrote a letter yesterday.</li>
+                    <li><span class="gr-tag">Neg.</span> She did not write a letter yesterday.</li>
+                    <li><span class="gr-tag">Question</span> Did she write a letter yesterday?</li>
+                </ul>
+            </div>
+
+            <div class="gr-tense-card">
+                <h3 class="gr-tense-name">Past Continuous</h3>
+                <span class="gr-tense-structure">Subject + was/were + verb-ing</span>
+                <ul class="gr-tense-examples">
+                    <li><span class="gr-tag">Affirm.</span> She was writing a letter at 8 pm.</li>
+                    <li><span class="gr-tag">Neg.</span> She was not writing a letter at 8 pm.</li>
+                    <li><span class="gr-tag">Question</span> Was she writing a letter at 8 pm?</li>
+                </ul>
+            </div>
+
+            <div class="gr-tense-card">
+                <h3 class="gr-tense-name">Past Perfect</h3>
+                <span class="gr-tense-structure">Subject + had + past participle</span>
+                <ul class="gr-tense-examples">
+                    <li><span class="gr-tag">Affirm.</span> She had written the letter before he arrived.</li>
+                    <li><span class="gr-tag">Neg.</span> She had not written the letter before he arrived.</li>
+                    <li><span class="gr-tag">Question</span> Had she written the letter before he arrived?</li>
+                </ul>
+            </div>
+
+            <div class="gr-tense-card">
+                <h3 class="gr-tense-name">Past Perfect Continuous</h3>
+                <span class="gr-tense-structure">Subject + had been + verb-ing</span>
+                <ul class="gr-tense-examples">
+                    <li><span class="gr-tag">Affirm.</span> She had been writing the letter for an hour before he arrived.</li>
+                    <li><span class="gr-tag">Neg.</span> She had not been writing the letter before he arrived.</li>
+                    <li><span class="gr-tag">Question</span> Had she been writing the letter before he arrived?</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="future-tenses" class="gr-section">
+            <h2 class="gr-section-title">Future tenses</h2>
+            <p class="gr-section-intro">Four ways to talk about what hasn't happened yet.</p>
+
+            <div class="gr-tense-card">
+                <h3 class="gr-tense-name">Future Simple</h3>
+                <span class="gr-tense-structure">Subject + will + base verb</span>
+                <ul class="gr-tense-examples">
+                    <li><span class="gr-tag">Affirm.</span> She will write a letter tomorrow.</li>
+                    <li><span class="gr-tag">Neg.</span> She will not write a letter tomorrow.</li>
+                    <li><span class="gr-tag">Question</span> Will she write a letter tomorrow?</li>
+                </ul>
+            </div>
+
+            <div class="gr-tense-card">
+                <h3 class="gr-tense-name">Future Continuous</h3>
+                <span class="gr-tense-structure">Subject + will be + verb-ing</span>
+                <ul class="gr-tense-examples">
+                    <li><span class="gr-tag">Affirm.</span> She will be writing a letter at 8 pm tomorrow.</li>
+                    <li><span class="gr-tag">Neg.</span> She will not be writing a letter at 8 pm tomorrow.</li>
+                    <li><span class="gr-tag">Question</span> Will she be writing a letter at 8 pm tomorrow?</li>
+                </ul>
+            </div>
+
+            <div class="gr-tense-card">
+                <h3 class="gr-tense-name">Future Perfect</h3>
+                <span class="gr-tense-structure">Subject + will have + past participle</span>
+                <ul class="gr-tense-examples">
+                    <li><span class="gr-tag">Affirm.</span> She will have written the letter by tomorrow.</li>
+                    <li><span class="gr-tag">Neg.</span> She will not have written the letter by tomorrow.</li>
+                    <li><span class="gr-tag">Question</span> Will she have written the letter by tomorrow?</li>
+                </ul>
+            </div>
+
+            <div class="gr-tense-card">
+                <h3 class="gr-tense-name">Future Perfect Continuous</h3>
+                <span class="gr-tense-structure">Subject + will have been + verb-ing</span>
+                <ul class="gr-tense-examples">
+                    <li><span class="gr-tag">Affirm.</span> She will have been writing the letter for an hour by then.</li>
+                    <li><span class="gr-tag">Neg.</span> She will not have been writing the letter for an hour by then.</li>
+                    <li><span class="gr-tag">Question</span> Will she have been writing the letter for an hour by then?</li>
+                </ul>
+            </div>
+        </section>
+
+        <a href="index.html" class="btn-ghost gr-back" style="display:inline-flex; margin-top: 8px;">
+            <svg width="16" height="16"><use href="#icon-arrow-left"/></svg> Back to dictionary
+        </a>
+    </main>
+
+    <script>
+        if (localStorage.getItem('dict_theme') === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const isDark = document.body.classList.toggle('dark-theme');
+            localStorage.setItem('dict_theme', isDark ? 'dark' : 'light');
+        });
+    </script>
+</body>
+</html>
