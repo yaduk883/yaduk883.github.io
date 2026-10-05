@@ -400,6 +400,91 @@ button.is-loading::after {
 }
 
 /* ===========================================================
+   WORD OF THE DAY
+=========================================================== */
+.wotd {
+    position: relative;
+    margin-bottom: 20px;
+    padding: 20px 22px;
+    border-radius: 16px;
+    border: 1px solid var(--hairline);
+    background:
+        linear-gradient(135deg, var(--gold-tint), transparent 60%),
+        var(--panel-tint);
+    overflow: hidden;
+    animation: fadeUp 0.5s var(--ease-smooth) both;
+}
+
+.wotd::after {
+    content: "";
+    position: absolute;
+    top: -40%; right: -10%;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--gold-tint), transparent 70%);
+    pointer-events: none;
+}
+
+.wotd-badge {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--gold);
+    color: var(--gold-strong);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.wotd-body { position: relative; cursor: pointer; }
+
+.wotd-word {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    margin: 0 0 8px;
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    color: var(--ink);
+}
+
+.wotd-speak-btn { width: 26px; height: 26px; flex-shrink: 0; }
+
+.wotd-translations {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1.1rem;
+    color: var(--gold-strong);
+}
+
+.wotd-translations .wotd-entry {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.wotd-skeleton {
+    height: 1.2em;
+    width: 55%;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--hairline) 25%, var(--hairline-strong) 50%, var(--hairline) 75%);
+    background-size: 200% 100%;
+    animation: skeletonShine 1.4s ease-in-out infinite;
+}
+
+@keyframes skeletonShine {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ===========================================================
    COLLAPSIBLE PANELS — smooth expand/collapse via grid-rows
 =========================================================== */
 .collapsible {
