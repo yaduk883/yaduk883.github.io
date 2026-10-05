@@ -460,8 +460,129 @@ async function performLogin() {
     }
 }
 
-async function saveNewWord() {
-    const btn = document.querySelector('#entryForm .btn-primary');
+// --- Admin: find / edit / delete existing entries ---
+// `editingEntryId` is null in "add new word" mode, or holds a row's id while the
+// form below is being used to edit that specific row instead of creating a new one.
+let editingEntryId = null;
+let manageSearchSeq = 0;
+
+async function searchManage() {
+    const raw = document.getElementById('manageSearchInput').value.trim();
+    const resultsEl = document.getElementById('manageResults');
+    const mySeq = ++manageSearchSeq;
+
+    if (!raw) {
+        resultsEl.innerHTML = '';
+        return;
+    }
+
+    const safeQ = escapeForSupabaseFilter(raw.toLowerCase());
+    resultsEl.innerHTML = '<p class="manage-empty"><span class="spinner" aria-hidden="true"></span> Searching…</p>';
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('dictionary')
+            .select('*')
+            .eq('language', LANGUAGE)
+            .ilike('english_word', `%${safeQ}%`)
+            .order('english_word', { ascending: true })
+            .limit(25);
+
+        if (mySeq !== manageSearchSeq) return;
+        if (error) throw error;
+
+        renderManageResults(data || []);
+    } catch (e) {
+        if (mySeq !== manageSearchSeq) return;
+        resultsEl.innerHTML = '';
+        showToast('Search failed: ' + e.message, 'error');
+    }
+}
+
+function renderManageResults(rows) {
+    const resultsEl = document.getElementById('manageResults');
+    resultsEl.innerHTML = '';
+
+    if (rows.length === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'manage-empty';
+        empty.textContent = 'No matching entries.';
+        resultsEl.appendChild(empty);
+        return;
+    }
+
+    rows.forEach(row => {
+        const rowEl = document.createElement('div');
+        rowEl.className = 'manage-row';
+
+        const textEl = document.createElement('div');
+        textEl.className = 'manage-row-text';
+        const wordSpan = document.createElement('span');
+        wordSpan.className = 'mr-word';
+        wordSpan.textContent = row.english_word;
+        const transSpan = document.createElement('span');
+        transSpan.className = 'mr-translation';
+        transSpan.textContent = row.translation;
+        textEl.appendChild(wordSpan);
+        textEl.appendChild(transSpan);
+        if (row.extra_info) {
+            const tagSpan = document.createElement('span');
+            tagSpan.className = 'mr-tag';
+            tagSpan.textContent = row.extra_info;
+            textEl.appendChild(tagSpan);
+        }
+
+        const actions = document.createElement('div');
+        actions.className = 'manage-row-actions';
+
+        const editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.className = 'copy-btn-mini';
+        editBtn.innerHTML = '<svg width="13" height="13"><use href="#icon-edit"/></svg>';
+        editBtn.setAttribute('aria-label', `Edit ${row.english_word}`);
+        editBtn.onclick = () => startEdit(row);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'copy-btn-mini manage-delete-btn';
+        deleteBtn.innerHTML = '<svg width="13" height="13"><use href="#icon-trash"/></svg>';
+        deleteBtn.setAttribute('aria-label', `Delete ${row.english_word}`);
+        deleteBtn.onclick = () => deleteEntry(row);
+
+        actions.appendChild(editBtn);
+        actions.appendChild(deleteBtn);
+
+        rowEl.appendChild(textEl);
+        rowEl.appendChild(actions);
+        resultsEl.appendChild(rowEl);
+    });
+}
+
+function startEdit(row) {
+    editingEntryId = row.id;
+    document.getElementById('newEnglish').value = row.english_word;
+    document.getElementById('newTranslation').value = row.translation;
+    document.getElementById('newType').value = row.extra_info || '';
+
+    document.getElementById('entryFormHeading').textContent = `Editing "${row.english_word}"`;
+    document.getElementById('saveEntryBtn').textContent = 'Update entry';
+    document.getElementById('cancelEditBtn').style.display = 'block';
+    document.getElementById('newEnglish').focus();
+}
+
+function cancelEdit() {
+    editingEntryId = null;
+    document.getElementById('newEnglish').value = '';
+    document.getElementById('newTranslation').value = '';
+    document.getElementById('newType').value = '';
+
+    document.getElementById('entryFormHeading').textContent = 'Add a new word';
+    document.getElementById('saveEntryBtn').textContent = 'Save entry';
+    document.getElementById('cancelEditBtn').style.display = 'none';
+}
+
+async function saveWord() {
+    const btn = document.getElementById('saveEntryBtn');
     const english_word = document.getElementById('newEnglish').value.trim();
     const translation = document.getElementById('newTranslation').value.trim();
     const extra_info = document.getElementById('newType').value.trim();
@@ -473,21 +594,56 @@ async function saveNewWord() {
 
     setButtonLoading(btn, true);
     try {
-        const { error } = await supabaseClient
-            .from('dictionary')
-            .insert([{ language: LANGUAGE, english_word, translation, extra_info }]);
+        if (editingEntryId !== null) {
+            // Edit mode — update the specific row being edited
+            const { error } = await supabaseClient
+                .from('dictionary')
+                .update({ english_word, translation, extra_info })
+                .eq('id', editingEntryId);
+            if (error) throw error;
 
-        if (error) throw error;
+            showToast('Entry updated', 'success');
+            cancelEdit();
+            searchManage(); // refresh the find-results list so the edit is reflected
+        } else {
+            // Add mode — insert a brand new row
+            const { error } = await supabaseClient
+                .from('dictionary')
+                .insert([{ language: LANGUAGE, english_word, translation, extra_info }]);
+            if (error) throw error;
 
-        showToast('Saved successfully', 'success');
-        document.getElementById('newEnglish').value = '';
-        document.getElementById('newTranslation').value = '';
-        document.getElementById('newType').value = '';
-        document.getElementById('newEnglish').focus();
+            showToast('Saved successfully', 'success');
+            document.getElementById('newEnglish').value = '';
+            document.getElementById('newTranslation').value = '';
+            document.getElementById('newType').value = '';
+            document.getElementById('newEnglish').focus();
+        }
+
+        localStorage.removeItem('wotd_cache'); // dictionary changed — don't serve a stale Word of the Day
     } catch (e) {
-        showToast('Save failed: ' + e.message, 'error');
+        showToast((editingEntryId !== null ? 'Update failed: ' : 'Save failed: ') + e.message, 'error');
     } finally {
         setButtonLoading(btn, false);
+    }
+}
+
+async function deleteEntry(row) {
+    const ok = window.confirm(`Delete "${row.english_word} → ${row.translation}"? This can't be undone.`);
+    if (!ok) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from('dictionary')
+            .delete()
+            .eq('id', row.id);
+        if (error) throw error;
+
+        showToast('Entry deleted', 'success');
+        if (editingEntryId === row.id) cancelEdit();
+        localStorage.removeItem('wotd_cache');
+        searchManage(); // refresh the list
+    } catch (e) {
+        showToast('Delete failed: ' + e.message, 'error');
     }
 }
 
@@ -501,6 +657,9 @@ async function logout() {
     document.getElementById('loginForm').style.display = 'block';
     document.getElementById('entryForm').style.display = 'none';
     document.getElementById('adminPass').value = '';
+    cancelEdit();
+    document.getElementById('manageSearchInput').value = '';
+    document.getElementById('manageResults').innerHTML = '';
 }
 
 // --- Restore saved theme before first interaction ---
@@ -559,6 +718,11 @@ document.getElementById('contactButton').addEventListener('click', () => {
 
 document.getElementById('adminPass').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') performLogin();
+});
+
+document.getElementById('manageSearchBtn').addEventListener('click', () => searchManage());
+document.getElementById('manageSearchInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchManage();
 });
 
 init();
