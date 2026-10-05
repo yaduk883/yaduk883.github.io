@@ -459,7 +459,6 @@ button.is-loading::after {
     align-items: center;
     gap: 8px 14px;
     font-family: var(--font-serif);
-    font-style: italic;
     font-size: 1.1rem;
     color: var(--gold-strong);
 }
@@ -654,7 +653,6 @@ button.is-loading::after {
     flex-wrap: wrap;
     margin: 0;
     font-family: var(--font-serif);
-    font-style: italic;
     font-weight: 500;
     font-size: 1.3rem;
     color: var(--gold-strong);
