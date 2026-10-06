@@ -54,9 +54,21 @@ const CATEGORY_LABELS = {
     parts_of_speech: 'Parts of speech',
     articles: 'Articles',
     tenses: 'Tenses',
+    verb_forms: 'Verb forms',
     sentence_structure: 'Sentence structure',
     other: 'Grammar basics'
 };
+
+// Appends a small Malayalam explanation line under some English content —
+// but only when one actually exists, so untranslated content shows nothing
+// extra rather than an empty box.
+function appendMl(parent, mlText) {
+    if (!mlText) return;
+    const p = document.createElement('p');
+    p.className = 'gr-ml';
+    p.textContent = mlText;
+    parent.appendChild(p);
+}
 
 const TAG_LABELS = {
     affirmative: 'Affirm.',
@@ -136,6 +148,7 @@ function groupGrammarRows(data) {
                 category: row.category,
                 title: row.title,
                 short_description: row.short_description,
+                short_description_ml: row.short_description_ml,
                 formula: row.formula,
                 topic_order: row.topic_order
             };
@@ -149,7 +162,9 @@ function groupGrammarRows(data) {
                 rule_number: row.rule_number,
                 rule_title: row.rule_title,
                 rule_text: row.rule_text,
+                rule_text_ml: row.rule_text_ml,
                 notes: row.notes,
+                notes_ml: row.notes_ml,
                 rule_order: row.rule_order
             };
             rulesMap.set(row.rule_id, rule);
@@ -164,6 +179,7 @@ function groupGrammarRows(data) {
                 example_type: row.example_type,
                 sentence: row.sentence,
                 explanation: row.explanation,
+                explanation_ml: row.explanation_ml,
                 example_order: row.example_order
             });
         }
@@ -272,6 +288,7 @@ function renderPartsOfSpeech(topicList, rules, examples) {
 
         card.appendChild(name);
         card.appendChild(def);
+        appendMl(card, topic.short_description_ml);
 
         const example = examples.find(e => e.topic_id === topic.topic_id);
         if (example) {
@@ -325,6 +342,7 @@ function renderArticles(topicList, rules, examples) {
             rule.className = 'gr-article-rule';
             rule.textContent = topic.short_description;
             card.appendChild(rule);
+            appendMl(card, topic.short_description_ml);
         }
 
         const topicExamples = examples.filter(e => e.topic_id === topic.topic_id);
@@ -334,6 +352,7 @@ function renderArticles(topicList, rules, examples) {
             topicExamples.forEach(ex => {
                 const li = document.createElement('li');
                 li.textContent = ex.sentence;
+                appendMl(li, ex.explanation_ml);
                 ul.appendChild(li);
             });
             card.appendChild(ul);
@@ -392,13 +411,17 @@ function renderTenseCard(topic, examples) {
         ul.className = 'gr-tense-examples';
         topicExamples.forEach(ex => {
             const li = document.createElement('li');
+            const row = document.createElement('div');
+            row.className = 'gr-example-row';
             const tag = document.createElement('span');
             tag.className = 'gr-tag';
             tag.textContent = tagLabel(ex.example_type);
             const text = document.createElement('span');
             text.textContent = ex.sentence;
-            li.appendChild(tag);
-            li.appendChild(text);
+            row.appendChild(tag);
+            row.appendChild(text);
+            li.appendChild(row);
+            appendMl(li, ex.explanation_ml);
             ul.appendChild(li);
         });
         card.appendChild(ul);
@@ -435,6 +458,7 @@ function renderGenericCategory(id, label, topicList, rules, examples) {
             intro.style.marginBottom = '10px';
             intro.textContent = topic.short_description;
             card.appendChild(intro);
+            appendMl(card, topic.short_description_ml);
         }
 
         if (topic.formula) {
@@ -459,6 +483,15 @@ function renderGenericCategory(id, label, topicList, rules, examples) {
             rtext.style.fontSize = '0.9rem';
             rtext.textContent = rule.rule_text;
             card.appendChild(rtext);
+            appendMl(card, rule.rule_text_ml);
+
+            if (rule.notes) {
+                const notesP = document.createElement('p');
+                notesP.className = 'gr-rule-notes';
+                notesP.textContent = rule.notes;
+                card.appendChild(notesP);
+                appendMl(card, rule.notes_ml);
+            }
 
             const ruleExamples = examples
                 .filter(e => e.rule_id === rule.rule_id)
@@ -468,13 +501,25 @@ function renderGenericCategory(id, label, topicList, rules, examples) {
                 ul.className = 'gr-tense-examples';
                 ruleExamples.forEach(ex => {
                     const li = document.createElement('li');
+                    const row = document.createElement('div');
+                    row.className = 'gr-example-row';
                     const tag = document.createElement('span');
                     tag.className = 'gr-tag';
                     tag.textContent = tagLabel(ex.example_type);
                     const text = document.createElement('span');
                     text.textContent = ex.sentence;
-                    li.appendChild(tag);
-                    li.appendChild(text);
+                    row.appendChild(tag);
+                    row.appendChild(text);
+                    li.appendChild(row);
+                    if (ex.explanation) {
+                        const expP = document.createElement('p');
+                        expP.style.margin = '4px 0 0';
+                        expP.style.fontSize = '0.82rem';
+                        expP.style.color = 'var(--ink-soft)';
+                        expP.textContent = ex.explanation;
+                        li.appendChild(expP);
+                    }
+                    appendMl(li, ex.explanation_ml);
                     ul.appendChild(li);
                 });
                 card.appendChild(ul);
@@ -690,6 +735,7 @@ function startTopicEdit(row) {
     document.getElementById('topicCategory').value = row.category;
     document.getElementById('topicTitle').value = row.title;
     document.getElementById('topicDescription').value = row.short_description || '';
+    document.getElementById('topicDescriptionMl').value = row.short_description_ml || '';
     document.getElementById('topicFormula').value = row.formula || '';
     document.getElementById('topicSortOrder').value = row.sort_order;
     document.getElementById('topicFormHeading').textContent = `Editing "${row.title}"`;
@@ -703,6 +749,7 @@ function cancelTopicEdit() {
     document.getElementById('topicCategory').value = 'parts_of_speech';
     document.getElementById('topicTitle').value = '';
     document.getElementById('topicDescription').value = '';
+    document.getElementById('topicDescriptionMl').value = '';
     document.getElementById('topicFormula').value = '';
     document.getElementById('topicSortOrder').value = 0;
     document.getElementById('topicFormHeading').textContent = 'Add a new topic';
@@ -716,6 +763,7 @@ async function saveTopic() {
     const category = document.getElementById('topicCategory').value;
     const title = document.getElementById('topicTitle').value.trim();
     const short_description = document.getElementById('topicDescription').value.trim();
+    const short_description_ml = document.getElementById('topicDescriptionMl').value.trim();
     const formula = document.getElementById('topicFormula').value.trim();
     const sort_order = parseInt(document.getElementById('topicSortOrder').value, 10) || 0;
 
@@ -729,14 +777,14 @@ async function saveTopic() {
         if (editingTopicId !== null) {
             const { error } = await supabaseClient
                 .from('grammar_topics')
-                .update({ slug, category, title, short_description, formula, sort_order })
+                .update({ slug, category, title, short_description, short_description_ml, formula, sort_order })
                 .eq('id', editingTopicId);
             if (error) throw error;
             showToast('Topic updated', 'success');
         } else {
             const { error } = await supabaseClient
                 .from('grammar_topics')
-                .insert([{ slug, category, title, short_description, formula, sort_order }]);
+                .insert([{ slug, category, title, short_description, short_description_ml, formula, sort_order }]);
             if (error) throw error;
             showToast('Topic added', 'success');
         }
@@ -835,7 +883,9 @@ function startRuleEdit(row) {
     document.getElementById('ruleNumber').value = row.rule_number;
     document.getElementById('ruleTitle').value = row.title || '';
     document.getElementById('ruleText').value = row.rule_text;
+    document.getElementById('ruleTextMl').value = row.rule_text_ml || '';
     document.getElementById('ruleNotes').value = row.notes || '';
+    document.getElementById('ruleNotesMl').value = row.notes_ml || '';
     document.getElementById('ruleSortOrder').value = row.sort_order;
     document.getElementById('ruleFormHeading').textContent = `Editing rule ${row.rule_number}`;
     document.getElementById('saveRuleBtn').textContent = 'Update rule';
@@ -847,7 +897,9 @@ function cancelRuleEdit() {
     document.getElementById('ruleNumber').value = 1;
     document.getElementById('ruleTitle').value = '';
     document.getElementById('ruleText').value = '';
+    document.getElementById('ruleTextMl').value = '';
     document.getElementById('ruleNotes').value = '';
+    document.getElementById('ruleNotesMl').value = '';
     document.getElementById('ruleSortOrder').value = 1;
     document.getElementById('ruleFormHeading').textContent = 'Add a new rule';
     document.getElementById('saveRuleBtn').textContent = 'Save rule';
@@ -860,7 +912,9 @@ async function saveRule() {
     const rule_number = parseInt(document.getElementById('ruleNumber').value, 10);
     const title = document.getElementById('ruleTitle').value.trim();
     const rule_text = document.getElementById('ruleText').value.trim();
+    const rule_text_ml = document.getElementById('ruleTextMl').value.trim();
     const notes = document.getElementById('ruleNotes').value.trim();
+    const notes_ml = document.getElementById('ruleNotesMl').value.trim();
     const sort_order = parseInt(document.getElementById('ruleSortOrder').value, 10) || 0;
 
     if (!topic_id) { showToast('Choose a topic first', 'error'); return; }
@@ -871,14 +925,14 @@ async function saveRule() {
         if (editingRuleId !== null) {
             const { error } = await supabaseClient
                 .from('grammar_rules')
-                .update({ topic_id, rule_number, title, rule_text, notes, sort_order })
+                .update({ topic_id, rule_number, title, rule_text, rule_text_ml, notes, notes_ml, sort_order })
                 .eq('id', editingRuleId);
             if (error) throw error;
             showToast('Rule updated', 'success');
         } else {
             const { error } = await supabaseClient
                 .from('grammar_rules')
-                .insert([{ topic_id, rule_number, title, rule_text, notes, sort_order }]);
+                .insert([{ topic_id, rule_number, title, rule_text, rule_text_ml, notes, notes_ml, sort_order }]);
             if (error) throw error;
             showToast('Rule added', 'success');
         }
@@ -974,6 +1028,7 @@ function startExampleEdit(row) {
     document.getElementById('exampleType').value = row.example_type;
     document.getElementById('exampleSentence').value = row.sentence;
     document.getElementById('exampleExplanation').value = row.explanation || '';
+    document.getElementById('exampleExplanationMl').value = row.explanation_ml || '';
     document.getElementById('exampleSortOrder').value = row.sort_order;
     document.getElementById('exampleFormHeading').textContent = 'Editing example';
     document.getElementById('saveExampleBtn').textContent = 'Update example';
@@ -985,6 +1040,7 @@ function cancelExampleEdit() {
     document.getElementById('exampleType').value = 'affirmative';
     document.getElementById('exampleSentence').value = '';
     document.getElementById('exampleExplanation').value = '';
+    document.getElementById('exampleExplanationMl').value = '';
     document.getElementById('exampleSortOrder').value = 1;
     document.getElementById('exampleFormHeading').textContent = 'Add a new example';
     document.getElementById('saveExampleBtn').textContent = 'Save example';
@@ -998,6 +1054,7 @@ async function saveExample() {
     const example_type = document.getElementById('exampleType').value;
     const sentence = document.getElementById('exampleSentence').value.trim();
     const explanation = document.getElementById('exampleExplanation').value.trim();
+    const explanation_ml = document.getElementById('exampleExplanationMl').value.trim();
     const sort_order = parseInt(document.getElementById('exampleSortOrder').value, 10) || 0;
 
     if (!topic_id || !rule_id) { showToast('Choose a topic and rule first', 'error'); return; }
@@ -1008,14 +1065,14 @@ async function saveExample() {
         if (editingExampleId !== null) {
             const { error } = await supabaseClient
                 .from('grammar_examples')
-                .update({ topic_id, rule_id, example_type, sentence, explanation, sort_order })
+                .update({ topic_id, rule_id, example_type, sentence, explanation, explanation_ml, sort_order })
                 .eq('id', editingExampleId);
             if (error) throw error;
             showToast('Example updated', 'success');
         } else {
             const { error } = await supabaseClient
                 .from('grammar_examples')
-                .insert([{ topic_id, rule_id, example_type, sentence, explanation, sort_order }]);
+                .insert([{ topic_id, rule_id, example_type, sentence, explanation, explanation_ml, sort_order }]);
             if (error) throw error;
             showToast('Example added', 'success');
         }
