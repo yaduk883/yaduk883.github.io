@@ -567,6 +567,24 @@ button.is-loading::after {
 
 .gr-loading { text-align: center; color: var(--ink-soft); font-size: 0.9rem; padding: 20px; }
 
+.gr-rule-notes {
+    margin: 0 0 6px;
+    font-size: 0.82rem;
+    font-style: italic;
+    color: var(--ink-soft);
+}
+
+.gr-ml {
+    margin: 5px 0 0;
+    padding: 6px 10px;
+    border-left: 2px solid var(--jade);
+    background: var(--jade-tint);
+    border-radius: 0 6px 6px 0;
+    font-size: 0.85rem;
+    color: var(--ink);
+    line-height: 1.5;
+}
+
 .panel-subtitle {
     margin: 22px 0 14px;
     padding-top: 16px;
@@ -1066,14 +1084,19 @@ button.is-loading::after {
 .gr-tense-examples { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 
 .gr-tense-examples li {
-    display: flex;
-    gap: 8px;
     font-size: 0.88rem;
     color: var(--ink);
     padding: 7px 10px;
     background: var(--paper-raised);
     border-radius: 7px;
 }
+
+.gr-tense-examples .gr-example-row {
+    display: flex;
+    gap: 8px;
+}
+
+.gr-tense-examples li .gr-ml { margin-top: 6px; }
 
 .gr-tense-examples .gr-tag {
     flex-shrink: 0;
