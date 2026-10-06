@@ -111,6 +111,7 @@
                                     <option value="parts_of_speech">Parts of speech</option>
                                     <option value="articles">Articles</option>
                                     <option value="tenses">Tenses</option>
+                                    <option value="verb_forms">Verb forms</option>
                                     <option value="sentence_structure">Sentence structure</option>
                                     <option value="other">Other</option>
                                 </select>
@@ -122,6 +123,10 @@
                             <label class="text-field">
                                 <span>Short description</span>
                                 <textarea id="topicDescription" rows="2" placeholder="One or two sentences introducing this topic"></textarea>
+                            </label>
+                            <label class="text-field">
+                                <span>Short description — Malayalam (optional)</span>
+                                <textarea id="topicDescriptionMl" rows="2" placeholder="മലയാളം വിശദീകരണം"></textarea>
                             </label>
                             <label class="text-field">
                                 <span>Formula / structure (optional)</span>
@@ -161,8 +166,16 @@
                                 <textarea id="ruleText" rows="2" placeholder="The rule itself, in full sentences"></textarea>
                             </label>
                             <label class="text-field">
+                                <span>Rule text — Malayalam (optional)</span>
+                                <textarea id="ruleTextMl" rows="2" placeholder="മലയാളം വിശദീകരണം"></textarea>
+                            </label>
+                            <label class="text-field">
                                 <span>Notes (optional)</span>
                                 <textarea id="ruleNotes" rows="2" placeholder="A tip, caveat, or extra detail"></textarea>
+                            </label>
+                            <label class="text-field">
+                                <span>Notes — Malayalam (optional)</span>
+                                <textarea id="ruleNotesMl" rows="2" placeholder="മലയാളം കുറിപ്പ്"></textarea>
                             </label>
                             <label class="text-field">
                                 <span>Sort order</span>
@@ -208,6 +221,10 @@
                             <label class="text-field">
                                 <span>Explanation (optional)</span>
                                 <input type="text" id="exampleExplanation" placeholder="Why this example works">
+                            </label>
+                            <label class="text-field">
+                                <span>Explanation — Malayalam (optional)</span>
+                                <input type="text" id="exampleExplanationMl" placeholder="മലയാളം വിശദീകരണം">
                             </label>
                             <label class="text-field">
                                 <span>Sort order</span>
