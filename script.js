@@ -349,6 +349,11 @@ async function loadWordOfDay() {
     const section = document.getElementById('wordOfDay');
     const todayKey = utcDayNumber();
 
+    if (sessionStorage.getItem('wotd_dismissed') === String(todayKey)) {
+        section.style.display = 'none';
+        return;
+    }
+
     try {
         const cached = localStorage.getItem('wotd_cache');
         if (cached) {
@@ -723,6 +728,11 @@ document.getElementById('adminPass').addEventListener('keydown', (e) => {
 document.getElementById('manageSearchBtn').addEventListener('click', () => searchManage());
 document.getElementById('manageSearchInput').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') searchManage();
+});
+
+document.getElementById('wotdClose').addEventListener('click', () => {
+    document.getElementById('wordOfDay').style.display = 'none';
+    sessionStorage.setItem('wotd_dismissed', String(utcDayNumber()));
 });
 
 init();
