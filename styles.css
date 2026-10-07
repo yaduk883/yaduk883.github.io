@@ -1,3 +1,9 @@
+/* ===========================================================
+   LEXICON — design tokens
+   Palette: warm paper / deep ink, brass gold as the single accent,
+   jade for success, muted brick for error. Serif (Fraunces) carries
+   the dictionary-headword personality; Inter runs the UI chrome.
+=========================================================== */
 :root {
     --font-serif: 'Fraunces', 'Iowan Old Style', Georgia, serif;
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
@@ -400,20 +406,18 @@ button.is-loading::after {
 =========================================================== */
 .wotd-float {
     position: fixed;
-    top: 90px;
-    right: 24px;
+    top: 78px;
+    right: 16px;
     z-index: 40;
-    width: 230px;
-    max-width: calc(100vw - 32px);
-    padding: 14px 16px;
-    border-radius: 14px;
+    width: 150px;
+    max-width: calc(100vw - 24px);
+    padding: 8px 10px;
+    border-radius: 10px;
     border: 1px solid var(--hairline);
-    background:
-        linear-gradient(135deg, var(--gold-tint), transparent 60%),
-        var(--paper-raised);
+    background: var(--paper-raised);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-sm);
     overflow: hidden;
     animation: wotdIn 0.5s var(--ease-smooth) 0.3s both;
 }
@@ -425,11 +429,11 @@ button.is-loading::after {
 
 .wotd-close {
     position: absolute;
-    top: 8px; right: 8px;
+    top: 4px; right: 4px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 22px; height: 22px;
+    width: 16px; height: 16px;
     border-radius: 50%;
     border: none;
     background: transparent;
@@ -438,16 +442,14 @@ button.is-loading::after {
     transition: color 0.2s ease, background-color 0.2s ease;
 }
 .wotd-close:hover { color: var(--rose); background: var(--rose-tint); }
+.wotd-close svg { width: 10px; height: 10px; }
 
 .wotd-badge {
-    display: inline-block;
-    margin: 0 20px 8px 0;
-    padding: 3px 9px;
-    border-radius: 999px;
-    border: 1px solid var(--gold);
+    display: block;
+    margin: 0 0 3px;
     color: var(--gold-strong);
-    font-size: 0.62rem;
-    font-weight: 600;
+    font-size: 0.56rem;
+    font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
 }
@@ -455,38 +457,36 @@ button.is-loading::after {
 .wotd-body { position: relative; cursor: pointer; }
 
 .wotd-word {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3em;
-    margin: 0 0 6px;
+    display: block;
+    margin: 0 0 2px;
     font-family: var(--font-serif);
     font-weight: 600;
-    font-size: 1.25rem;
+    font-size: 0.95rem;
+    line-height: 1.2;
     color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.wotd-speak-btn { width: 22px; height: 22px; flex-shrink: 0; }
+.wotd-word .speak-btn-mini { display: none; }
 
 .wotd-translations {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 5px 10px;
     font-family: var(--font-serif);
-    font-size: 0.92rem;
+    font-size: 0.78rem;
+    line-height: 1.3;
     color: var(--gold-strong);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.wotd-translations .wotd-entry {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-}
+.wotd-translations .wotd-entry .speak-btn-mini { display: none; }
 
 .wotd-skeleton {
-    height: 1.1em;
+    height: 0.9em;
     width: 70%;
-    border-radius: 6px;
+    border-radius: 4px;
     background: linear-gradient(90deg, var(--hairline) 25%, var(--hairline-strong) 50%, var(--hairline) 75%);
     background-size: 200% 100%;
     animation: skeletonShine 1.4s ease-in-out infinite;
@@ -498,17 +498,16 @@ button.is-loading::after {
 }
 
 /* On narrower screens there's no spare room beside the main card,
-   so the widget collapses into a smaller badge pinned to the top,
-   still outside the normal document flow. */
+   so the widget tucks into the corner even smaller. */
 @media (max-width: 880px) {
     .wotd-float {
-        top: 12px;
-        right: 12px;
-        width: 190px;
-        padding: 11px 13px;
+        top: 10px;
+        right: 10px;
+        width: 128px;
+        padding: 7px 9px;
     }
-    .wotd-word { font-size: 1.05rem; }
-    .wotd-translations { font-size: 0.82rem; }
+    .wotd-word { font-size: 0.85rem; }
+    .wotd-translations { font-size: 0.72rem; }
 }
 
 /* ===========================================================
