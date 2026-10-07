@@ -409,7 +409,7 @@ button.is-loading::after {
     top: 78px;
     right: 16px;
     z-index: 40;
-    width: 150px;
+    width: 200px;
     max-width: calc(100vw - 24px);
     padding: 8px 10px;
     border-radius: 10px;
