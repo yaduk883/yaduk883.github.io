@@ -1,2 +1,3 @@
 # Dictionary.github.io
-Dictionary for Malayalam - English
+Dictionary for Malayalam - English 
+English - Malayalam 
