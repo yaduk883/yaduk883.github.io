@@ -1,16 +1,14 @@
 // --- Supabase Configuration ---
 const supabaseUrl = 'https://plwtfwylrlintbnvhfha.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsd3Rmd3lscmxpbnRibnZoZmhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNjIxODQsImV4cCI6MjEwNTYzODE4NH0.Y65Dhadml3pFMyytXro0drSprdYY-IOr4jQJ3tfL3F8';
-// IMPORTANT: named `supabaseClient` (not `supabase`) — declaring `const supabase =
-// supabase.createClient(...)` would shadow the global `supabase` object from the CDN
-// script and throw a ReferenceError before the app can run.
+
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 const LANGUAGE = 'MALAYALAM'; // single-language build
 let searchTimeout = null;
-let searchSeq = 0; // guards against slow/out-of-order network responses overwriting newer results
+let searchSeq = 0; /
 
-// --- Collapsible panel helpers (smooth grid-rows expand/collapse) ---
+
 function openPanel(id, toggleBtnId) {
     document.getElementById(id).classList.add('is-open');
     if (toggleBtnId) document.getElementById(toggleBtnId).setAttribute('aria-expanded', 'true');
@@ -23,9 +21,7 @@ function isPanelOpen(id) {
     return document.getElementById(id).classList.contains('is-open');
 }
 
-// --- Text-to-speech (Web Speech API) ---
-// Free and needs no backend, but voice availability — especially Malayalam — depends
-// entirely on the visitor's device/OS. We detect and warn rather than fail silently.
+// --- Text-to-speech 
 let availableVoices = [];
 if ('speechSynthesis' in window) {
     const loadVoices = () => { availableVoices = window.speechSynthesis.getVoices(); };
@@ -51,7 +47,7 @@ function speak(text, langCode, btn) {
         showToast('This device has no Malayalam voice installed — pronunciation may be off or silent', 'info');
     }
 
-    window.speechSynthesis.cancel(); // stop anything currently playing
+    window.speechSynthesis.cancel(); 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = langCode;
     if (voice) utterance.voice = voice;
@@ -161,9 +157,7 @@ async function filterData(query) {
         if (mySeq !== searchSeq) return;
         if (err1) throw err1;
 
-        // Stage 2: only if there's room left in the result budget, fill the rest with
-        // words that merely CONTAIN the query elsewhere (and explicitly are not
-        // already covered by stage 1, so the two sets never overlap or duplicate).
+        
         let secondary = [];
         const remaining = RESULT_LIMIT - primary.length;
         if (remaining > 0) {
@@ -189,11 +183,7 @@ async function filterData(query) {
             groupedData[item.english_word].push(item);
         });
 
-        // Single source of truth for relevance, used identically for sorting AND
-        // highlighting below, so the two can never disagree with each other.
-        //   0 = exact match (English word or a Malayalam translation equals the query)
-        //   1 = prefix match (English word or a Malayalam translation starts with the query)
-        //   2 = anything else that matched the database ILIKE search
+        
         const matches = Object.keys(groupedData)
             .map(word => ({ word, rank: relevanceRank(word, groupedData[word], q) }))
             .sort((x, y) => {
@@ -210,9 +200,7 @@ async function filterData(query) {
     }
 }
 
-// Ranks a dictionary headword against the (already trimmed + lowercased) search term `q`.
-// Trims and lowercases every value it compares so stray whitespace or mixed case in the
-// database can never cause an exact match to be missed.
+
 function relevanceRank(word, entries, q) {
     const wordNorm = (word || '').trim().toLowerCase();
     if (wordNorm === q) return 0;
@@ -244,7 +232,7 @@ function renderTable(matches, groupedData) {
 
     openPanel('bookTableContainer');
 
-    // textContent only — never innerHTML — for anything sourced from the database
+    // textContent only
     matches.forEach(({ word, rank }, i) => {
         const row = tbody.insertRow();
         row.classList.add('row-in');
@@ -336,68 +324,86 @@ function showDetails(word, entries) {
     document.getElementById('descriptionArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// --- Word of the Day ---
-// Deterministic by UTC calendar date (same word for every visitor all day, everywhere),
-// cycling through the dictionary in alphabetical order so nothing repeats until the
-// whole table has had a turn. Cached in localStorage so it's one Supabase round-trip
-// per day, not per page load.
-function utcDayNumber(date = new Date()) {
-    return Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / 86400000);
+// --- Word of the Day
+const WOTD_TIMEZONE = 'Asia/Kolkata'; // must match the timezone inside get_word_of_the_day() in word_of_the_day.sql
+
+function todayKey() {
+    // "YYYY-MM-DD" for the current day in WOTD_TIMEZONE (en-CA formats dates as ISO)
+    return new Intl.DateTimeFormat('en-CA', {
+        timeZone: WOTD_TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit'
+    }).format(new Date());
+}
+
+function hashString(str) {
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+}
+
+async function fallbackPickWord(today) {
+    const { count, error: countErr } = await supabaseClient
+        .from('dictionary')
+        .select('*', { count: 'exact', head: true })
+        .eq('language', LANGUAGE);
+    if (countErr || !count) return null;
+
+    const index = hashString(today) % count;
+    const { data, error } = await supabaseClient
+        .from('dictionary')
+        .select('english_word')
+        .eq('language', LANGUAGE)
+        .order('english_word', { ascending: true })
+        .range(index, index);
+    if (error || !data || !data.length) return null;
+    return { day: today, word: data[0].english_word };
+}
+
+async function pickWordOfDay(today) {
+    const { data, error } = await supabaseClient.rpc('get_word_of_the_day', { p_language: LANGUAGE });
+    if (!error) {
+        const row = Array.isArray(data) ? data[0] : data;
+        return row && row.english_word ? { day: row.day, word: row.english_word } : null;
+    }
+    console.warn('get_word_of_the_day() unavailable — run word_of_the_day.sql in Supabase. Using fallback:', error.message);
+    return fallbackPickWord(today);
 }
 
 async function loadWordOfDay() {
     const section = document.getElementById('wordOfDay');
-    const todayKey = utcDayNumber();
+    const today = todayKey();
 
-    if (sessionStorage.getItem('wotd_dismissed') === String(todayKey)) {
+    if (sessionStorage.getItem('wotd_dismissed') === today) {
         section.style.display = 'none';
         return;
     }
 
     try {
-        const cached = localStorage.getItem('wotd_cache');
-        if (cached) {
-            const parsed = JSON.parse(cached);
-            if (parsed.day === todayKey && parsed.word && Array.isArray(parsed.entries)) {
-                renderWordOfDay(parsed.word, parsed.entries);
-                return;
-            }
+        const cached = JSON.parse(localStorage.getItem('wotd_cache') || 'null');
+        if (cached && cached.day === today && cached.word && Array.isArray(cached.entries) && cached.entries.length) {
+            renderWordOfDay(cached.word, cached.entries);
+            return;
         }
     } catch (e) {
-        // corrupt cache — fall through and refetch
+        
     }
 
     try {
-        const { count, error: countErr } = await supabaseClient
-            .from('dictionary')
-            .select('*', { count: 'exact', head: true })
-            .eq('language', LANGUAGE);
-        if (countErr) throw countErr;
-        if (!count) { section.style.display = 'none'; return; }
-
-        const index = todayKey % count;
-
-        const { data: picked, error: pickErr } = await supabaseClient
-            .from('dictionary')
-            .select('english_word')
-            .eq('language', LANGUAGE)
-            .order('english_word', { ascending: true })
-            .range(index, index);
-        if (pickErr) throw pickErr;
-        if (!picked || !picked.length) { section.style.display = 'none'; return; }
-
-        const word = picked[0].english_word;
+        const picked = await pickWordOfDay(today);
+        if (!picked) { section.style.display = 'none'; return; }
 
         const { data: entries, error: entriesErr } = await supabaseClient
             .from('dictionary')
             .select('*')
             .eq('language', LANGUAGE)
-            .eq('english_word', word);
+            .eq('english_word', picked.word);
         if (entriesErr) throw entriesErr;
         if (!entries || !entries.length) { section.style.display = 'none'; return; }
 
-        localStorage.setItem('wotd_cache', JSON.stringify({ day: todayKey, word, entries }));
-        renderWordOfDay(word, entries);
+        localStorage.setItem('wotd_cache', JSON.stringify({ day: picked.day, word: picked.word, entries }));
+        renderWordOfDay(picked.word, entries);
     } catch (e) {
         console.error('Word of the Day failed to load:', e);
         section.style.display = 'none';
@@ -465,9 +471,6 @@ async function performLogin() {
     }
 }
 
-// --- Admin: find / edit / delete existing entries ---
-// `editingEntryId` is null in "add new word" mode, or holds a row's id while the
-// form below is being used to edit that specific row instead of creating a new one.
 let editingEntryId = null;
 let manageSearchSeq = 0;
 
@@ -667,12 +670,11 @@ async function logout() {
     document.getElementById('manageResults').innerHTML = '';
 }
 
-// --- Restore saved theme before first interaction ---
 if (localStorage.getItem('dict_theme') === 'dark') {
     document.body.classList.add('dark-theme');
 }
 
-// --- Event wiring ---
+
 document.getElementById('searchInput').addEventListener('input', handleSearchInput);
 document.getElementById('searchInput').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -732,7 +734,7 @@ document.getElementById('manageSearchInput').addEventListener('keydown', (e) => 
 
 document.getElementById('wotdClose').addEventListener('click', () => {
     document.getElementById('wordOfDay').style.display = 'none';
-    sessionStorage.setItem('wotd_dismissed', String(utcDayNumber()));
+    sessionStorage.setItem('wotd_dismissed', todayKey());
 });
 
 init();
