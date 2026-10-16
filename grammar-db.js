@@ -4,7 +4,37 @@
 // localStorage), and vice versa.
 const supabaseUrl = 'https://plwtfwylrlintbnvhfha.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsd3Rmd3lscmxpbnRibnZoZmhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNjIxODQsImV4cCI6MjEwNTYzODE4NH0.Y65Dhadml3pFMyytXro0drSprdYY-IOr4jQJ3tfL3F8';
-const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+// If the database library fails to load (blocked CDN, ad blocker, offline), createClient()
+// used to throw right here and silently kill this whole page. Now the failure is contained
+// and the page shows a clear message instead.
+let supabaseClient = null;
+try {
+    if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+        throw new Error('The Supabase library did not load');
+    }
+    supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+} catch (e) {
+    console.error('Database unavailable:', e);
+}
+const DB_UNAVAILABLE_MSG = "Can't reach the grammar database. Check your internet connection or ad blocker, then refresh.";
+
+// Connects a handler to an element if it exists; a missing element is skipped instead of
+// throwing and stopping every line after it.
+function on(id, eventName, handler) {
+    const el = document.getElementById(id);
+    if (!el) { console.warn('#' + id + ' not found in the page — skipped'); return; }
+    el.addEventListener(eventName, handler);
+}
+
+// Runs a startup task so that one failing task can't stop the next one from running.
+function safeRun(fn) {
+    try {
+        const result = fn();
+        if (result && typeof result.catch === 'function') result.catch(e => console.error(e));
+    } catch (e) {
+        console.error(e);
+    }
+}
 
 // --- Shared helpers (same approach as script.js: escape everything, never trust DB content) ---
 function escapeHTML(value) {
@@ -46,9 +76,9 @@ function setButtonLoading(btn, loading) {
     btn.classList.toggle('is-loading', loading);
 }
 
-function openPanel(id) { document.getElementById(id).classList.add('is-open'); }
-function closePanel(id) { document.getElementById(id).classList.remove('is-open'); }
-function isPanelOpen(id) { return document.getElementById(id).classList.contains('is-open'); }
+function openPanel(id) { const el = document.getElementById(id); if (el) el.classList.add('is-open'); }
+function closePanel(id) { const el = document.getElementById(id); if (el) el.classList.remove('is-open'); }
+function isPanelOpen(id) { const el = document.getElementById(id); return !!el && el.classList.contains('is-open'); }
 
 const CATEGORY_LABELS = {
     parts_of_speech: 'Parts of speech',
@@ -102,6 +132,17 @@ function slugify(text) {
 async function loadGrammar() {
     const container = document.getElementById('grammarContent');
     const toc = document.getElementById('grammarTOC');
+    if (!container) return;
+
+    if (!supabaseClient) {
+        container.innerHTML = '';
+        const errBox = document.createElement('div');
+        errBox.className = 'gr-error';
+        errBox.textContent = DB_UNAVAILABLE_MSG;
+        container.appendChild(errBox);
+        if (toc) toc.innerHTML = '';
+        return;
+    }
 
     try {
         const { data, error } = await supabaseClient
@@ -543,6 +584,7 @@ let editingRuleId = null;
 let editingExampleId = null;
 
 async function adminInit() {
+    if (!supabaseClient) return;
     try {
         const { data: { session } } = await supabaseClient.auth.getSession();
         const loggedIn = !!session;
@@ -557,6 +599,7 @@ async function adminInit() {
 }
 
 async function performLogin() {
+    if (!supabaseClient) { showToast(DB_UNAVAILABLE_MSG, 'error'); return; }
     const btn = document.getElementById('loginBtn');
     const email = document.getElementById('adminUser').value.trim();
     const pass = document.getElementById('adminPass').value;
@@ -1104,7 +1147,7 @@ async function deleteExample(row) {
 
 /* ---------------------------- EVENT WIRING ---------------------------- */
 
-document.getElementById('adminLoginBtn').addEventListener('click', () => {
+on('adminLoginBtn', 'click', () => {
     if (isPanelOpen('adminPanel')) {
         closePanel('adminPanel');
         document.getElementById('adminLoginBtn').setAttribute('aria-expanded', 'false');
@@ -1114,29 +1157,29 @@ document.getElementById('adminLoginBtn').addEventListener('click', () => {
     }
 });
 
-document.getElementById('loginBtn').addEventListener('click', performLogin);
-document.getElementById('adminPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') performLogin(); });
-document.getElementById('logoutBtn').addEventListener('click', logout);
+on('loginBtn', 'click', performLogin);
+on('adminPass', 'keydown', (e) => { if (e.key === 'Enter') performLogin(); });
+on('logoutBtn', 'click', logout);
 
 document.querySelectorAll('.gr-admin-tab').forEach(btn => {
     btn.addEventListener('click', () => switchAdminTab(btn.dataset.tab));
 });
 
-document.getElementById('topicSearchBtn').addEventListener('click', searchTopics);
-document.getElementById('topicSearchInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') searchTopics(); });
-document.getElementById('saveTopicBtn').addEventListener('click', saveTopic);
-document.getElementById('cancelTopicBtn').addEventListener('click', cancelTopicEdit);
+on('topicSearchBtn', 'click', searchTopics);
+on('topicSearchInput', 'keydown', (e) => { if (e.key === 'Enter') searchTopics(); });
+on('saveTopicBtn', 'click', saveTopic);
+on('cancelTopicBtn', 'click', cancelTopicEdit);
 
-document.getElementById('ruleListBtn').addEventListener('click', listRulesForTopic);
-document.getElementById('ruleTopicSelect').addEventListener('change', () => { cancelRuleEdit(); listRulesForTopic(); });
-document.getElementById('saveRuleBtn').addEventListener('click', saveRule);
-document.getElementById('cancelRuleBtn').addEventListener('click', cancelRuleEdit);
+on('ruleListBtn', 'click', listRulesForTopic);
+on('ruleTopicSelect', 'change', () => { cancelRuleEdit(); listRulesForTopic(); });
+on('saveRuleBtn', 'click', saveRule);
+on('cancelRuleBtn', 'click', cancelRuleEdit);
 
-document.getElementById('exampleTopicSelect').addEventListener('change', () => { cancelExampleEdit(); refreshRuleDropdownForExamples(); document.getElementById('exampleResults').innerHTML = ''; });
-document.getElementById('exampleListBtn').addEventListener('click', listExamplesForRule);
-document.getElementById('exampleRuleSelect').addEventListener('change', () => { cancelExampleEdit(); listExamplesForRule(); });
-document.getElementById('saveExampleBtn').addEventListener('click', saveExample);
-document.getElementById('cancelExampleBtn').addEventListener('click', cancelExampleEdit);
+on('exampleTopicSelect', 'change', () => { cancelExampleEdit(); refreshRuleDropdownForExamples(); document.getElementById('exampleResults').innerHTML = ''; });
+on('exampleListBtn', 'click', listExamplesForRule);
+on('exampleRuleSelect', 'change', () => { cancelExampleEdit(); listExamplesForRule(); });
+on('saveExampleBtn', 'click', saveExample);
+on('cancelExampleBtn', 'click', cancelExampleEdit);
 
-loadGrammar();
-adminInit();
+safeRun(loadGrammar);
+safeRun(adminInit);
