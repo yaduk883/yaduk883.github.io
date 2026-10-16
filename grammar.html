@@ -7,7 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Database library pinned to the exact tested version, with a backup CDN if the first is blocked. -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+    <script>window.supabase || document.write('<script src="https://unpkg.com/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"><\/script>');</script>
 </head>
 <body>
     <div id="prism-bg"></div>
@@ -253,15 +255,21 @@
     </main>
 
     <script>
-        if (localStorage.getItem('dict_theme') === 'dark') {
-            document.body.classList.add('dark-theme');
-        }
-        document.getElementById('themeToggle').addEventListener('click', () => {
-            const isDark = document.body.classList.toggle('dark-theme');
-            localStorage.setItem('dict_theme', isDark ? 'dark' : 'light');
-        });
+        // Same theme as the dictionary page. Storage access is wrapped because some browsers
+        // block it, and an unwrapped call would stop the theme button from ever being connected.
+        (function () {
+            function getTheme() { try { return localStorage.getItem('dict_theme'); } catch (e) { return null; } }
+            function saveTheme(v) { try { localStorage.setItem('dict_theme', v); } catch (e) { /* ignore */ } }
+            if (getTheme() === 'dark') document.body.classList.add('dark-theme');
+            var btn = document.getElementById('themeToggle');
+            if (btn) btn.addEventListener('click', function () {
+                saveTheme(document.body.classList.toggle('dark-theme') ? 'dark' : 'light');
+            });
+        })();
     </script>
 
     <script src="grammar-db.js"></script>
+    <!-- Same animated background as the dictionary page (index.html loads it the same way). -->
+    <script type="module" src="prism.js"></script>
 </body>
 </html>
