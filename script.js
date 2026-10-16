@@ -4,7 +4,54 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 // IMPORTANT: named `supabaseClient` (not `supabase`) — declaring `const supabase =
 // supabase.createClient(...)` would shadow the global `supabase` object from the CDN
 // script and throw a ReferenceError before the app can run.
-const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+// If the database library fails to load (blocked CDN, ad blocker, offline, or a missing
+// <script> tag), createClient() used to throw right here and silently kill the WHOLE page:
+// every button, search and Word of the Day. Now the failure is contained — the page keeps
+// working and database features show a clear message instead.
+let supabaseClient = null;
+try {
+    if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+        throw new Error('The Supabase library did not load');
+    }
+    supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+} catch (e) {
+    console.error('Database unavailable:', e);
+}
+const DB_UNAVAILABLE_MSG = "Can't reach the dictionary database. Check your internet connection or ad blocker, then refresh.";
+
+function dbAvailable() {
+    if (supabaseClient) return true;
+    const status = document.getElementById('statusMessage');
+    if (status) status.textContent = DB_UNAVAILABLE_MSG;
+    return false;
+}
+
+// Browser storage can be blocked (some in-app browsers, strict privacy settings) and merely
+// touching localStorage then THROWS. These wrappers make storage optional instead of fatal.
+const safeStore = {
+    get(store, key) { try { return window[store].getItem(key); } catch (e) { return null; } },
+    set(store, key, value) { try { window[store].setItem(key, value); } catch (e) { /* storage unavailable — ignore */ } },
+    remove(store, key) { try { window[store].removeItem(key); } catch (e) { /* storage unavailable — ignore */ } },
+};
+
+// Connects a handler to an element if it exists. A missing element (for example an older
+// index.html paired with this script) is skipped instead of throwing and stopping every
+// line after it.
+function on(id, eventName, handler) {
+    const el = document.getElementById(id);
+    if (!el) { console.warn('#' + id + ' not found in the page — skipped'); return; }
+    el.addEventListener(eventName, handler);
+}
+
+// Runs a startup task so that one failing task can't stop the next one from running.
+function safeRun(fn) {
+    try {
+        const result = fn();
+        if (result && typeof result.catch === 'function') result.catch(e => console.error(e));
+    } catch (e) {
+        console.error(e);
+    }
+}
 
 const LANGUAGE = 'MALAYALAM'; // single-language build
 let searchTimeout = null;
@@ -12,25 +59,34 @@ let searchSeq = 0; // guards against slow/out-of-order network responses overwri
 
 // --- Collapsible panel helpers (smooth grid-rows expand/collapse) ---
 function openPanel(id, toggleBtnId) {
-    document.getElementById(id).classList.add('is-open');
-    if (toggleBtnId) document.getElementById(toggleBtnId).setAttribute('aria-expanded', 'true');
+    const el = document.getElementById(id);
+    if (el) el.classList.add('is-open');
+    const btn = toggleBtnId ? document.getElementById(toggleBtnId) : null;
+    if (btn) btn.setAttribute('aria-expanded', 'true');
 }
 function closePanel(id, toggleBtnId) {
-    document.getElementById(id).classList.remove('is-open');
-    if (toggleBtnId) document.getElementById(toggleBtnId).setAttribute('aria-expanded', 'false');
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('is-open');
+    const btn = toggleBtnId ? document.getElementById(toggleBtnId) : null;
+    if (btn) btn.setAttribute('aria-expanded', 'false');
 }
 function isPanelOpen(id) {
-    return document.getElementById(id).classList.contains('is-open');
+    const el = document.getElementById(id);
+    return !!el && el.classList.contains('is-open');
 }
 
 // --- Text-to-speech (Web Speech API) ---
 // Free and needs no backend, but voice availability — especially Malayalam — depends
 // entirely on the visitor's device/OS. We detect and warn rather than fail silently.
 let availableVoices = [];
-if ('speechSynthesis' in window) {
-    const loadVoices = () => { availableVoices = window.speechSynthesis.getVoices(); };
-    loadVoices();
-    window.speechSynthesis.onvoiceschanged = loadVoices;
+try {
+    if ('speechSynthesis' in window) {
+        const loadVoices = () => { availableVoices = window.speechSynthesis.getVoices(); };
+        loadVoices();
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+} catch (e) {
+    console.warn('Speech voices unavailable:', e);
 }
 
 function findVoiceFor(langCode) {
@@ -105,17 +161,22 @@ function setButtonLoading(btn, loading) {
 }
 
 async function init() {
-    const status = document.getElementById('statusMessage');
-    if (status) status.textContent = "Connected";
     closePanel('bookTableContainer');
     closePanel('descriptionArea');
-    document.getElementById('searchInput').value = '';
+    const searchEl = document.getElementById('searchInput');
+    if (searchEl) searchEl.value = '';
+
+    if (!dbAvailable()) return;
+    const status = document.getElementById('statusMessage');
+    if (status) status.textContent = "Connected";
 
     try {
         const { data: { session } } = await supabaseClient.auth.getSession();
         const loggedIn = !!session;
-        document.getElementById('loginForm').style.display = loggedIn ? 'none' : 'block';
-        document.getElementById('entryForm').style.display = loggedIn ? 'block' : 'none';
+        const loginForm = document.getElementById('loginForm');
+        const entryForm = document.getElementById('entryForm');
+        if (loginForm) loginForm.style.display = loggedIn ? 'none' : 'block';
+        if (entryForm) entryForm.style.display = loggedIn ? 'block' : 'none';
     } catch (e) {
         console.error('Session check failed:', e);
     }
@@ -130,6 +191,7 @@ function escapeForSupabaseFilter(str) {
 
 // --- Bidirectional live search (English <-> Malayalam), debounced + race-safe ---
 async function filterData(query) {
+    if (!dbAvailable()) return;
     const q = query.toLowerCase().trim();
     const status = document.getElementById('statusMessage');
     const mySeq = ++searchSeq; // any older in-flight request will be discarded on arrival
@@ -337,67 +399,95 @@ function showDetails(word, entries) {
 }
 
 // --- Word of the Day ---
-// Deterministic by UTC calendar date (same word for every visitor all day, everywhere),
-// cycling through the dictionary in alphabetical order so nothing repeats until the
-// whole table has had a turn. Cached in localStorage so it's one Supabase round-trip
-// per day, not per page load.
-function utcDayNumber(date = new Date()) {
-    return Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / 86400000);
+// The word is chosen on the server (get_word_of_the_day(), see word_of_the_day.sql):
+// one word per calendar day, the same for every visitor, picked by DISTINCT word and
+// never repeated until the whole dictionary has had a turn. The browser only asks for
+// today's word and caches it so there's one lookup per day, not per page load.
+const WOTD_TIMEZONE = 'Asia/Kolkata'; // must match the timezone inside get_word_of_the_day() in word_of_the_day.sql
+
+function todayKey() {
+    // "YYYY-MM-DD" for the current day in WOTD_TIMEZONE (en-CA formats dates as ISO)
+    return new Intl.DateTimeFormat('en-CA', {
+        timeZone: WOTD_TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit'
+    }).format(new Date());
+}
+
+function hashString(str) {
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+}
+
+// Used only if get_word_of_the_day() hasn't been installed in Supabase yet, so the
+// page keeps working in the meantime. Hash-based, so consecutive days jump around
+// instead of stepping through neighbouring rows one by one.
+async function fallbackPickWord(today) {
+    const { count, error: countErr } = await supabaseClient
+        .from('dictionary')
+        .select('*', { count: 'exact', head: true })
+        .eq('language', LANGUAGE);
+    if (countErr || !count) return null;
+
+    const index = hashString(today) % count;
+    const { data, error } = await supabaseClient
+        .from('dictionary')
+        .select('english_word')
+        .eq('language', LANGUAGE)
+        .order('english_word', { ascending: true })
+        .range(index, index);
+    if (error || !data || !data.length) return null;
+    return { day: today, word: data[0].english_word };
+}
+
+async function pickWordOfDay(today) {
+    const { data, error } = await supabaseClient.rpc('get_word_of_the_day', { p_language: LANGUAGE });
+    if (!error) {
+        const row = Array.isArray(data) ? data[0] : data;
+        return row && row.english_word ? { day: row.day, word: row.english_word } : null;
+    }
+    console.warn('get_word_of_the_day() unavailable — run word_of_the_day.sql in Supabase. Using fallback:', error.message);
+    return fallbackPickWord(today);
 }
 
 async function loadWordOfDay() {
     const section = document.getElementById('wordOfDay');
-    const todayKey = utcDayNumber();
+    if (!section) return;
+    const today = todayKey();
 
-    if (sessionStorage.getItem('wotd_dismissed') === String(todayKey)) {
+    if (safeStore.get('sessionStorage', 'wotd_dismissed') === today) {
         section.style.display = 'none';
         return;
     }
 
     try {
-        const cached = localStorage.getItem('wotd_cache');
-        if (cached) {
-            const parsed = JSON.parse(cached);
-            if (parsed.day === todayKey && parsed.word && Array.isArray(parsed.entries)) {
-                renderWordOfDay(parsed.word, parsed.entries);
-                return;
-            }
+        const cached = JSON.parse(safeStore.get('localStorage', 'wotd_cache') || 'null');
+        if (cached && cached.day === today && cached.word && Array.isArray(cached.entries) && cached.entries.length) {
+            renderWordOfDay(cached.word, cached.entries);
+            return;
         }
     } catch (e) {
-        // corrupt cache — fall through and refetch
+        // corrupt or old-format cache — fall through and refetch
     }
 
+    if (!supabaseClient) { section.style.display = 'none'; return; }
+
     try {
-        const { count, error: countErr } = await supabaseClient
-            .from('dictionary')
-            .select('*', { count: 'exact', head: true })
-            .eq('language', LANGUAGE);
-        if (countErr) throw countErr;
-        if (!count) { section.style.display = 'none'; return; }
-
-        const index = todayKey % count;
-
-        const { data: picked, error: pickErr } = await supabaseClient
-            .from('dictionary')
-            .select('english_word')
-            .eq('language', LANGUAGE)
-            .order('english_word', { ascending: true })
-            .range(index, index);
-        if (pickErr) throw pickErr;
-        if (!picked || !picked.length) { section.style.display = 'none'; return; }
-
-        const word = picked[0].english_word;
+        const picked = await pickWordOfDay(today);
+        if (!picked) { section.style.display = 'none'; return; }
 
         const { data: entries, error: entriesErr } = await supabaseClient
             .from('dictionary')
             .select('*')
             .eq('language', LANGUAGE)
-            .eq('english_word', word);
+            .eq('english_word', picked.word);
         if (entriesErr) throw entriesErr;
         if (!entries || !entries.length) { section.style.display = 'none'; return; }
 
-        localStorage.setItem('wotd_cache', JSON.stringify({ day: todayKey, word, entries }));
-        renderWordOfDay(word, entries);
+        safeStore.set('localStorage', 'wotd_cache', JSON.stringify({ day: picked.day, word: picked.word, entries }));
+        renderWordOfDay(picked.word, entries);
     } catch (e) {
         console.error('Word of the Day failed to load:', e);
         section.style.display = 'none';
@@ -439,6 +529,7 @@ function renderWordOfDay(word, entries) {
 
 // --- Supabase Admin Auth ---
 async function performLogin() {
+    if (!supabaseClient) { showToast(DB_UNAVAILABLE_MSG, 'error'); return; }
     const btn = document.querySelector('#loginForm .btn-primary');
     const email = document.getElementById('adminUser').value.trim();
     const pass = document.getElementById('adminPass').value;
@@ -624,7 +715,7 @@ async function saveWord() {
             document.getElementById('newEnglish').focus();
         }
 
-        localStorage.removeItem('wotd_cache'); // dictionary changed — don't serve a stale Word of the Day
+        safeStore.remove('localStorage', 'wotd_cache'); // dictionary changed — don't serve a stale Word of the Day
     } catch (e) {
         showToast((editingEntryId !== null ? 'Update failed: ' : 'Save failed: ') + e.message, 'error');
     } finally {
@@ -645,7 +736,7 @@ async function deleteEntry(row) {
 
         showToast('Entry deleted', 'success');
         if (editingEntryId === row.id) cancelEdit();
-        localStorage.removeItem('wotd_cache');
+        safeStore.remove('localStorage', 'wotd_cache');
         searchManage(); // refresh the list
     } catch (e) {
         showToast('Delete failed: ' + e.message, 'error');
@@ -668,13 +759,13 @@ async function logout() {
 }
 
 // --- Restore saved theme before first interaction ---
-if (localStorage.getItem('dict_theme') === 'dark') {
+if (safeStore.get('localStorage', 'dict_theme') === 'dark') {
     document.body.classList.add('dark-theme');
 }
 
 // --- Event wiring ---
-document.getElementById('searchInput').addEventListener('input', handleSearchInput);
-document.getElementById('searchInput').addEventListener('keydown', (e) => {
+on('searchInput', 'input', handleSearchInput);
+on('searchInput', 'keydown', (e) => {
     if (e.key === 'Enter') {
         clearTimeout(searchTimeout);
         filterData(e.target.value);
@@ -686,24 +777,24 @@ document.getElementById('searchInput').addEventListener('keydown', (e) => {
     }
 });
 
-document.getElementById('backButton').addEventListener('click', () => {
+on('backButton', 'click', () => {
     closePanel('descriptionArea');
     openPanel('bookTableContainer');
 });
 
-document.getElementById('refreshBtn').addEventListener('click', () => {
+on('refreshBtn', 'click', () => {
     const btn = document.getElementById('refreshBtn');
     btn.classList.add('spin-once');
     setTimeout(() => btn.classList.remove('spin-once'), 650);
     init();
 });
 
-document.getElementById('themeToggle').addEventListener('click', () => {
+on('themeToggle', 'click', () => {
     const isDark = document.body.classList.toggle('dark-theme');
-    localStorage.setItem('dict_theme', isDark ? 'dark' : 'light');
+    safeStore.set('localStorage', 'dict_theme', isDark ? 'dark' : 'light');
 });
 
-document.getElementById('adminLoginBtn').addEventListener('click', () => {
+on('adminLoginBtn', 'click', () => {
     if (isPanelOpen('adminPanel')) {
         closePanel('adminPanel', 'adminLoginBtn');
     } else {
@@ -712,7 +803,7 @@ document.getElementById('adminLoginBtn').addEventListener('click', () => {
     }
 });
 
-document.getElementById('contactButton').addEventListener('click', () => {
+on('contactButton', 'click', () => {
     if (isPanelOpen('contactArea')) {
         closePanel('contactArea', 'contactButton');
     } else {
@@ -721,19 +812,19 @@ document.getElementById('contactButton').addEventListener('click', () => {
     }
 });
 
-document.getElementById('adminPass').addEventListener('keydown', (e) => {
+on('adminPass', 'keydown', (e) => {
     if (e.key === 'Enter') performLogin();
 });
 
-document.getElementById('manageSearchBtn').addEventListener('click', () => searchManage());
-document.getElementById('manageSearchInput').addEventListener('keydown', (e) => {
+on('manageSearchBtn', 'click', () => searchManage());
+on('manageSearchInput', 'keydown', (e) => {
     if (e.key === 'Enter') searchManage();
 });
 
-document.getElementById('wotdClose').addEventListener('click', () => {
+on('wotdClose', 'click', () => {
     document.getElementById('wordOfDay').style.display = 'none';
-    sessionStorage.setItem('wotd_dismissed', String(utcDayNumber()));
+    safeStore.set('sessionStorage', 'wotd_dismissed', todayKey());
 });
 
-init();
-loadWordOfDay();
+safeRun(init);
+safeRun(loadWordOfDay);
