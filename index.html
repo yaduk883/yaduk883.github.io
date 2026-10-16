@@ -216,18 +216,22 @@
         </section>
     </main>
 
-    <aside id="wordOfDay" class="wotd-float" aria-live="polite">
+    <aside id="wordOfDay" class="wotd-float" aria-live="polite" style="display:none;">
         <button id="wotdClose" class="wotd-close" type="button" aria-label="Dismiss Word of the Day">
             <svg width="13" height="13"><use href="#icon-close"/></svg>
         </button>
         <span class="wotd-badge">Word of the day</span>
         <div class="wotd-body">
-            <h2 id="wotdWord" class="wotd-word"><span class="wotd-skeleton" aria-hidden="true"></span></h2>
+            <h2 id="wotdWord" class="wotd-word"></h2>
             <div id="wotdTranslations" class="wotd-translations"></div>
         </div>
     </aside>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Database library, pinned to the exact version this site was tested with (the old "@2"
+         meant "whatever the newest 2.x is today", which can change without warning).
+         If the first CDN is blocked or down, a second one is tried before script.js runs. -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+    <script>window.supabase || document.write('<script src="https://unpkg.com/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"><\/script>');</script>
     <script src="script.js"></script>
     <script type="module" src="prism.js"></script>
 </body>
